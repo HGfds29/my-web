@@ -1,6 +1,13 @@
 <template>
-  <router-view />
+  <NavBar />
+  <div class="page-wrapper">
+    <router-view />
+  </div>
 </template>
+
+<script setup>
+import NavBar from './components/NavBar.vue'
+</script>
 
 <style>
 #app {
@@ -8,5 +15,9 @@
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   color: #2c3e50;
+}
+
+.page-wrapper {
+  padding-top: 60px;
 }
 </style>

@@ -1,4 +1,4 @@
-import { createRouter, createWebHistory } from 'vue-router'
+import { createRouter, createWebHashHistory } from 'vue-router'
 import { ref, nextTick } from 'vue'
 import Home from '../views/Home.vue'
 import BlogList from '../views/BlogList.vue'
@@ -14,6 +14,7 @@ const LEAVE_DURATION = 450
 const routes = [
   {
     path: '/',
+    name: 'Root',
     redirect: '/home'
   },
   {
@@ -45,11 +46,15 @@ const routes = [
     name: 'BlogDetail',
     component: BlogDetail,
     meta: { index: 3 }
+  },
+  {
+    path: '/:pathMatch(.*)*',
+    redirect: '/home'
   }
 ]
 
 const router = createRouter({
-  history: createWebHistory(),
+  history: createWebHashHistory(),
   routes
 })
 

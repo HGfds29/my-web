@@ -1,0 +1,135 @@
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+html, body, #app {
+  width: 100%;
+  min-height: 100vh;
+}
+
+body {
+  font-family: Avenir, Helvetica, Arial, sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  background: #fafafa;
+  color: #2c3e50;
+  transition: background 0.3s, color 0.3s;
+}
+
+html.dark,
+html.dark body {
+  background: #0f0f1a;
+  color: #e0e0e0;
+}
+
+html.dark h1,
+html.dark h2,
+html.dark h3 {
+  color: #f0f0f0;
+}
+
+html.dark p {
+  color: #bbb;
+}
+
+html.dark .subtitle {
+  color: #999 !important;
+}
+
+html.dark .date {
+  color: #888 !important;
+}
+
+html.dark .desc {
+  color: #aaa !important;
+}
+
+html.dark .about-text,
+html.dark .intro,
+html.dark .contact {
+  color: #bbb !important;
+}
+
+html.dark .footer {
+  border-top-color: #2d2d44 !important;
+  color: #888 !important;
+}
+
+html.dark .post-item {
+  background: #1a1a2e;
+  border-color: #2d2d44 !important;
+}
+
+html.dark .post-item:hover {
+  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.3) !important;
+}
+
+html.dark .section-title,
+html.dark .section h2 {
+  border-bottom-color: #42b983 !important;
+  color: #f0f0f0 !important;
+}
+
+html.dark .tag,
+html.dark .skill {
+  background: #1e2d3a !important;
+  color: #42b983 !important;
+}
+
+html.dark .view-all,
+html.dark .read-more {
+  color: #42b983 !important;
+}
+
+html.dark .btn-ghost {
+  color: #42b983 !important;
+  border-color: #42b983 !important;
+}
+
+html.dark .btn-ghost:hover {
+  background: #1e2d3a !important;
+}
+
+html.dark .back-btn {
+  color: #42b983 !important;
+}
+
+html.dark .hobbies {
+  color: #bbb !important;
+}
+
+html.dark .content pre {
+  color: #ddd !important;
+}
+
+html.dark .not-found {
+  color: #888 !important;
+}
+
+html.dark .navbar {
+  background: #12121f !important;
+  border-bottom-color: #252540 !important;
+}
+
+html.dark .navbar .nav-logo {
+  color: #e0e0e0 !important;
+}
+
+html.dark .navbar .nav-link {
+  color: #aaa !important;
+}
+
+html.dark .navbar .nav-link.active {
+  color: #42b983 !important;
+}
+
+html.dark .navbar .theme-toggle {
+  color: #aaa !important;
+}
+
+html.dark .navbar .theme-toggle:hover {
+  background: #2d2d44 !important;
+  color: #42b983 !important;
+}

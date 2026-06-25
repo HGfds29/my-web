@@ -563,4 +563,64 @@ const goBack = () => {
   font-size: 13px;
   margin-top: 8px;
 }
+
+:global(.dark) .photos-page {
+  color: #e0e0e0;
+}
+
+:global(.dark) .page-header h1 {
+  color: #f0f0f0;
+}
+
+:global(.dark) .subtitle {
+  color: #999;
+}
+
+:global(.dark) .photo-area {
+  background: #1a1a2e;
+}
+
+:global(.dark) .toolbar {
+  background: #1a1a2e;
+  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.3);
+}
+
+:global(.dark) .tool {
+  color: #aaa;
+}
+
+:global(.dark) .tool:hover {
+  background: #2d2d44;
+  color: #42b983;
+}
+
+:global(.dark) .polaroid {
+  background: #2a2a40;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
+}
+
+:global(.dark) .polaroid:hover {
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.5);
+}
+
+:global(.dark) .polaroid.dragging {
+  box-shadow: 0 15px 40px rgba(0, 0, 0, 0.6);
+}
+
+:global(.dark) .polaroid.pinned:hover {
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
+}
+
+:global(.dark) .photo-inner {
+  background: #1a1a2e;
+}
+
+:global(.dark) .polaroid-bottom {
+  background: #2a2a40;
+  color: #999;
+}
+
+:global(.dark) .empty {
+  color: #888;
+}
 </style>
