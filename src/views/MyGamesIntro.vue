@@ -1,13 +1,13 @@
 <template>
   <div class="games-page" :class="{ leaving: isLeaving }">
     <div class="page-header stagger-item" :style="{ '--delay': '0.05s' }">
-      <button class="back-btn" @click="goBack">← 返回首页</button>
-      <h1>游戏笔记</h1>
-      <p class="subtitle">记录我玩过的游戏</p>
+      <button class="back-btn" @click="goBack">{{ t('games.back') }}</button>
+      <h1>{{ t('games.title') }}</h1>
+      <p class="subtitle">{{ t('games.subtitle') }}</p>
     </div>
 
     <div class="game-list stagger-item" :style="{ '--delay': '0.15s' }">
-      <h2 class="section-title">全部游戏</h2>
+      <h2 class="section-title">{{ t('games.allGames') }}</h2>
       <Transition :name="pageDirection === 'forward' ? 'page-forward' : 'page-backward'" mode="out-in">
         <div :key="currentPage" class="page-content">
           <div
@@ -25,7 +25,7 @@
                 <span class="platform">{{ item.platform }}</span>
               </div>
               <p class="desc">{{ item.desc }}</p>
-              <span class="read-more">查看详情 →</span>
+              <span class="read-more">{{ t('games.viewDetail') }}</span>
             </div>
           </div>
         </div>
@@ -38,7 +38,7 @@
         :disabled="currentPage === 1"
         @click="prevPage"
       >
-        上一页
+        {{ t('games.prev') }}
       </button>
       <div class="page-numbers">
         <button
@@ -56,12 +56,12 @@
         :disabled="currentPage === totalPages"
         @click="nextPage"
       >
-        下一页
+        {{ t('games.next') }}
       </button>
     </div>
 
     <footer class="footer stagger-item" :style="{ '--delay': '0.35s' }">
-      <p>© 2026 个人网站</p>
+      <p>{{ t('games.footer') }}</p>
     </footer>
   </div>
 </template>
@@ -70,6 +70,7 @@
 import { ref, computed, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { isLeaving } from '../router'
+import { t } from '../utils/i18n'
 import gameList from '../data/games.json'
 
 console.log('[MyGamesIntro.vue] 组件初始化')

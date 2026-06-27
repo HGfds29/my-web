@@ -1,32 +1,29 @@
 <template>
   <div class="home-page" :class="{ leaving: isLeaving }">
     <div class="hero stagger-item" :style="{ '--delay': '0.05s' }">
-      <h1>你好，欢迎来到我的网站 👋</h1>
-      <p class="subtitle">一个记录学习和生活的个人空间</p>
+      <h1>{{ t('home.welcome') }}</h1>
+      <p class="subtitle">{{ t('home.subtitle') }}</p>
       <div class="nav-links">
-        <router-link to="/blog" class="btn">浏览博客</router-link>
-        <router-link to="/photos" class="btn btn-ghost">照片集</router-link>
-        <router-link to="/about" class="btn btn-ghost">关于我</router-link>
+        <router-link to="/blog" class="btn">{{ t('home.browseBlog') }}</router-link>
+        <router-link to="/photos" class="btn btn-ghost">{{ t('home.photos') }}</router-link>
+        <router-link to="/about" class="btn btn-ghost">{{ t('home.about') }}</router-link>
       </div>
     </div>
 
     <div class="section stagger-item" :style="{ '--delay': '0.15s' }">
-      <h2>最新文章</h2>
+      <h2>{{ t('home.latestPosts') }}</h2>
       <div class="post-item" v-for="(post, index) in latestPosts" :key="post.id" @click="goToPost(post.id)">
         <h3>{{ post.title }}</h3>
         <p class="date">{{ post.date }}</p>
         <p class="desc">{{ post.desc }}</p>
-        <span class="read-more">阅读全文 →</span>
+        <span class="read-more">{{ t('home.readMore') }}</span>
       </div>
-      <router-link to="/blog" class="view-all">查看全部文章 →</router-link>
+      <router-link to="/blog" class="view-all">{{ t('home.viewAll') }}</router-link>
     </div>
 
     <div class="section stagger-item" :style="{ '--delay': '0.25s' }">
-      <h2>关于我</h2>
-      <p class="about-text">
-        热爱前端开发，喜欢用代码创造有趣的东西。
-        这里记录我的学习笔记、项目经验和生活思考。
-      </p>
+      <h2>{{ t('home.aboutSection') }}</h2>
+      <p class="about-text">{{ t('home.aboutText') }}</p>
       <div class="tags">
         <span class="tag">Vue 3</span>
         <span class="tag">JavaScript</span>
@@ -36,10 +33,8 @@
     </div>
 
     <div class="section open-source-section stagger-item" :style="{ '--delay': '0.35s' }">
-      <h2>开源项目</h2>
-      <p class="about-text">
-        这个网站是开源的，代码托管在 GitHub 上，欢迎 Star 和 Fork~
-      </p>
+      <h2>{{ t('home.openSource') }}</h2>
+      <p class="about-text">{{ t('home.openSourceText') }}</p>
       <a
         href="https://github.com/HGfds29/my-web"
         target="_blank"
@@ -54,7 +49,7 @@
     </div>
 
     <footer class="footer stagger-item" :style="{ '--delay': '0.4s' }">
-      <p>© 2026 个人网站</p>
+      <p>{{ t('home.footer') }}</p>
     </footer>
   </div>
 </template>
@@ -63,6 +58,7 @@
 import { computed, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { isLeaving } from '../router'
+import { t } from '../utils/i18n'
 import blogList from '../data/blog.json'
 
 console.log('[Home.vue] 组件初始化')

@@ -1,16 +1,26 @@
 <template>
   <nav class="navbar">
     <div class="nav-container">
-      <router-link to="/home" class="nav-logo">我的网站</router-link>
+      <router-link to="/home" class="nav-logo">{{ t('nav.title') }}</router-link>
       <div class="nav-right">
         <div class="nav-links">
-          <router-link to="/home" class="nav-link" active-class="active">首页</router-link>
-          <router-link to="/blog" class="nav-link" active-class="active">博客</router-link>
-          <router-link to="/photos" class="nav-link" active-class="active">照片集</router-link>
-          <router-link to="/games" class="nav-link" active-class="active">游戏</router-link>
-          <router-link to="/about" class="nav-link" active-class="active">关于</router-link>
+          <router-link to="/home" class="nav-link" active-class="active">{{ t('nav.home') }}</router-link>
+          <router-link to="/blog" class="nav-link" active-class="active">{{ t('nav.blog') }}</router-link>
+          <router-link to="/photos" class="nav-link" active-class="active">{{ t('nav.photos') }}</router-link>
+          <router-link to="/games" class="nav-link" active-class="active">{{ t('nav.games') }}</router-link>
+          <router-link to="/about" class="nav-link" active-class="active">{{ t('nav.about') }}</router-link>
         </div>
-        <button class="theme-toggle" @click="toggleTheme" :title="isDark ? '切换到浅色模式' : '切换到深色模式'">
+        <button class="lang-toggle" @click="toggleLanguage" :class="{ switching: isSwitching }" :title="t('nav.switchLangTip')">
+          <span class="lang-icon">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <circle cx="12" cy="12" r="10"/>
+              <line x1="2" y1="12" x2="22" y2="12"/>
+              <path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/>
+            </svg>
+          </span>
+          <span class="lang-text">{{ t('nav.switchLang') }}</span>
+        </button>
+        <button class="theme-toggle" @click="toggleTheme" :title="isDark ? t('nav.themeLight') : t('nav.themeDark')">
           <svg v-if="isDark" class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
             <circle cx="12" cy="12" r="5"/>
             <line x1="12" y1="1" x2="12" y2="3"/>
@@ -33,10 +43,21 @@
 
 <script setup>
 import { ref, onMounted, watch } from 'vue'
+import { t, toggleLocale } from '../utils/i18n'
 
 console.log('[NavBar] 组件初始化')
 
 const isDark = ref(false)
+const isSwitching = ref(false)
+
+const toggleLanguage = () => {
+  console.log('[NavBar/toggleLanguage] 切换语言')
+  isSwitching.value = true
+  toggleLocale()
+  setTimeout(() => {
+    isSwitching.value = false
+  }, 400)
+}
 
 const applyTheme = (dark) => {
   console.log('[NavBar/applyTheme] 应用主题:', dark ? '深色' : '浅色')
@@ -121,7 +142,99 @@ watch(isDark, (val) => {
 .nav-right {
   display: flex;
   align-items: center;
-  gap: 20px;
+  gap: 12px;
+}
+
+.lang-toggle {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  background: none;
+  border: 1px solid #ddd;
+  cursor: pointer;
+  padding: 4px 10px;
+  border-radius: 20px;
+  color: #666;
+  font-size: 13px;
+  transition: all 0.3s ease;
+  overflow: hidden;
+}
+
+.lang-toggle:hover {
+  background: #f0f9f4;
+  color: #42b983;
+  border-color: #42b983;
+  transform: translateY(-1px);
+  box-shadow: 0 2px 8px rgba(66, 185, 131, 0.2);
+}
+
+.lang-toggle:active {
+  transform: translateY(0);
+  box-shadow: none;
+}
+
+.lang-toggle.switching {
+  animation: langPulse 0.4s ease;
+}
+
+.lang-toggle.switching .lang-icon {
+  animation: globeSpin 0.4s ease;
+}
+
+.lang-toggle.switching .lang-text {
+  animation: textFade 0.4s ease;
+}
+
+@keyframes langPulse {
+  0% { transform: scale(1); }
+  50% { transform: scale(1.1); }
+  100% { transform: scale(1); }
+}
+
+@keyframes globeSpin {
+  0% { transform: rotateY(0deg); }
+  100% { transform: rotateY(360deg); }
+}
+
+@keyframes textFade {
+  0% { opacity: 1; }
+  25% { opacity: 0; transform: translateX(-5px); }
+  50% { opacity: 0; transform: translateX(5px); }
+  75% { opacity: 1; }
+  100% { opacity: 1; transform: translateX(0); }
+}
+
+.lang-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.lang-icon svg {
+  width: 16px;
+  height: 16px;
+  transition: transform 0.3s;
+}
+
+.lang-toggle:hover .lang-icon svg {
+  transform: rotate(180deg);
+}
+
+.lang-text {
+  font-weight: 500;
+  letter-spacing: 0.5px;
+}
+
+:global(.dark) .lang-toggle {
+  border-color: #2d2d44;
+  color: #aaa;
+}
+
+:global(.dark) .lang-toggle:hover {
+  background: rgba(66, 185, 131, 0.15);
+  color: #42b983;
+  border-color: #42b983;
+  box-shadow: 0 2px 8px rgba(66, 185, 131, 0.3);
 }
 
 .nav-links {

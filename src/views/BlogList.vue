@@ -1,13 +1,13 @@
 <template>
   <div class="blog-page" :class="{ leaving: isLeaving }">
     <div class="page-header stagger-item" :style="{ '--delay': '0.05s' }">
-      <button class="back-btn" @click="goBack">← 返回首页</button>
-      <h1>我的博客</h1>
-      <p class="subtitle">记录学习与思考的地方</p>
+      <button class="back-btn" @click="goBack">{{ t('blogList.back') }}</button>
+      <h1>{{ t('blogList.title') }}</h1>
+      <p class="subtitle">{{ t('blogList.subtitle') }}</p>
     </div>
 
     <div class="post-list stagger-item" :style="{ '--delay': '0.15s' }">
-      <h2 class="section-title">全部文章</h2>
+      <h2 class="section-title">{{ t('blogList.allPosts') }}</h2>
       <Transition :name="pageDirection === 'forward' ? 'page-forward' : 'page-backward'" mode="out-in">
         <div :key="currentPage" class="page-content">
           <div
@@ -20,7 +20,7 @@
             <h3>{{ item.title }}</h3>
             <p class="date">{{ item.date }}</p>
             <p class="desc">{{ item.desc }}</p>
-            <span class="read-more">阅读全文 →</span>
+            <span class="read-more">{{ t('blogList.readMore') }}</span>
           </div>
         </div>
       </Transition>
@@ -32,7 +32,7 @@
         :disabled="currentPage === 1"
         @click="prevPage"
       >
-        上一页
+        {{ t('blogList.prev') }}
       </button>
       <div class="page-numbers">
         <button
@@ -50,12 +50,12 @@
         :disabled="currentPage === totalPages"
         @click="nextPage"
       >
-        下一页
+        {{ t('blogList.next') }}
       </button>
     </div>
 
     <footer class="footer stagger-item" :style="{ '--delay': '0.35s' }">
-      <p>© 2026 个人网站</p>
+      <p>{{ t('blogList.footer') }}</p>
     </footer>
   </div>
 </template>
@@ -64,6 +64,7 @@
 import { ref, computed, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { isLeaving } from '../router'
+import { t } from '../utils/i18n'
 import blogList from '../data/blog.json'
 
 console.log('[BlogList.vue] 组件初始化')

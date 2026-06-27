@@ -1,30 +1,30 @@
 <template>
   <div class="about-page" :class="{ leaving: isLeaving }">
     <div class="stagger-item" :style="{ '--delay': '0.05s' }">
-      <button class="back-btn" @click="goBack">← 返回首页</button>
+      <button class="back-btn" @click="goBack">{{ t('about.back') }}</button>
     </div>
     <div class="stagger-item" :style="{ '--delay': '0.1s' }">
-      <h1>关于我</h1>
+      <h1>{{ t('about.title') }}</h1>
     </div>
     <div class="stagger-item" :style="{ '--delay': '0.15s' }">
-      <p class="intro">你好！我是一名前端开发者，热爱用代码创造有趣的东西。</p>
+      <p class="intro">{{ t('about.intro') }}</p>
     </div>
     <div class="stagger-item section" :style="{ '--delay': '0.2s' }">
-      <h2>技能栈</h2>
+      <h2>{{ t('about.skills') }}</h2>
       <div class="skills">
         <span class="skill" v-for="(skill, i) in skills" :key="skill">{{ skill }}</span>
       </div>
     </div>
     <div class="stagger-item section" :style="{ '--delay': '0.25s' }">
-      <h2>兴趣爱好</h2>
+      <h2>{{ t('about.hobbies') }}</h2>
       <ul class="hobbies">
-        <li v-for="hobby in hobbies" :key="hobby">{{ hobby }}</li>
+        <li v-for="hobby in hobbies" :key="hobby">{{ t(hobby) }}</li>
       </ul>
     </div>
     <div class="stagger-item section" :style="{ '--delay': '0.3s' }">
-      <h2>联系方式</h2>
-	  <p class="contact">邮箱：3656754515@qq.com</p>
-      <p class="contact">邮箱：qwe15925906016@qq.com</p>
+      <h2>{{ t('about.contact') }}</h2>
+	  <p class="contact">{{ t('about.email') }}：3656754515@qq.com</p>
+      <p class="contact">{{ t('about.email') }}：qwe15925906016@qq.com</p>
     </div>
   </div>
 </template>
@@ -33,13 +33,14 @@
 import { onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { isLeaving } from '../router'
+import { t } from '../utils/i18n'
 
 console.log('[About.vue] 组件初始化')
 
 const router = useRouter()
 
 const skills = ['Vue 3', 'JavaScript', 'TypeScript', 'CSS', 'Vite', 'Node.js']
-const hobbies = ['写代码', '听音乐', '打游戏']
+const hobbies = ['about.hobby1', 'about.hobby2', 'about.hobby3']
 
 const goBack = () => {
   console.log('[About/goBack] 返回首页')

@@ -1,7 +1,7 @@
 <template>
   <div class="blog-detail" :class="{ leaving: isLeaving }">
     <div class="stagger-item" :style="{ '--delay': '0.05s' }">
-      <button class="back-btn" @click="goBack">← 返回</button>
+      <button class="back-btn" @click="goBack">{{ t('blogDetail.back') }}</button>
     </div>
     <article v-if="blog" class="stagger-item" :style="{ '--delay': '0.1s' }">
       <h1>{{ blog.title }}</h1>
@@ -11,7 +11,7 @@
           v-for="(img, idx) in blog.images"
           :key="idx"
           :src="img"
-          :alt="blog.title + ' 图片' + (idx + 1)"
+          :alt="t('blogDetail.imageAlt', { title: blog.title, n: idx + 1 })"
           class="article-image"
           @click="previewImage(img)"
         />
@@ -20,7 +20,7 @@
         <pre>{{ blog.content }}</pre>
       </div>
     </article>
-    <p v-else class="not-found">文章不存在</p>
+    <p v-else class="not-found">{{ t('blogDetail.notFound') }}</p>
   </div>
 </template>
 
@@ -28,6 +28,7 @@
 import { computed, onMounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { isLeaving } from '../router'
+import { t } from '../utils/i18n'
 import blogList from '../data/blog.json'
 
 console.log('[BlogDetail.vue] 组件初始化')

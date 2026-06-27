@@ -1,9 +1,9 @@
 <template>
   <div class="photos-page" :class="{ leaving: isLeaving }">
     <div class="page-header stagger-item" :style="{ '--delay': '0.05s' }">
-      <button class="back-btn" @click="goBack">← 返回</button>
-      <h1>照片集</h1>
-      <p class="subtitle">那些值得被记住的瞬间</p>
+      <button class="back-btn" @click="goBack">{{ t('photos.back') }}</button>
+      <h1>{{ t('photos.title') }}</h1>
+      <p class="subtitle">{{ t('photos.subtitle') }}</p>
     </div>
 
     <div class="main-content stagger-item" :style="{ '--delay': '0.15s' }">
@@ -44,36 +44,36 @@
       </div>
 
       <div class="toolbar">
-        <div class="tool" :class="{ active: pinMode }" @click="togglePinMode" title="钉子模式">
+        <div class="tool" :class="{ active: pinMode }" @click="togglePinMode" :title="t('photos.pinMode')">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
             <path d="M12 2v4M12 18v4M4.93 4.93l2.83 2.83M16.24 16.24l2.83 2.83M2 12h4M18 12h4M4.93 19.07l2.83-2.83M16.24 7.76l2.83-2.83"/>
           </svg>
-          <span>{{ pinMode ? '钉选中' : '钉子' }}</span>
+          <span>{{ pinMode ? t('photos.pinSelected') : t('photos.pin') }}</span>
         </div>
-        <div class="tool" :class="{ active: showBoard }" @click="toggleBoard" title="软木板">
+        <div class="tool" :class="{ active: showBoard }" @click="toggleBoard" :title="t('photos.corkboard')">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
             <rect x="3" y="3" width="18" height="18" rx="2"/>
             <path d="M3 9h18M9 3v18"/>
           </svg>
-          <span>{{ showBoard ? '收起板子' : '板子' }}</span>
+          <span>{{ showBoard ? t('photos.hideBoard') : t('photos.board') }}</span>
         </div>
-        <div class="tool" @click="resetLayout" title="重置位置">
+        <div class="tool" @click="resetLayout" :title="t('photos.resetTitle')">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
             <polyline points="1 4 1 10 7 10"/>
             <path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10"/>
           </svg>
-          <span>重置</span>
+          <span>{{ t('photos.reset') }}</span>
         </div>
       </div>
     </div>
 
     <div v-if="pinMode" class="pin-hint">
-      💡 点击照片钉住/取消钉住，钉住的照片不能拖动
+      {{ t('photos.hint') }}
     </div>
 
     <div v-if="photos.length === 0" class="empty stagger-item" :style="{ '--delay': '0.15s' }">
-      <p>暂无照片</p>
-      <p class="hint">把照片放到 src/assets/photos/ 文件夹里就会自动显示啦</p>
+      <p>{{ t('photos.empty') }}</p>
+      <p class="hint">{{ t('photos.emptyHint') }}</p>
     </div>
   </div>
 </template>
@@ -82,6 +82,7 @@
 import { ref, onMounted, watch, nextTick } from 'vue'
 import { useRouter } from 'vue-router'
 import { isLeaving } from '../router'
+import { t } from '../utils/i18n'
 import photoConfig from '../data/photos.json'
 
 console.log('[Photos.vue] 组件初始化')
@@ -297,7 +298,7 @@ const toggleBoard = () => {
 
 const resetLayout = () => {
   console.log('[Photos/resetLayout] 重置布局')
-  if (!confirm('确定要重置位置吗？所有照片会回到初始位置。')) return
+  if (!confirm(t('photos.confirmReset'))) return
   console.log('[Photos/resetLayout] 用户确认重置')
   document.cookie = `${COOKIE_KEY}=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/`
   pinMode.value = false
