@@ -1,26 +1,32 @@
 <template>
-  <div class="blog-page" :class="{ leaving: isLeaving }">
+  <div class="games-page" :class="{ leaving: isLeaving }">
     <div class="page-header stagger-item" :style="{ '--delay': '0.05s' }">
       <button class="back-btn" @click="goBack">← 返回首页</button>
-      <h1>我的博客</h1>
-      <p class="subtitle">记录学习与思考的地方</p>
+      <h1>游戏笔记</h1>
+      <p class="subtitle">记录我玩过的游戏</p>
     </div>
 
-    <div class="post-list stagger-item" :style="{ '--delay': '0.15s' }">
-      <h2 class="section-title">全部文章</h2>
+    <div class="game-list stagger-item" :style="{ '--delay': '0.15s' }">
+      <h2 class="section-title">全部游戏</h2>
       <Transition :name="pageDirection === 'forward' ? 'page-forward' : 'page-backward'" mode="out-in">
         <div :key="currentPage" class="page-content">
           <div
-            class="post-item"
-            v-for="(item, index) in currentPosts"
+            class="game-item"
+            v-for="(item, index) in currentGames"
             :key="item.id"
             :style="{ '--item-delay': (index * 0.08) + 's' }"
             @click="goToDetail(item.id)"
           >
-            <h3>{{ item.title }}</h3>
-            <p class="date">{{ item.date }}</p>
-            <p class="desc">{{ item.desc }}</p>
-            <span class="read-more">阅读全文 →</span>
+            <div class="game-icon">{{ getEmoji(item.platform) }}</div>
+            <div class="game-content">
+              <h3>{{ item.title }}</h3>
+              <div class="meta">
+                <span class="date">{{ item.date }}</span>
+                <span class="platform">{{ item.platform }}</span>
+              </div>
+              <p class="desc">{{ item.desc }}</p>
+              <span class="read-more">查看详情 →</span>
+            </div>
           </div>
         </div>
       </Transition>
@@ -64,10 +70,10 @@
 import { ref, computed, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { isLeaving } from '../router'
-import blogList from '../data/blog.json'
+import gameList from '../data/games.json'
 
-console.log('[BlogList.vue] 组件初始化')
-console.log('[BlogList.vue] 文章总数:', blogList.length)
+console.log('[MyGamesIntro.vue] 组件初始化')
+console.log('[MyGamesIntro.vue] 游戏总数:', gameList.length)
 
 const router = useRouter()
 const currentPage = ref(1)
@@ -75,30 +81,38 @@ const pageSize = 5
 const pageDirection = ref('forward')
 
 const totalPages = computed(() => {
-  const pages = Math.ceil(blogList.length / pageSize)
-  console.log('[BlogList/totalPages] 总页数:', pages)
+  const pages = Math.ceil(gameList.length / pageSize)
+  console.log('[MyGamesIntro/totalPages] 总页数:', pages)
   return pages
 })
 
-const currentPosts = computed(() => {
+const currentGames = computed(() => {
   const start = (currentPage.value - 1) * pageSize
   const end = start + pageSize
-  const posts = blogList.slice(start, end)
-  console.log('[BlogList/currentPosts] 第', currentPage.value, '页文章:', posts.map(p => p.title))
-  return posts
+  const games = gameList.slice(start, end)
+  console.log('[MyGamesIntro/currentGames] 第', currentPage.value, '页游戏:', games.map(g => g.title))
+  return games
 })
+
+const getEmoji = (platform) => {
+  if (platform.includes('Switch')) return '🎮'
+  if (platform.includes('PC')) return '⌨️'
+  if (platform.includes('PS')) return '🕹️'
+  if (platform.includes('全平台')) return '🌍'
+  return '🎮'
+}
 
 const goToPage = (page) => {
   if (page < 1 || page > totalPages.value) return
-  console.log('[BlogList/goToPage] 跳转到第', page, '页')
+  console.log('[MyGamesIntro/goToPage] 跳转到第', page, '页')
   pageDirection.value = page > currentPage.value ? 'forward' : 'backward'
-  console.log('[BlogList/goToPage] 动画方向:', pageDirection.value)
+  console.log('[MyGamesIntro/goToPage] 动画方向:', pageDirection.value)
   currentPage.value = page
 }
 
 const prevPage = () => {
   if (currentPage.value > 1) {
-    console.log('[BlogList/prevPage] 上一页')
+    console.log('[MyGamesIntro/prevPage] 上一页')
     pageDirection.value = 'backward'
     currentPage.value--
   }
@@ -106,29 +120,29 @@ const prevPage = () => {
 
 const nextPage = () => {
   if (currentPage.value < totalPages.value) {
-    console.log('[BlogList/nextPage] 下一页')
+    console.log('[MyGamesIntro/nextPage] 下一页')
     pageDirection.value = 'forward'
     currentPage.value++
   }
 }
 
 const goToDetail = (id) => {
-  console.log('[BlogList/goToDetail] 跳转到文章详情 ID:', id)
-  router.push(`/blog/${id}`)
+  console.log('[MyGamesIntro/goToDetail] 跳转到游戏详情 ID:', id)
+  router.push(`/games/${id}`)
 }
 
 const goBack = () => {
-  console.log('[BlogList/goBack] 返回首页')
+  console.log('[MyGamesIntro/goBack] 返回首页')
   router.push('/')
 }
 
 onMounted(() => {
-  console.log('[BlogList/onMounted] 博客列表页已加载，当前第', currentPage.value, '页')
+  console.log('[MyGamesIntro/onMounted] 游戏列表页已加载，当前第', currentPage.value, '页')
 })
 </script>
 
 <style scoped>
-.blog-page {
+.games-page {
   max-width: 800px;
   margin: 0 auto;
   padding: 20px;
@@ -196,7 +210,7 @@ onMounted(() => {
   margin: 0;
 }
 
-.post-list {
+.game-list {
   margin-top: 20px;
   min-height: 400px;
 }
@@ -236,7 +250,9 @@ onMounted(() => {
   transform: translateX(30px);
 }
 
-.post-item {
+.game-item {
+  display: flex;
+  gap: 16px;
   margin: 16px 0;
   border: 1px solid #eee;
   padding: 16px;
@@ -258,20 +274,46 @@ onMounted(() => {
   }
 }
 
-.post-item:hover {
+.game-item:hover {
   box-shadow: 0 2px 12px rgba(0, 0, 0, 0.1);
   transform: translateY(-2px);
 }
 
-.post-item h3 {
+.game-icon {
+  font-size: 48px;
+  flex-shrink: 0;
+  width: 60px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.game-content {
+  flex: 1;
+  min-width: 0;
+}
+
+.game-content h3 {
   margin: 0 0 8px;
   font-size: 18px;
 }
 
-.date {
-  color: #999;
+.meta {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 8px;
   font-size: 13px;
-  margin: 0 0 8px;
+  color: #999;
+  flex-wrap: wrap;
+}
+
+.platform {
+  background: #f0f9f4;
+  color: #42b983;
+  padding: 2px 8px;
+  border-radius: 4px;
+  font-size: 12px;
 }
 
 .desc {
@@ -340,13 +382,50 @@ onMounted(() => {
   font-size: 13px;
 }
 
-:global(.dark) .post-item {
+:global(.dark) .games-page {
+  color: #e0e0e0;
+}
+
+:global(.dark) .page-header h1 {
+  color: #e0e0e0;
+}
+
+:global(.dark) .subtitle {
+  color: #aaa;
+}
+
+:global(.dark) .section-title {
+  color: #e0e0e0;
+}
+
+:global(.dark) .game-item {
   background: #1a1a2e;
   border-color: #2d2d44;
 }
 
-:global(.dark) .post-item:hover {
+:global(.dark) .game-item:hover {
   box-shadow: 0 2px 12px rgba(0, 0, 0, 0.3);
+}
+
+:global(.dark) .game-content h3 {
+  color: #e0e0e0;
+}
+
+:global(.dark) .meta {
+  color: #888;
+}
+
+:global(.dark) .platform {
+  background: rgba(66, 185, 131, 0.2);
+  color: #42b983;
+}
+
+:global(.dark) .desc {
+  color: #aaa;
+}
+
+:global(.dark) .read-more {
+  color: #42b983;
 }
 
 :global(.dark) .page-btn {
@@ -363,5 +442,10 @@ onMounted(() => {
 :global(.dark) .page-btn.active {
   background: #42b983;
   color: #fff;
+}
+
+:global(.dark) .footer {
+  border-top-color: #2d2d44;
+  color: #888;
 }
 </style>

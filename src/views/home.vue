@@ -35,27 +35,54 @@
       </div>
     </div>
 
-    <footer class="footer stagger-item" :style="{ '--delay': '0.3s' }">
+    <div class="section open-source-section stagger-item" :style="{ '--delay': '0.35s' }">
+      <h2>开源项目</h2>
+      <p class="about-text">
+        这个网站是开源的，代码托管在 GitHub 上，欢迎 Star 和 Fork~
+      </p>
+      <a
+        href="https://github.com/HGfds29/my-web"
+        target="_blank"
+        rel="noopener noreferrer"
+        class="github-link"
+      >
+        <svg class="github-icon" viewBox="0 0 24 24" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
+          <path d="M12 0C5.37 0 0 5.37 0 12c0 5.31 3.435 9.795 8.205 11.385.6.105.825-.255.825-.57 0-.285-.015-1.23-.015-2.235-3.015.555-3.795-.735-4.035-1.41-.135-.345-.72-1.41-1.23-1.695-.42-.225-1.02-.78-.015-.795.945-.015 1.62.87 1.845 1.23 1.08 1.815 2.805 1.305 3.495.99.105-.78.42-1.305.765-1.605-2.67-.3-5.46-1.335-5.46-5.925 0-1.305.465-2.385 1.23-3.225-.12-.3-.54-1.53.12-3.18 0 0 1.005-.315 3.3 1.23.96-.27 1.98-.405 3-.405s2.04.135 3 .405c2.295-1.56 3.3-1.23 3.3-1.23.66 1.65.24 2.88.12 3.18.765.84 1.23 1.905 1.23 3.225 0 4.605-2.805 5.625-5.475 5.925.435.375.81 1.095.81 2.22 0 1.605-.015 2.895-.015 3.3 0 .315.225.69.825.57A12.02 12.02 0 0024 12c0-6.63-5.37-12-12-12z"/>
+        </svg>
+        <span>HGfds29/my-web</span>
+      </a>
+    </div>
+
+    <footer class="footer stagger-item" :style="{ '--delay': '0.4s' }">
       <p>© 2026 个人网站</p>
     </footer>
   </div>
 </template>
 
 <script setup>
-import { computed } from 'vue'
+import { computed, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { isLeaving } from '../router'
 import blogList from '../data/blog.json'
 
+console.log('[Home.vue] 组件初始化')
+
 const router = useRouter()
 
 const latestPosts = computed(() => {
-  return [...blogList].sort((a, b) => new Date(b.date) - new Date(a.date)).slice(0, 3)
+  const posts = [...blogList].sort((a, b) => new Date(b.date) - new Date(a.date)).slice(0, 3)
+  console.log('[Home/latestPosts] 最新文章:', posts.map(p => p.title))
+  return posts
 })
 
 const goToPost = (id) => {
+  console.log('[Home/goToPost] 跳转到文章 ID:', id)
   router.push(`/blog/${id}`)
 }
+
+onMounted(() => {
+  console.log('[Home/onMounted] 首页已加载完成')
+})
 </script>
 
 <style scoped>
@@ -219,6 +246,41 @@ const goToPost = (id) => {
   color: #42b983;
   border-radius: 4px;
   font-size: 13px;
+}
+
+.open-source-section {
+  margin-top: 40px;
+}
+
+.github-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 20px;
+  background: #24292e;
+  color: white;
+  text-decoration: none;
+  border-radius: 6px;
+  font-size: 14px;
+  transition: background 0.3s, transform 0.2s;
+}
+
+.github-link:hover {
+  background: #2d333b;
+  transform: translateY(-2px);
+}
+
+.github-icon {
+  width: 18px;
+  height: 18px;
+}
+
+:global(.dark) .github-link {
+  background: #2d333b;
+}
+
+:global(.dark) .github-link:hover {
+  background: #373e47;
 }
 
 .footer {

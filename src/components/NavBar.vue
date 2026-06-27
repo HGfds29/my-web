@@ -7,6 +7,7 @@
           <router-link to="/home" class="nav-link" active-class="active">首页</router-link>
           <router-link to="/blog" class="nav-link" active-class="active">博客</router-link>
           <router-link to="/photos" class="nav-link" active-class="active">照片集</router-link>
+          <router-link to="/games" class="nav-link" active-class="active">游戏</router-link>
           <router-link to="/about" class="nav-link" active-class="active">关于</router-link>
         </div>
         <button class="theme-toggle" @click="toggleTheme" :title="isDark ? '切换到浅色模式' : '切换到深色模式'">
@@ -33,9 +34,12 @@
 <script setup>
 import { ref, onMounted, watch } from 'vue'
 
+console.log('[NavBar] 组件初始化')
+
 const isDark = ref(false)
 
 const applyTheme = (dark) => {
+  console.log('[NavBar/applyTheme] 应用主题:', dark ? '深色' : '浅色')
   if (dark) {
     document.documentElement.classList.add('dark')
   } else {
@@ -44,22 +48,30 @@ const applyTheme = (dark) => {
 }
 
 const toggleTheme = () => {
+  console.log('[NavBar/toggleTheme] 切换主题，当前:', isDark.value ? '深色' : '浅色')
   isDark.value = !isDark.value
+  console.log('[NavBar/toggleTheme] 切换后:', isDark.value ? '深色' : '浅色')
 }
 
 onMounted(() => {
+  console.log('[NavBar/onMounted] 组件已挂载')
   const saved = localStorage.getItem('theme')
+  console.log('[NavBar/onMounted] 本地存储主题:', saved)
   if (saved) {
     isDark.value = saved === 'dark'
   } else {
     isDark.value = window.matchMedia('(prefers-color-scheme: dark)').matches
+    console.log('[NavBar/onMounted] 使用系统主题偏好:', isDark.value ? '深色' : '浅色')
   }
   applyTheme(isDark.value)
+  console.log('[NavBar/onMounted] 最终主题:', isDark.value ? '深色' : '浅色')
 })
 
 watch(isDark, (val) => {
+  console.log('[NavBar/watch] isDark 变化:', val)
   applyTheme(val)
   localStorage.setItem('theme', val ? 'dark' : 'light')
+  console.log('[NavBar/watch] 主题已保存到 localStorage')
 })
 </script>
 

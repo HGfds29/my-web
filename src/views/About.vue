@@ -30,8 +30,11 @@
 </template>
 
 <script setup>
+import { onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { isLeaving } from '../router'
+
+console.log('[About.vue] 组件初始化')
 
 const router = useRouter()
 
@@ -39,8 +42,15 @@ const skills = ['Vue 3', 'JavaScript', 'TypeScript', 'CSS', 'Vite', 'Node.js']
 const hobbies = ['写代码', '听音乐', '打游戏']
 
 const goBack = () => {
+  console.log('[About/goBack] 返回首页')
   router.push('/')
 }
+
+onMounted(() => {
+  console.log('[About/onMounted] 关于页面已加载')
+  console.log('[About/onMounted] 技能列表:', skills)
+  console.log('[About/onMounted] 兴趣爱好:', hobbies)
+})
 </script>
 
 <style scoped>

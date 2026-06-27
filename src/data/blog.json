@@ -4,6 +4,9 @@
     "title": "Vue3入门搭建个人网站",
     "date": "2026-06-25",
     "desc": "从零搭建Vite+Vue3个人博客，规范文件分类，避免屎山代码",
+    "images": [
+      "/images/blog/1-1.jpg"
+    ],
     "content": "# Vue3学习笔记\n## 1. 项目启动命令\n`npm run dev`"
   },
   {
@@ -11,13 +14,73 @@
     "title": "前端文件分层规范",
     "date": "2026-06-24",
     "desc": "怎么分类src文件夹，长期维护不混乱",
+    "images": [],
     "content": "按照views、components、hooks分层开发"
   },
   {
-	  "id":3,
-	  "title":"写了一个基础",
-	  "date":"2026-6-25",
-	  "desc":"不这么好看，就是你看到的",
-	  "content":"写了半天累死了x_x"
+    "id": 3,
+    "title": "写了一个基础",
+    "date": "2026-06-26",
+    "desc": "不这么好看，就是你看到的",
+    "images": [],
+    "content": "写了半天累死了x_x"
+  },
+  {
+    "id": 4,
+    "title": "UI大更新！！！",
+    "date": "2026-06-27",
+    "desc": "wow!!",
+    "images": [
+      "/images/blog/4-1.jpg"
+    ],
+    "content": "我加了一个顶栏加了深色awa"
+  },
+  {
+    "id": 5,
+    "title": "CSS动画入门指南",
+    "date": "2026-06-20",
+    "desc": "从transition到keyframes，一步步学会CSS动画",
+    "images": [],
+    "content": "CSS动画可以让网页更生动，transition用于状态变化，keyframes用于复杂动画序列。"
+  },
+  {
+    "id": 6,
+    "title": "JavaScript数组方法总结",
+    "date": "2026-06-18",
+    "desc": "map、filter、reduce等常用数组方法详解",
+    "images": [],
+    "content": "数组是JS中最常用的数据结构之一，掌握这些方法可以大大提高开发效率。"
+  },
+  {
+    "id": 7,
+    "title": "响应式设计最佳实践",
+    "date": "2026-06-15",
+    "desc": "移动优先、断点选择、弹性布局一网打尽",
+    "images": [],
+    "content": "响应式设计是现代网页开发的基础，使用媒体查询和flexbox可以轻松适配各种屏幕。"
+  },
+  {
+    "id": 8,
+    "title": "Git常用命令速查",
+    "date": "2026-06-12",
+    "desc": "commit、branch、merge、rebase一文搞定",
+    "images": [],
+    "content": "Git是版本控制的必备工具，掌握常用命令可以让团队协作更高效。"
+  },
+  {
+    "id": 9,
+    "title": "Vue Router使用技巧",
+    "date": "2026-06-10",
+    "desc": "路由守卫、动态路由、懒加载全解析",
+    "images": [],
+    "content": "Vue Router是Vue官方的路由管理器，可以帮助我们构建单页应用。"
+  },
+  {
+    "id": 10,
+    "title": "前端性能优化技巧",
+    "date": "2026-06-08",
+    "desc": "图片懒加载、代码分割、缓存策略详解",
+    "images": [],
+    "content": "性能优化是前端开发的重要课题，好的用户体验离不开快速的页面加载。"
   }
 ]
