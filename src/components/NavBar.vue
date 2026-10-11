@@ -45,13 +45,10 @@
 import { ref, onMounted, watch } from 'vue'
 import { t, toggleLocale } from '../utils/i18n'
 
-console.log('[NavBar] 组件初始化')
-
 const isDark = ref(false)
 const isSwitching = ref(false)
 
 const toggleLanguage = () => {
-  console.log('[NavBar/toggleLanguage] 切换语言')
   isSwitching.value = true
   toggleLocale()
   setTimeout(() => {
@@ -59,8 +56,11 @@ const toggleLanguage = () => {
   }, 400)
 }
 
+const openDeskPet = () => {
+  window.open(import.meta.env.BASE_URL + 'desk-pet/加载.html', '_blank')
+}
+
 const applyTheme = (dark) => {
-  console.log('[NavBar/applyTheme] 应用主题:', dark ? '深色' : '浅色')
   if (dark) {
     document.documentElement.classList.add('dark')
   } else {
@@ -69,30 +69,22 @@ const applyTheme = (dark) => {
 }
 
 const toggleTheme = () => {
-  console.log('[NavBar/toggleTheme] 切换主题，当前:', isDark.value ? '深色' : '浅色')
   isDark.value = !isDark.value
-  console.log('[NavBar/toggleTheme] 切换后:', isDark.value ? '深色' : '浅色')
 }
 
 onMounted(() => {
-  console.log('[NavBar/onMounted] 组件已挂载')
   const saved = localStorage.getItem('theme')
-  console.log('[NavBar/onMounted] 本地存储主题:', saved)
   if (saved) {
     isDark.value = saved === 'dark'
   } else {
     isDark.value = window.matchMedia('(prefers-color-scheme: dark)').matches
-    console.log('[NavBar/onMounted] 使用系统主题偏好:', isDark.value ? '深色' : '浅色')
   }
   applyTheme(isDark.value)
-  console.log('[NavBar/onMounted] 最终主题:', isDark.value ? '深色' : '浅色')
 })
 
 watch(isDark, (val) => {
-  console.log('[NavBar/watch] isDark 变化:', val)
   applyTheme(val)
   localStorage.setItem('theme', val ? 'dark' : 'light')
-  console.log('[NavBar/watch] 主题已保存到 localStorage')
 })
 </script>
 
@@ -235,6 +227,49 @@ watch(isDark, (val) => {
   color: #42b983;
   border-color: #42b983;
   box-shadow: 0 2px 8px rgba(66, 185, 131, 0.3);
+}
+
+.desk-pet-btn {
+  background: none;
+  border: 1px solid #ddd;
+  cursor: pointer;
+  padding: 6px;
+  border-radius: 50%;
+  color: #666;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.3s ease;
+}
+
+.desk-pet-btn:hover {
+  background: #f0f9f4;
+  color: #42b983;
+  border-color: #42b983;
+  transform: translateY(-2px) rotate(-10deg);
+  box-shadow: 0 4px 12px rgba(66, 185, 131, 0.25);
+}
+
+.desk-pet-btn:active {
+  transform: translateY(0) rotate(0deg);
+  box-shadow: none;
+}
+
+:global(.dark) .desk-pet-btn {
+  border-color: #2d2d44;
+  color: #aaa;
+}
+
+:global(.dark) .desk-pet-btn:hover {
+  background: rgba(66, 185, 131, 0.15);
+  color: #42b983;
+  border-color: #42b983;
+  box-shadow: 0 4px 12px rgba(66, 185, 131, 0.3);
+}
+
+.desk-pet-btn .icon {
+  width: 18px;
+  height: 18px;
 }
 
 .nav-links {

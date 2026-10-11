@@ -31,31 +31,23 @@ import { isLeaving } from '../router'
 import { t } from '../utils/i18n'
 import blogList from '../data/blog.json'
 
-console.log('[BlogDetail.vue] 组件初始化')
-
 const route = useRoute()
 const router = useRouter()
 
 const blog = computed(() => {
   const id = Number(route.params.id)
-  console.log('[BlogDetail/blog] 查找文章 ID:', id)
-  const found = blogList.find(item => item.id === id)
-  console.log('[BlogDetail/blog] 找到文章:', found ? found.title : '未找到')
-  return found
+  return blogList.find(item => item.id === id)
 })
 
 const goBack = () => {
-  console.log('[BlogDetail/goBack] 返回博客列表')
   router.back()
 }
 
 const previewImage = (src) => {
-  console.log('[BlogDetail/previewImage] 预览图片:', src)
   window.open(src, '_blank')
 }
 
 onMounted(() => {
-  console.log('[BlogDetail/onMounted] 文章详情页已加载，文章ID:', route.params.id)
 })
 </script>
 

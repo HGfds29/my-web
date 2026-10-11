@@ -1,0 +1,43 @@
+# ============ 依赖 ============
+node_modules/
+
+# ============ 构建产物 ============
+dist/
+
+# ============ 缓存 ============
+.vite/
+.cache/
+*.local
+
+# ============ 日志 ============
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
+# ============ 环境变量 ============
+.env
+.env.*
+!.env.example
+
+# ============ 编辑器 / 操作系统 ============
+.vscode/*
+!.vscode/extensions.json
+.idea/
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# ============ 本仓库专属：不入库的大体积资源与本地专属页面 ============
+# Renkt Shell 发行包（public/ 下约 63MB，含 Renkt-v1.2.5.zip）
+Renkt Shell/
+# 桌宠素材（public/ 下约 15MB，第三方图片资源）
+desk-pet/
+# Renkt Shell 产品页源码：仅本地保留，不入库
+/src/views/RenktShell.vue

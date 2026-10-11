@@ -1,12 +1,88 @@
 <template>
-  <NavBar />
-  <div class="page-wrapper">
+  <NavBar v-if="!hideNav" />
+  <div class="page-wrapper" :class="{ 'no-nav': hideNav }">
     <router-view />
   </div>
+  <FlagEasterEgg />
+  <ErrorModal
+    v-model:visible="modalVisible"
+    :type="modalConfig.type"
+    :title="modalConfig.title"
+    :message="modalConfig.message"
+    :confirmText="modalConfig.confirmText"
+    :cancelText="modalConfig.cancelText"
+    :showCancel="modalConfig.showCancel"
+    :showClose="modalConfig.showClose"
+    :closeOnOverlay="modalConfig.closeOnOverlay"
+    :size="modalConfig.size"
+    @confirm="onModalConfirm"
+    @cancel="onModalCancel"
+    @close="onModalClose"
+  />
+  <PromptModal
+    v-model:visible="promptVisible"
+    :title="promptConfig.title"
+    :message="promptConfig.message"
+    :placeholder="promptConfig.placeholder"
+    :defaultValue="promptConfig.defaultValue"
+    :confirmText="promptConfig.confirmText"
+    :cancelText="promptConfig.cancelText"
+    :showClose="promptConfig.showClose"
+    :closeOnOverlay="promptConfig.closeOnOverlay"
+    :size="promptConfig.size"
+    :inputType="promptConfig.inputType"
+    :textareaRows="promptConfig.textareaRows"
+    :showCounter="promptConfig.showCounter"
+    :required="promptConfig.required"
+    :minLength="promptConfig.minLength"
+    :maxLength="promptConfig.maxLength"
+    :pattern="promptConfig.pattern"
+    :patternError="promptConfig.patternError"
+    @confirm="onPromptConfirm"
+    @cancel="onPromptCancel"
+    @close="onPromptClose"
+  />
+  <LoadingModal
+    v-model:visible="loadingVisible"
+    :title="loadingConfig.title"
+    :message="loadingConfig.message"
+    :cancelable="loadingConfig.cancelable"
+    :cancelText="loadingConfig.cancelText"
+    :transparent="loadingConfig.transparent"
+    :size="loadingConfig.size"
+    :percent="loadingConfig.percent"
+    @cancel="onLoadingCancel"
+  />
+  <ToastContainer />
 </template>
 
 <script setup>
+import { computed } from 'vue'
+import { useRoute } from 'vue-router'
 import NavBar from './components/NavBar.vue'
+import FlagEasterEgg from './components/FlagEasterEgg.vue'
+import ErrorModal from './components/ErrorModal.vue'
+import PromptModal from './components/PromptModal.vue'
+import LoadingModal from './components/LoadingModal.vue'
+import ToastContainer from './components/ToastContainer.vue'
+import {
+  visible as modalVisible,
+  config as modalConfig,
+  handleConfirm as onModalConfirm,
+  handleCancel as onModalCancel,
+  handleClose as onModalClose,
+  promptVisible,
+  promptConfig,
+  handlePromptConfirm as onPromptConfirm,
+  handlePromptCancel as onPromptCancel,
+  handlePromptClose as onPromptClose,
+  loadingVisible,
+  loadingConfig,
+  handleLoadingCancel as onLoadingCancel
+} from './utils/modal'
+
+const route = useRoute()
+const hideNav = computed(() => !!route.meta.hideNav)
 </script>
 
 <style>
@@ -19,5 +95,9 @@ import NavBar from './components/NavBar.vue'
 
 .page-wrapper {
   padding-top: 60px;
+}
+
+.page-wrapper.no-nav {
+  padding-top: 0;
 }
 </style>

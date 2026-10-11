@@ -7,9 +7,17 @@ import About from '../views/About.vue'
 import Photos from '../views/Photos.vue'
 import MyGamesIntro from '../views/MyGamesIntro.vue'
 import GameDetail from '../views/GameDetail.vue'
+import Plugins from '../views/Plugins.vue'
+import HeroMemorial from '../views/HeroMemorial.vue'
+import NotFound from '../views/NotFound.vue'
 
-console.log('[router/index.js] 路由模块加载开始')
-console.log('[router/index.js] 路由模式: hash')
+// RenktShell.vue 已被 .gitignore 排除，属于本地专属页面：
+// 这里用 glob 动态解析，文件不存在时就不注册该路由，
+// 保证别人 clone 后（没有这个文件）依然能正常构建。
+// 不要改回静态 import —— 缺文件时构建会直接失败。
+const renktShellModules = import.meta.glob('../views/Renkt*.vue')
+const renktShellView =
+  Object.entries(renktShellModules).find(([key]) => key.endsWith('/RenktShell.vue'))?.[1] || null
 
 export const isLeaving = ref(false)
 export const leaveDirection = ref('right')
@@ -58,6 +66,28 @@ const routes = [
     component: GameDetail,
     meta: { index: 6 }
   },
+  ...(renktShellView
+    ? [
+        {
+          path: '/renkt',
+          name: 'RenktShell',
+          component: renktShellView,
+          meta: { index: 7 }
+        }
+      ]
+    : []),
+  {
+    path: '/plugins',
+    name: 'Plugins',
+    component: Plugins,
+    meta: { index: 9 }
+  },
+  {
+    path: '/hero-memorial',
+    name: 'HeroMemorial',
+    component: HeroMemorial,
+    meta: { index: 8, hideNav: true }
+  },
   {
     path: '/blog/:id',
     name: 'BlogDetail',
@@ -66,35 +96,27 @@ const routes = [
   },
   {
     path: '/:pathMatch(.*)*',
-    redirect: '/home'
+    name: 'NotFound',
+    component: NotFound,
+    meta: { index: 0 }
   }
 ]
-
-console.log('[router/index.js] 路由配置:', routes.map(r => r.path))
 
 const router = createRouter({
   history: createWebHashHistory(),
   routes
 })
 
-console.log('[router/index.js] 路由实例已创建')
-
 let isNavigating = false
 
 router.beforeEach((to, from, next) => {
-  console.log('[router/beforeEach] 路由变化:', from.path, '→', to.path)
-  console.log('[router/beforeEach] from.name:', from.name, '| to.name:', to.name)
-  console.log('[router/beforeEach] isNavigating:', isNavigating)
-
   if (isNavigating) {
-    console.log('[router/beforeEach] 导航中，直接放行')
     isNavigating = false
     next()
     return
   }
 
   if (!from.name) {
-    console.log('[router/beforeEach] 首次加载，直接放行')
     next()
     return
   }
@@ -103,15 +125,12 @@ router.beforeEach((to, from, next) => {
   const fromIndex = from.meta.index ?? 0
 
   leaveDirection.value = toIndex > fromIndex ? 'right' : 'left'
-  console.log('[router/beforeEach] 动画方向:', leaveDirection.value)
 
   isLeaving.value = true
-  console.log('[router/beforeEach] 触发离开动画，延迟放行')
 
   next(false)
 
   setTimeout(() => {
-    console.log('[router/beforeEach] 动画结束，执行导航')
     isNavigating = true
     isLeaving.value = false
     router.push(to.fullPath)
@@ -119,10 +138,6 @@ router.beforeEach((to, from, next) => {
 })
 
 router.afterEach((to, from) => {
-  console.log('[router/afterEach] 路由完成:', from.path, '→', to.path)
 })
-
-console.log('[router/index.js] 路由守卫已注册')
-console.log('[router/index.js] 路由模块加载完成')
 
 export default router

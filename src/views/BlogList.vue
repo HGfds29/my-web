@@ -67,39 +67,29 @@ import { isLeaving } from '../router'
 import { t } from '../utils/i18n'
 import blogList from '../data/blog.json'
 
-console.log('[BlogList.vue] 组件初始化')
-console.log('[BlogList.vue] 文章总数:', blogList.length)
-
 const router = useRouter()
 const currentPage = ref(1)
 const pageSize = 5
 const pageDirection = ref('forward')
 
 const totalPages = computed(() => {
-  const pages = Math.ceil(blogList.length / pageSize)
-  console.log('[BlogList/totalPages] 总页数:', pages)
-  return pages
+  return Math.ceil(blogList.length / pageSize)
 })
 
 const currentPosts = computed(() => {
   const start = (currentPage.value - 1) * pageSize
   const end = start + pageSize
-  const posts = blogList.slice(start, end)
-  console.log('[BlogList/currentPosts] 第', currentPage.value, '页文章:', posts.map(p => p.title))
-  return posts
+  return blogList.slice(start, end)
 })
 
 const goToPage = (page) => {
   if (page < 1 || page > totalPages.value) return
-  console.log('[BlogList/goToPage] 跳转到第', page, '页')
   pageDirection.value = page > currentPage.value ? 'forward' : 'backward'
-  console.log('[BlogList/goToPage] 动画方向:', pageDirection.value)
   currentPage.value = page
 }
 
 const prevPage = () => {
   if (currentPage.value > 1) {
-    console.log('[BlogList/prevPage] 上一页')
     pageDirection.value = 'backward'
     currentPage.value--
   }
@@ -107,24 +97,20 @@ const prevPage = () => {
 
 const nextPage = () => {
   if (currentPage.value < totalPages.value) {
-    console.log('[BlogList/nextPage] 下一页')
     pageDirection.value = 'forward'
     currentPage.value++
   }
 }
 
 const goToDetail = (id) => {
-  console.log('[BlogList/goToDetail] 跳转到文章详情 ID:', id)
   router.push(`/blog/${id}`)
 }
 
 const goBack = () => {
-  console.log('[BlogList/goBack] 返回首页')
   router.push('/')
 }
 
 onMounted(() => {
-  console.log('[BlogList/onMounted] 博客列表页已加载，当前第', currentPage.value, '页')
 })
 </script>
 

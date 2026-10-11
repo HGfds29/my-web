@@ -383,70 +383,7 @@ onMounted(() => {
   font-size: 13px;
 }
 
-:global(.dark) .games-page {
-  color: #e0e0e0;
-}
-
-:global(.dark) .page-header h1 {
-  color: #e0e0e0;
-}
-
-:global(.dark) .subtitle {
-  color: #aaa;
-}
-
-:global(.dark) .section-title {
-  color: #e0e0e0;
-}
-
-:global(.dark) .game-item {
-  background: #1a1a2e;
-  border-color: #2d2d44;
-}
-
-:global(.dark) .game-item:hover {
-  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.3);
-}
-
-:global(.dark) .game-content h3 {
-  color: #e0e0e0;
-}
-
-:global(.dark) .meta {
-  color: #888;
-}
-
-:global(.dark) .platform {
-  background: rgba(66, 185, 131, 0.2);
-  color: #42b983;
-}
-
-:global(.dark) .desc {
-  color: #aaa;
-}
-
-:global(.dark) .read-more {
-  color: #42b983;
-}
-
-:global(.dark) .page-btn {
-  background: #1a1a2e;
-  border-color: #2d2d44;
-  color: #aaa;
-}
-
-:global(.dark) .page-btn:hover:not(:disabled) {
-  border-color: #42b983;
-  color: #42b983;
-}
-
-:global(.dark) .page-btn.active {
-  background: #42b983;
-  color: #fff;
-}
-
-:global(.dark) .footer {
-  border-top-color: #2d2d44;
-  color: #888;
-}
+/* 深色模式样式统一在 src/assets/css/global.css 中维护：
+   作用域样式里的全局选择器写法会丢弃其后的后代选择器，
+   无法命中挂在 html 上的深色类名下的元素。 */
 </style>
