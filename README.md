@@ -1,4 +1,8 @@
 <p align="center">
+  <img src="https://capsule-render.vercel.app/api?type=waving&color=0:4FC08D,100:42b983&height=130&section=header" alt="banner" />
+</p>
+
+<p align="center">
   <img src="src/assets/logo.png" alt="logo" width="88" />
 </p>
 
@@ -7,6 +11,10 @@
 <p align="center">
   <em>用 Vue 3 写的一个个人网站 —— 记录学习、生活与思考</em><br />
   <sub>A personal website built with Vue 3 — documenting learning, life, and thoughts</sub>
+</p>
+
+<p align="center">
+  <a href="#zh">🇨🇳 中文</a> · <a href="#en">🇬🇧 English</a>
 </p>
 
 <p align="center">
@@ -30,12 +38,9 @@
 </p>
 
 <p align="center">
-  <a href="https://HGfds29.github.io/my-web"><b>🔗 在线预览</b></a> ·
-  <a href="http://qwe159259.3vkj.vip/"><b>🔗 国内线路</b></a>
-</p>
-
-<p align="center">
-  <a href="#zh">🇨🇳 中文</a> · <a href="#en">🇬🇧 English</a>
+  <a href="https://HGfds29.github.io/my-web"><img src="https://img.shields.io/badge/%E5%9C%A8%E7%BA%BF%E9%A2%84%E8%A7%88-42b983?style=for-the-badge&logo=githubpages&logoColor=white" alt="在线预览" /></a>
+  <a href="http://qwe159259.3vkj.vip/"><img src="https://img.shields.io/badge/%E5%9B%BD%E5%86%85%E7%BA%BF%E8%B7%AF-4FC08D?style=for-the-badge" alt="国内线路" /></a>
+  <a href="https://github.com/HGfds29/my-web"><img src="https://img.shields.io/badge/%E6%BA%90%E7%A0%81%E4%BB%93%E5%BA%93-181717?style=for-the-badge&logo=github&logoColor=white" alt="源码仓库" /></a>
 </p>
 
 ---
@@ -73,49 +78,50 @@
 
 ### 功能特性
 
-**界面与交互**
+**🎨 界面与交互**
 
-- 页面左右滑入 + Stagger 延迟动画（路由守卫控制方向与离场时机）
-- 深色 / 浅色主题，跟随系统偏好，选择持久化到 `localStorage`
-- 响应式布局，移动端可用
+- ✨ 页面左右滑入 + Stagger 延迟动画（路由守卫控制方向与离场时机）
+- 🌗 深色 / 浅色主题，跟随系统偏好，选择持久化到 `localStorage`
+- 📱 响应式布局，移动端可用
 
-**内容**
+**📚 内容**
 
-- 博客：分页列表 + 详情页，支持图片
-- 游戏笔记：列表 + 详情（封面、平台、正文）
-- 照片墙：宝丽来风格，**可拖拽排序**、**钉子固定**、**软木板模式**，位置与状态存 Cookie
-  - 把图片丢进 `src/assets/photos/`，重启开发服务器就会自动出现在墙上
-- 英雄纪念页：B 站视频嵌入，中英双语标题
+- 📝 博客：分页列表 + 详情页，支持图片
+- 🎮 游戏笔记：列表 + 详情（封面、平台、正文）
+- 📸 照片墙：宝丽来风格，**可拖拽排序**、**钉子固定**、**软木板模式**，位置与状态存 Cookie
+  - 🖼️ 把图片丢进 `src/assets/photos/`，重启开发服务器就会自动出现在墙上
+- 🚩 英雄纪念页：B 站视频嵌入，中英双语标题
 
-**内置组件（无 UI 库）**
+**🧩 内置组件（无 UI 库）**
 
-- 命令式弹窗：`info` / `success` / `warning` / `error` / `confirm`，支持自定义按钮与遮罩行为
-- 输入弹窗：必填、长度、正则校验，带字数计数器
-- 加载弹窗：可取消、可显示百分比进度
-- Toast 通知：队列管理、鼠标悬停**暂停计时**、7 种弹出位置
+- 💬 命令式弹窗：`info` / `success` / `warning` / `error` / `confirm`，支持自定义按钮与遮罩行为
+- ⌨️ 输入弹窗：必填、长度、正则校验，带字数计数器
+- ⏳ 加载弹窗：可取消、可显示百分比进度
+- 🔔 Toast 通知：队列管理、鼠标悬停**暂停计时**、7 种弹出位置
 
-**其他**
+**🌏 其他**
 
-- 中/英全站切换，同步 `<html lang>`
-- 右下角藏了个彩蛋：鼠标移到右下角会出现一面旗帜，点击进入英雄纪念页
-- 内置广告拦截（`MutationObserver` + 定时扫描），清理免费空间商注入的广告
+- 🌐 中/英全站切换，同步 `<html lang>`
+- 🥚 右下角藏了个彩蛋：鼠标移到右下角会出现一面旗帜，点击进入英雄纪念页
+- 🛡️ 内置广告拦截（`MutationObserver` + 定时扫描），清理免费空间商注入的广告
 
 ### 页面与路由
 
 | 页面 | 路由 | 说明 |
 | :--- | :--- | :--- |
-| 首页 | `#/home` | 欢迎页、最新文章、个人信息 |
-| 博客列表 | `#/blog` | 分页展示，带翻页动画 |
-| 博客详情 | `#/blog/:id` | 文章正文 |
-| 关于 | `#/about` | 个人信息、技能栈、联系方式 |
-| 照片集 | `#/photos` | 拖拽 / 钉住 / 软木板 |
-| 游戏笔记 | `#/games` | 游戏列表（分页） |
-| 游戏详情 | `#/games/:id` | 单个游戏的介绍 |
-| 插件中心 | `#/plugins` | Renkt Shell 插件库与开发指南 |
-| Renkt Shell | `#/renkt` | 产品页，**本地专属**，文件不存在时自动不注册该路由 |
-| 英雄纪念 | `#/hero-memorial` | 隐藏导航栏，从彩蛋进入 |
-| 404 | 任意未匹配路径 | 友好提示 + 返回首页 |
+| 🏠 首页 | `#/home` | 欢迎页、最新文章、个人信息 |
+| 📝 博客列表 | `#/blog` | 分页展示，带翻页动画 |
+| 📄 博客详情 | `#/blog/:id` | 文章正文 |
+| 👤 关于 | `#/about` | 个人信息、技能栈、联系方式 |
+| 📸 照片集 | `#/photos` | 拖拽 / 钉住 / 软木板 |
+| 🎮 游戏笔记 | `#/games` | 游戏列表（分页） |
+| 🕹️ 游戏详情 | `#/games/:id` | 单个游戏的介绍 |
+| 🧩 插件中心 | `#/plugins` | Renkt Shell 插件库与开发指南 |
+| 🖥️ Renkt Shell | `#/renkt` | 产品页，**本地专属**，文件不存在时自动不注册该路由 |
+| 🚩 英雄纪念 | `#/hero-memorial` | 隐藏导航栏，从彩蛋进入 |
+| 🚫 404 | 任意未匹配路径 | 友好提示 + 返回首页 |
 
+> [!NOTE]
 > 根路径 `/` 会重定向到 `/home`。路由的 `meta.index` 决定页面切换时的滑动方向。
 
 ### 项目结构
@@ -160,6 +166,13 @@ flowchart TD
   F --> G["utils/<br/>modal · toast · i18n"]
   F --> H["data/*.json"]
   G --> E
+
+  classDef core fill:#42b98330,stroke:#42b983,stroke-width:1px
+  classDef page fill:#4FC08D24,stroke:#4FC08D,stroke-width:1px
+  classDef util fill:#88888824,stroke:#888888,stroke-dasharray:4
+  class B core
+  class D,F page
+  class G,H util
 ```
 
 ### 快速开始
@@ -173,7 +186,8 @@ npm run build      # 构建生产版本到 dist/
 npm run preview    # 本地预览构建结果
 ```
 
-改内容基本不用碰组件：
+> [!TIP]
+> 日常改内容基本不用碰组件代码，只要动下面这几个文件。
 
 - 加文章 → 编辑 `src/data/blog.json`
 - 加游戏 → 编辑 `src/data/games.json`
@@ -184,7 +198,8 @@ npm run preview    # 本地预览构建结果
 
 线上有两份：GitHub Pages（`HGfds29.github.io/my-web`）和国内镜像（`qwe159259.3vkj.vip`）。
 
-> **注意：`dist/` 已加入 `.gitignore`，不再纳入版本控制。** 如果之前是靠提交 `dist/` 让 Pages 生效的，现在需要换一种方式：
+> [!WARNING]
+> **`dist/` 已加入 `.gitignore`，不再纳入版本控制。** 如果之前是靠提交 `dist/` 让 Pages 生效的，现在需要换一种方式：
 
 | 方式 | 做法 |
 | :--- | :--- |
@@ -196,7 +211,8 @@ npm run preview    # 本地预览构建结果
 
 ### 本地专属文件
 
-以下内容**只在本地存在，不在仓库里**（都被 `.gitignore` 排除了），自己开发时不受影响，但别人 clone 下来是没有的：
+> [!NOTE]
+> 以下内容**只在本地存在，不在仓库里**（都被 `.gitignore` 排除了），自己开发时不受影响，但别人 clone 下来是没有的。
 
 <details>
 <summary><b>点击展开：哪些文件没有入库，以及为什么</b></summary>
@@ -226,7 +242,8 @@ npm run preview    # 本地预览构建结果
 html.dark .game-item { border-color: #2d2d44 !important; }
 ```
 
-原因：Vue 3.5 的 scoped 样式编译器会把 `:global(.dark) .game-item` 编译成 `.dark { ... }` —— **`:global()` 之后的后代选择器会被整段丢弃**，规则只命中挂在 `<html>` 上的类名，等于废代码。这个坑在本项目历史上踩过一次，导致整页深色模式失效。
+> [!IMPORTANT]
+> 原因：Vue 3.5 的 scoped 样式编译器会把 `:global(.dark) .game-item` 编译成 `.dark { ... }` —— **`:global()` 之后的后代选择器会被整段丢弃**，规则只命中挂在 `<html>` 上的类名，等于废代码。这个坑在本项目历史上踩过一次，导致整页深色模式失效。
 
 **其他约定**
 
@@ -290,12 +307,21 @@ html.dark .game-item { border-color: #2d2d44 !important; }
 <br />
 
 <p align="center">
-  <img src="https://github-readme-stats.vercel.app/api/pin/?username=HGfds29&repo=my-web&bg_color=0f0f1a&title_color=42b983&text_color=e0e0e0&icon_color=42b983&border_color=2d2d44" alt="仓库卡片" height="150" />
-  <img src="https://github-readme-stats.vercel.app/api/top-langs/?username=HGfds29&layout=compact&langs_count=6&bg_color=0f0f1a&title_color=42b983&text_color=e0e0e0&border_color=2d2d44" alt="语言占比" height="150" />
+  <picture>
+    <source media="(prefers-color-scheme: dark)" srcset="https://github-readme-stats.vercel.app/api/pin/?username=HGfds29&repo=my-web&bg_color=0f0f1a&title_color=42b983&text_color=e0e0e0&icon_color=42b983&border_color=2d2d44" />
+    <img src="https://github-readme-stats.vercel.app/api/pin/?username=HGfds29&repo=my-web&bg_color=ffffff&title_color=42b983&text_color=2c3e50&icon_color=42b983&border_color=eeeeee" alt="仓库卡片" height="150" />
+  </picture>
+  <picture>
+    <source media="(prefers-color-scheme: dark)" srcset="https://github-readme-stats.vercel.app/api/top-langs/?username=HGfds29&layout=compact&langs_count=6&bg_color=0f0f1a&title_color=42b983&text_color=e0e0e0&border_color=2d2d44" />
+    <img src="https://github-readme-stats.vercel.app/api/top-langs/?username=HGfds29&layout=compact&langs_count=6&bg_color=ffffff&title_color=42b983&text_color=2c3e50&border_color=eeeeee" alt="语言占比" height="150" />
+  </picture>
 </p>
 
 <p align="center">
-  <img src="https://github-readme-activity-graph.vercel.app/graph?username=HGfds29&bg_color=0f0f1a&color=42b983&line=42b983&point=e0e0e0&hide_border=true&days=90" alt="提交活跃度" />
+  <picture>
+    <source media="(prefers-color-scheme: dark)" srcset="https://github-readme-activity-graph.vercel.app/graph?username=HGfds29&bg_color=0f0f1a&color=42b983&line=42b983&point=e0e0e0&hide_border=true&days=90" />
+    <img src="https://github-readme-activity-graph.vercel.app/graph?username=HGfds29&bg_color=ffffff&color=42b983&line=42b983&point=2c3e50&hide_border=true&days=90" alt="提交活跃度" />
+  </picture>
 </p>
 
 <p align="center">
@@ -345,49 +371,50 @@ MIT © 2026 [HGfds29](https://github.com/HGfds29)
 
 ### Features
 
-**Interface**
+**🎨 Interface**
 
-- Direction-aware slide transitions with staggered entrance animations
-- Dark / light theme that follows the system preference and persists to `localStorage`
-- Responsive and mobile friendly
+- ✨ Direction-aware slide transitions with staggered entrance animations
+- 🌗 Dark / light theme that follows the system preference and persists to `localStorage`
+- 📱 Responsive and mobile friendly
 
-**Content**
+**📚 Content**
 
-- Blog: paginated list + detail pages with images
-- Game notes: list + detail (cover, platform, article body)
-- Photo wall: Polaroid style with **drag to rearrange**, **pin in place**, **corkboard mode**; positions and state stored in a cookie
-  - Drop images into `src/assets/photos/` and restart the dev server — they appear automatically
-- Memorial page with an embedded Bilibili video and bilingual headings
+- 📝 Blog: paginated list + detail pages with images
+- 🎮 Game notes: list + detail (cover, platform, article body)
+- 📸 Photo wall: Polaroid style with **drag to rearrange**, **pin in place**, **corkboard mode**; positions and state stored in a cookie
+  - 🖼️ Drop images into `src/assets/photos/` and restart the dev server — they appear automatically
+- 🚩 Memorial page with an embedded Bilibili video and bilingual headings
 
-**Built-in widgets (no UI library)**
+**🧩 Built-in widgets (no UI library)**
 
-- Imperative dialogs: `info` / `success` / `warning` / `error` / `confirm`, with customisable buttons and overlay behaviour
-- Prompt dialog with required / length / regex validation and a character counter
-- Loading dialog that can be cancelled and can show percentage progress
-- Toast notifications: queue management, **timer pause on hover**, 7 positions
+- 💬 Imperative dialogs: `info` / `success` / `warning` / `error` / `confirm`, with customisable buttons and overlay behaviour
+- ⌨️ Prompt dialog with required / length / regex validation and a character counter
+- ⏳ Loading dialog that can be cancelled and can show percentage progress
+- 🔔 Toast notifications: queue management, **timer pause on hover**, 7 positions
 
-**Extras**
+**🌏 Extras**
 
-- Full ZH / EN switching that also syncs `<html lang>`
-- A hidden easter egg in the bottom-right corner: hover to reveal a flag, click to enter the memorial page
-- Built-in ad blocker (`MutationObserver` + periodic scanning) that removes ads injected by free hosting
+- 🌐 Full ZH / EN switching that also syncs `<html lang>`
+- 🥚 A hidden easter egg in the bottom-right corner: hover to reveal a flag, click to enter the memorial page
+- 🛡️ Built-in ad blocker (`MutationObserver` + periodic scanning) that removes ads injected by free hosting
 
 ### Pages and Routes
 
 | Page | Route | Description |
 | :--- | :--- | :--- |
-| Home | `#/home` | Welcome, latest posts, personal info |
-| Blog list | `#/blog` | Paginated with page-turn animation |
-| Blog detail | `#/blog/:id` | Full article |
-| About | `#/about` | Bio, skills, contact |
-| Photos | `#/photos` | Drag / pin / corkboard |
-| Game notes | `#/games` | Paginated game list |
-| Game detail | `#/games/:id` | Single game write-up |
-| Plugin hub | `#/plugins` | Renkt Shell plugin library and dev guide |
-| Renkt Shell | `#/renkt` | Product page, **local-only**; the route is skipped when the file is absent |
-| Hero memorial | `#/hero-memorial` | Hides the nav bar; reached via the easter egg |
-| 404 | any unmatched path | Friendly message + back home |
+| 🏠 Home | `#/home` | Welcome, latest posts, personal info |
+| 📝 Blog list | `#/blog` | Paginated with page-turn animation |
+| 📄 Blog detail | `#/blog/:id` | Full article |
+| 👤 About | `#/about` | Bio, skills, contact |
+| 📸 Photos | `#/photos` | Drag / pin / corkboard |
+| 🎮 Game notes | `#/games` | Paginated game list |
+| 🕹️ Game detail | `#/games/:id` | Single game write-up |
+| 🧩 Plugin hub | `#/plugins` | Renkt Shell plugin library and dev guide |
+| 🖥️ Renkt Shell | `#/renkt` | Product page, **local-only**; the route is skipped when the file is absent |
+| 🚩 Hero memorial | `#/hero-memorial` | Hides the nav bar; reached via the easter egg |
+| 🚫 404 | any unmatched path | Friendly message + back home |
 
+> [!NOTE]
 > `/` redirects to `/home`. A route's `meta.index` decides the slide direction during navigation.
 
 ### Project Structure
@@ -432,6 +459,13 @@ flowchart TD
   F --> G["utils/<br/>modal · toast · i18n"]
   F --> H["data/*.json"]
   G --> E
+
+  classDef core fill:#42b98330,stroke:#42b983,stroke-width:1px
+  classDef page fill:#4FC08D24,stroke:#4FC08D,stroke-width:1px
+  classDef util fill:#88888824,stroke:#888888,stroke-dasharray:4
+  class B core
+  class D,F page
+  class G,H util
 ```
 
 ### Quick Start
@@ -445,7 +479,8 @@ npm run build      # Build for production into dist/
 npm run preview    # Preview the production build locally
 ```
 
-Most content changes need no component edits:
+> [!TIP]
+> Day-to-day content changes need no component edits — just these files.
 
 - New post → edit `src/data/blog.json`
 - New game → edit `src/data/games.json`
@@ -456,7 +491,8 @@ Most content changes need no component edits:
 
 There are two live copies: GitHub Pages (`HGfds29.github.io/my-web`) and a China mirror (`qwe159259.3vkj.vip`).
 
-> **Note: `dist/` is git-ignored and no longer tracked.** If Pages previously worked by committing `dist/`, switch to one of these:
+> [!WARNING]
+> **`dist/` is git-ignored and no longer tracked.** If Pages previously worked by committing `dist/`, switch to one of these:
 
 | Approach | How |
 | :--- | :--- |
@@ -468,7 +504,8 @@ The `base` value in `vite.config.js` must match the deploy path: keep `'/my-web/
 
 ### Local-only Files
 
-The following exist **only on the author's machine** and are excluded by `.gitignore`. A fresh clone will not contain them:
+> [!NOTE]
+> The following exist **only on the author's machine** and are excluded by `.gitignore`, so a fresh clone will not contain them.
 
 <details>
 <summary><b>Expand: what is not committed, and why</b></summary>
@@ -498,7 +535,8 @@ One side effect worth knowing: when the file *is* present it is bundled as its o
 html.dark .game-item { border-color: #2d2d44 !important; }
 ```
 
-Why: the Vue 3.5 scoped-style compiler turns `:global(.dark) .game-item` into `.dark { ... }` — **everything after `:global()` is dropped**, so the rule only matches the class on `<html>` and does nothing. This project hit that trap once, which silently broke an entire page's dark mode.
+> [!IMPORTANT]
+> Why: the Vue 3.5 scoped-style compiler turns `:global(.dark) .game-item` into `.dark { ... }` — **everything after `:global()` is dropped**, so the rule only matches the class on `<html>` and does nothing. This project hit that trap once, which silently broke an entire page's dark mode.
 
 **Other conventions**
 
@@ -562,12 +600,21 @@ See "Local-only files" above: without `RenktShell.vue` the `/renkt` route is not
 <br />
 
 <p align="center">
-  <img src="https://github-readme-stats.vercel.app/api/pin/?username=HGfds29&repo=my-web&bg_color=0f0f1a&title_color=42b983&text_color=e0e0e0&icon_color=42b983&border_color=2d2d44" alt="Repository card" height="150" />
-  <img src="https://github-readme-stats.vercel.app/api/top-langs/?username=HGfds29&layout=compact&langs_count=6&bg_color=0f0f1a&title_color=42b983&text_color=e0e0e0&border_color=2d2d44" alt="Language split" height="150" />
+  <picture>
+    <source media="(prefers-color-scheme: dark)" srcset="https://github-readme-stats.vercel.app/api/pin/?username=HGfds29&repo=my-web&bg_color=0f0f1a&title_color=42b983&text_color=e0e0e0&icon_color=42b983&border_color=2d2d44" />
+    <img src="https://github-readme-stats.vercel.app/api/pin/?username=HGfds29&repo=my-web&bg_color=ffffff&title_color=42b983&text_color=2c3e50&icon_color=42b983&border_color=eeeeee" alt="Repository card" height="150" />
+  </picture>
+  <picture>
+    <source media="(prefers-color-scheme: dark)" srcset="https://github-readme-stats.vercel.app/api/top-langs/?username=HGfds29&layout=compact&langs_count=6&bg_color=0f0f1a&title_color=42b983&text_color=e0e0e0&border_color=2d2d44" />
+    <img src="https://github-readme-stats.vercel.app/api/top-langs/?username=HGfds29&layout=compact&langs_count=6&bg_color=ffffff&title_color=42b983&text_color=2c3e50&border_color=eeeeee" alt="Language split" height="150" />
+  </picture>
 </p>
 
 <p align="center">
-  <img src="https://github-readme-activity-graph.vercel.app/graph?username=HGfds29&bg_color=0f0f1a&color=42b983&line=42b983&point=e0e0e0&hide_border=true&days=90" alt="Commit activity" />
+  <picture>
+    <source media="(prefers-color-scheme: dark)" srcset="https://github-readme-activity-graph.vercel.app/graph?username=HGfds29&bg_color=0f0f1a&color=42b983&line=42b983&point=e0e0e0&hide_border=true&days=90" />
+    <img src="https://github-readme-activity-graph.vercel.app/graph?username=HGfds29&bg_color=ffffff&color=42b983&line=42b983&point=2c3e50&hide_border=true&days=90" alt="Commit activity" />
+  </picture>
 </p>
 
 <p align="center">
