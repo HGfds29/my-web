@@ -6,7 +6,7 @@
 
     <div class="stagger-item" :style="{ '--delay': '0.1s' }">
       <div class="page-header">
-        <div class="header-icon">🧩</div>
+        <div class="header-icon"><AppIcon name="配置_config" :size="44" /></div>
         <div class="header-text">
           <h1>{{ t('plugins.title') }}</h1>
           <p class="subtitle">{{ t('plugins.subtitle') }}</p>
@@ -23,7 +23,7 @@
         :class="{ active: activeCategory === cat.key }"
         @click="activeCategory = cat.key"
       >
-        <span class="filter-icon">{{ cat.icon }}</span>
+        <span class="filter-icon"><AppIcon :name="cat.icon" :size="15" /></span>
         <span class="filter-label">{{ cat.label }}</span>
         <span class="filter-count">{{ getCategoryCount(cat.key) }}</span>
       </button>
@@ -152,6 +152,7 @@ import { ref, computed, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { isLeaving } from '../router'
 import { t, locale } from '../utils/i18n'
+import AppIcon from '../components/AppIcon.vue'
 
 console.log('[Plugins.vue] 组件初始化')
 
@@ -159,11 +160,11 @@ const router = useRouter()
 const activeCategory = ref('all')
 
 const categories = computed(() => [
-  { key: 'all', icon: '🏷️', label: t('plugins.catAll') },
-  { key: 'official', icon: '⭐', label: t('plugins.catOfficial') },
-  { key: 'community', icon: '🌐', label: t('plugins.catCommunity') },
-  { key: 'tool', icon: '🛠️', label: t('plugins.catTool') },
-  { key: 'gui', icon: '🖥️', label: t('plugins.catGui') }
+  { key: 'all', icon: '全部_all-application', label: t('plugins.catAll') },
+  { key: 'official', icon: '安全_shield', label: t('plugins.catOfficial') },
+  { key: 'community', icon: '更多2_more-two', label: t('plugins.catCommunity') },
+  { key: 'tool', icon: '工具_tool', label: t('plugins.catTool') },
+  { key: 'gui', icon: '系统_system', label: t('plugins.catGui') }
 ])
 
 const plugins = computed(() => [
@@ -395,6 +396,7 @@ onMounted(() => {
   display: flex;
   align-items: center;
   justify-content: center;
+  color: #42b983;
   background: linear-gradient(135deg, #f0f9f4 0%, #e8f5ef 100%);
   border-radius: 18px;
   flex-shrink: 0;
@@ -447,7 +449,7 @@ onMounted(() => {
   color: #2c7a52;
   box-shadow: 0 2px 8px rgba(66, 185, 131, 0.15);
 }
-.filter-icon { font-size: 15px; }
+.filter-icon { display: flex; align-items: center; }
 .filter-count {
   background: rgba(66, 185, 131, 0.15);
   color: #2c7a52;
@@ -806,6 +808,10 @@ onMounted(() => {
     height: 64px;
     font-size: 36px;
     border-radius: 14px;
+  }
+  .header-icon .app-icon {
+    width: 36px;
+    height: 36px;
   }
   .header-text h1 { font-size: 26px; }
   .plugin-grid {

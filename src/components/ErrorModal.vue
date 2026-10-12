@@ -1,12 +1,12 @@
 <template>
   <Teleport to="body">
-    <Transition name="modal-overlay">
+    <Transition name="modal-overlay" appear :duration="{ enter: 300, leave: 360 }">
       <div
         v-if="visible"
         class="modal-overlay"
         @click.self="handleOverlayClick"
       >
-        <Transition name="modal-content" appear>
+        <Transition name="modal-content" appear :duration="{ enter: 350, leave: 300 }">
           <div
             v-if="visible"
             class="modal-content"
@@ -16,25 +16,7 @@
           >
             <div class="modal-header">
               <div class="modal-icon" :class="`icon-${type}`">
-                <svg v-if="type === 'error'" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                  <circle cx="12" cy="12" r="10"/>
-                  <line x1="15" y1="9" x2="9" y2="15"/>
-                  <line x1="9" y1="9" x2="15" y2="15"/>
-                </svg>
-                <svg v-else-if="type === 'warning'" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                  <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/>
-                  <line x1="12" y1="9" x2="12" y2="13"/>
-                  <line x1="12" y1="17" x2="12.01" y2="17"/>
-                </svg>
-                <svg v-else-if="type === 'success'" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                  <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/>
-                  <polyline points="22 4 12 14.01 9 11.01"/>
-                </svg>
-                <svg v-else viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                  <circle cx="12" cy="12" r="10"/>
-                  <line x1="12" y1="16" x2="12" y2="12"/>
-                  <line x1="12" y1="8" x2="12.01" y2="8"/>
-                </svg>
+                <AppIcon :name="typeIcon" :size="26" />
               </div>
               <div class="modal-title-wrap">
                 <h3 class="modal-title">{{ resolvedTitle }}</h3>
@@ -82,6 +64,7 @@
 <script setup>
 import { computed } from 'vue'
 import { t } from '../utils/i18n'
+import AppIcon from './AppIcon.vue'
 
 const props = defineProps({
   visible: {
@@ -129,6 +112,16 @@ const props = defineProps({
 })
 
 const emit = defineEmits(['confirm', 'cancel', 'close', 'update:visible'])
+
+/** 弹窗类型 → public/svg 下的图标文件名 */
+const TYPE_ICONS = {
+  error: '报错_caution',
+  warning: '警报_alarm',
+  success: '邮件发送成功_email-successfully',
+  info: '系统_system'
+}
+
+const typeIcon = computed(() => TYPE_ICONS[props.type] || TYPE_ICONS.info)
 
 const defaultTitles = {
   error: 'modal.titleError',
@@ -186,7 +179,7 @@ const handleOverlayClick = () => {
   left: 0;
   right: 0;
   bottom: 0;
-  background: rgba(0, 0, 0, 0.5);
+  background: rgba(15, 15, 26, 0.55);
   backdrop-filter: blur(4px);
   -webkit-backdrop-filter: blur(4px);
   z-index: 10000;
@@ -196,9 +189,13 @@ const handleOverlayClick = () => {
   padding: 20px;
 }
 
-.modal-overlay.modal-overlay-enter-active,
-.modal-overlay.modal-overlay-leave-active {
+.modal-overlay.modal-overlay-enter-active {
   transition: background 0.3s ease, backdrop-filter 0.3s ease;
+}
+
+/* 退场：遮罩比卡片多留 40ms，避免卡片还没缩完背景就没了 */
+.modal-overlay.modal-overlay-leave-active {
+  transition: background 0.34s ease, backdrop-filter 0.34s ease;
 }
 
 .modal-overlay.modal-overlay-enter-from,
@@ -210,7 +207,7 @@ const handleOverlayClick = () => {
 
 .modal-content {
   position: relative;
-  background: #ffffff;
+  background: #fff;
   border-radius: 16px;
   box-shadow:
     0 20px 60px rgba(0, 0, 0, 0.2),
@@ -229,11 +226,20 @@ const handleOverlayClick = () => {
   max-width: 560px;
 }
 
-.modal-content.modal-content-enter-active,
-.modal-content.modal-content-leave-active {
+.modal-content.modal-content-enter-active {
   transition:
     opacity 0.25s ease,
     transform 0.35s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+/* 卡片退场：这里必须挂在遮罩的过渡类上。
+   两层 Transition 绑同一个 v-if 时，退场阶段是「父元素整体移除」，
+   子元素自己的 Transition 退场钩子根本不会触发（入场因为父元素先插入、子元素再挂载，所以正常），
+   结果就是只有遮罩在淡出、卡片硬消失。改为由遮罩的 leave 类以后代选择器驱动卡片退场。 */
+.modal-overlay.modal-overlay-leave-active .modal-content {
+  transition:
+    opacity 0.26s ease-in,
+    transform 0.3s cubic-bezier(0.4, 0, 0.6, 1);
 }
 
 .modal-content.modal-content-enter-from {
@@ -241,9 +247,9 @@ const handleOverlayClick = () => {
   transform: scale(0.85) translateY(20px);
 }
 
-.modal-content.modal-content-leave-to {
+.modal-overlay.modal-overlay-leave-to .modal-content {
   opacity: 0;
-  transform: scale(0.9) translateY(-10px);
+  transform: scale(0.92) translateY(-14px);
 }
 
 .modal-header {
@@ -281,29 +287,26 @@ const handleOverlayClick = () => {
   }
 }
 
-.modal-icon svg {
-  width: 26px;
-  height: 26px;
-}
+/* 图标颜色由 .icon-* 的 color 决定，尺寸由 AppIcon 的 size 属性决定 */
 
 .icon-error {
-  background: rgba(239, 68, 68, 0.12);
-  color: #ef4444;
+  background: rgba(224, 82, 75, 0.12);
+  color: #e0524b;
 }
 
 .icon-warning {
-  background: rgba(245, 158, 11, 0.12);
-  color: #f59e0b;
+  background: rgba(217, 147, 43, 0.12);
+  color: #d9932b;
 }
 
 .icon-info {
-  background: rgba(59, 130, 246, 0.12);
-  color: #3b82f6;
+  background: rgba(66, 185, 131, 0.12);
+  color: #42b983;
 }
 
 .icon-success {
-  background: rgba(16, 185, 129, 0.12);
-  color: #10b981;
+  background: rgba(79, 192, 141, 0.12);
+  color: #4FC08D;
 }
 
 .modal-title-wrap {
@@ -315,7 +318,7 @@ const handleOverlayClick = () => {
 .modal-title {
   font-size: 18px;
   font-weight: 600;
-  color: #1f2937;
+  color: #2c3e50;
   line-height: 1.4;
   margin: 0;
 }
@@ -331,13 +334,13 @@ const handleOverlayClick = () => {
   display: flex;
   align-items: center;
   justify-content: center;
-  color: #9ca3af;
+  color: #999;
   transition: all 0.2s ease;
 }
 
 .modal-close:hover {
   background: rgba(0, 0, 0, 0.06);
-  color: #4b5563;
+  color: #555;
   transform: rotate(90deg);
 }
 
@@ -353,7 +356,7 @@ const handleOverlayClick = () => {
 .modal-message {
   font-size: 15px;
   line-height: 1.7;
-  color: #4b5563;
+  color: #555;
   margin: 0;
   word-break: break-word;
 }
@@ -379,18 +382,18 @@ const handleOverlayClick = () => {
 }
 
 .modal-btn-cancel {
-  background: #f3f4f6;
-  color: #4b5563;
-  border: 1px solid #e5e7eb;
+  background: #f5f5f5;
+  color: #555;
+  border: 1px solid #e8e8e8;
 }
 
 .modal-btn-cancel:hover {
-  background: #e5e7eb;
-  border-color: #d1d5db;
+  background: #e8e8e8;
+  border-color: #ccc;
 }
 
 .modal-btn-confirm {
-  color: #ffffff;
+  color: #fff;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
 }
 
@@ -404,42 +407,42 @@ const handleOverlayClick = () => {
 }
 
 .btn-error {
-  background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+  background: linear-gradient(135deg, #e0524b 0%, #c0453f 100%);
 }
 
 .btn-error:hover {
-  background: linear-gradient(135deg, #f87171 0%, #ef4444 100%);
+  background: linear-gradient(135deg, #e2837c 0%, #e0524b 100%);
 }
 
 .btn-warning {
-  background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
+  background: linear-gradient(135deg, #d9932b 0%, #b87a1f 100%);
 }
 
 .btn-warning:hover {
-  background: linear-gradient(135deg, #fbbf24 0%, #f59e0b 100%);
+  background: linear-gradient(135deg, #e0b064 0%, #d9932b 100%);
 }
 
 .btn-info {
-  background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
+  background: linear-gradient(135deg, #42b983 0%, #2c7a52 100%);
 }
 
 .btn-info:hover {
-  background: linear-gradient(135deg, #60a5fa 0%, #3b82f6 100%);
+  background: linear-gradient(135deg, #4FC08D 0%, #42b983 100%);
 }
 
 .btn-success {
-  background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+  background: linear-gradient(135deg, #4FC08D 0%, #3aa876 100%);
 }
 
 .btn-success:hover {
-  background: linear-gradient(135deg, #34d399 0%, #10b981 100%);
+  background: linear-gradient(135deg, #6fd3a8 0%, #4FC08D 100%);
 }
 
 /* 深色模式 */
 html.dark .modal-content {
   background: #1a1a2e;
   box-shadow:
-    0 20px 60px rgba(0, 0, 0, 0.5),
+    0 20px 60px rgba(15, 15, 26, 0.55),
     0 0 0 1px rgba(255, 255, 255, 0.06) inset;
 }
 
@@ -452,12 +455,12 @@ html.dark .modal-message {
 }
 
 html.dark .modal-close {
-  color: #6b7280;
+  color: #666;
 }
 
 html.dark .modal-close:hover {
   background: rgba(255, 255, 255, 0.08);
-  color: #d1d5db;
+  color: #ccc;
 }
 
 html.dark .modal-btn-cancel {
@@ -468,23 +471,23 @@ html.dark .modal-btn-cancel {
 
 html.dark .modal-btn-cancel:hover {
   background: #2d2d44;
-  border-color: #383858;
+  border-color: #23233c;
 }
 
 html.dark .icon-error {
-  background: rgba(239, 68, 68, 0.18);
+  background: rgba(224, 82, 75, 0.18);
 }
 
 html.dark .icon-warning {
-  background: rgba(245, 158, 11, 0.18);
+  background: rgba(217, 147, 43, 0.18);
 }
 
 html.dark .icon-info {
-  background: rgba(59, 130, 246, 0.18);
+  background: rgba(66, 185, 131, 0.18);
 }
 
 html.dark .icon-success {
-  background: rgba(16, 185, 129, 0.18);
+  background: rgba(79, 192, 141, 0.18);
 }
 
 @media (max-width: 600px) {
@@ -502,7 +505,7 @@ html.dark .icon-success {
     height: 42px;
   }
 
-  .modal-icon svg {
+  .modal-icon .app-icon {
     width: 22px;
     height: 22px;
   }

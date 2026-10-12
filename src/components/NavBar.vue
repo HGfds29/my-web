@@ -4,19 +4,45 @@
       <router-link to="/home" class="nav-logo">{{ t('nav.title') }}</router-link>
       <div class="nav-right">
         <div class="nav-links">
-          <router-link to="/home" class="nav-link" active-class="active">{{ t('nav.home') }}</router-link>
-          <router-link to="/blog" class="nav-link" active-class="active">{{ t('nav.blog') }}</router-link>
-          <router-link to="/photos" class="nav-link" active-class="active">{{ t('nav.photos') }}</router-link>
-          <router-link to="/games" class="nav-link" active-class="active">{{ t('nav.games') }}</router-link>
-          <router-link to="/about" class="nav-link" active-class="active">{{ t('nav.about') }}</router-link>
+          <router-link to="/home" class="nav-link" active-class="active"><AppIcon name="全部_all-application" :size="15" />{{ t('nav.home') }}</router-link>
+          <router-link to="/blog" class="nav-link" active-class="active"><AppIcon name="标签_tag" :size="15" />{{ t('nav.blog') }}</router-link>
+          <router-link to="/photos" class="nav-link" active-class="active"><AppIcon name="预览-打开_preview-open" :size="15" />{{ t('nav.photos') }}</router-link>
+          <router-link to="/games" class="nav-link" active-class="active"><AppIcon name="游戏手柄_game-handle" :size="15" />{{ t('nav.games') }}</router-link>
+          <router-link to="/about" class="nav-link" active-class="active"><AppIcon name="更多2_more-two" :size="15" />{{ t('nav.about') }}</router-link>
+          <div
+            class="more-menu"
+            :class="{ open: moreOpen }"
+            @mouseenter="moreOpen = true"
+            @mouseleave="moreOpen = false"
+          >
+            <button
+              class="more-btn"
+              :title="t('nav.moreTip')"
+              aria-haspopup="true"
+              :aria-expanded="moreOpen"
+              @click="moreOpen = !moreOpen"
+            >
+              <AppIcon name="更多2_more-two" :size="15" />
+              <span class="more-text">{{ t('nav.more') }}</span>
+              <svg class="more-arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                <polyline points="6 15 12 9 18 15" />
+              </svg>
+            </button>
+            <div class="more-dropdown">
+              <router-link to="/plugins" class="more-item" active-class="active" @click="moreOpen = false">
+                <AppIcon name="配置_config" :size="16" />
+                <span>{{ t('nav.menuPlugins') }}</span>
+              </router-link>
+              <router-link to="/demo" class="more-item" active-class="active" @click="moreOpen = false">
+                <AppIcon name="系统_system" :size="16" />
+                <span>{{ t('nav.menuDemo') }}</span>
+              </router-link>
+            </div>
+          </div>
         </div>
         <button class="lang-toggle" @click="toggleLanguage" :class="{ switching: isSwitching }" :title="t('nav.switchLangTip')">
           <span class="lang-icon">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-              <circle cx="12" cy="12" r="10"/>
-              <line x1="2" y1="12" x2="22" y2="12"/>
-              <path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/>
-            </svg>
+            <AppIcon :name="locale === 'zh' ? '英文_english' : '中文_chinese'" :size="16" />
           </span>
           <span class="lang-text">{{ t('nav.switchLang') }}</span>
         </button>
@@ -43,10 +69,12 @@
 
 <script setup>
 import { ref, onMounted, watch } from 'vue'
-import { t, toggleLocale } from '../utils/i18n'
+import { t, toggleLocale, locale } from '../utils/i18n'
+import AppIcon from './AppIcon.vue'
 
 const isDark = ref(false)
 const isSwitching = ref(false)
+const moreOpen = ref(false)
 
 const toggleLanguage = () => {
   isSwitching.value = true
@@ -100,7 +128,7 @@ watch(isDark, (val) => {
   transition: background 0.3s, border-color 0.3s;
 }
 
-:global(.dark) .navbar {
+.dark .navbar {
   background: #12121f;
   border-bottom: 1px solid #252540;
 }
@@ -123,7 +151,7 @@ watch(isDark, (val) => {
   transition: color 0.3s;
 }
 
-:global(.dark) .nav-logo {
+.dark .nav-logo {
   color: #e0e0e0;
 }
 
@@ -202,13 +230,11 @@ watch(isDark, (val) => {
   justify-content: center;
 }
 
-.lang-icon svg {
-  width: 16px;
-  height: 16px;
+.lang-icon {
   transition: transform 0.3s;
 }
 
-.lang-toggle:hover .lang-icon svg {
+.lang-toggle:hover .lang-icon {
   transform: rotate(180deg);
 }
 
@@ -217,12 +243,12 @@ watch(isDark, (val) => {
   letter-spacing: 0.5px;
 }
 
-:global(.dark) .lang-toggle {
+.dark .lang-toggle {
   border-color: #2d2d44;
   color: #aaa;
 }
 
-:global(.dark) .lang-toggle:hover {
+.dark .lang-toggle:hover {
   background: rgba(66, 185, 131, 0.15);
   color: #42b983;
   border-color: #42b983;
@@ -255,12 +281,12 @@ watch(isDark, (val) => {
   box-shadow: none;
 }
 
-:global(.dark) .desk-pet-btn {
+.dark .desk-pet-btn {
   border-color: #2d2d44;
   color: #aaa;
 }
 
-:global(.dark) .desk-pet-btn:hover {
+.dark .desk-pet-btn:hover {
   background: rgba(66, 185, 131, 0.15);
   color: #42b983;
   border-color: #42b983;
@@ -274,17 +300,20 @@ watch(isDark, (val) => {
 
 .nav-links {
   display: flex;
-  gap: 24px;
+  gap: 18px;
 }
 
 .nav-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
   color: #666;
   text-decoration: none;
   font-size: 14px;
   transition: color 0.3s;
 }
 
-:global(.dark) .nav-link {
+.dark .nav-link {
   color: #aaa;
 }
 
@@ -310,7 +339,7 @@ watch(isDark, (val) => {
   transition: background 0.3s, color 0.3s;
 }
 
-:global(.dark) .theme-toggle {
+.dark .theme-toggle {
   color: #aaa;
 }
 
@@ -319,13 +348,159 @@ watch(isDark, (val) => {
   color: #42b983;
 }
 
-:global(.dark) .theme-toggle:hover {
+.dark .theme-toggle:hover {
   background: #2d2d44;
   color: #42b983;
+}
+
+.more-menu {
+  position: relative;
+}
+
+.more-btn {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  background: none;
+  border: 1px solid #ddd;
+  cursor: pointer;
+  padding: 4px 10px;
+  border-radius: 20px;
+  color: #666;
+  font-size: 13px;
+  transition: all 0.3s ease;
+}
+
+.more-text {
+  font-weight: 500;
+  letter-spacing: 0.5px;
+}
+
+.more-arrow {
+  width: 14px;
+  height: 14px;
+  transition: transform 0.35s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+.more-menu:hover .more-btn,
+.more-menu:focus-within .more-btn,
+.more-menu.open .more-btn {
+  background: #f0f9f4;
+  color: #42b983;
+  border-color: #42b983;
+  transform: translateY(-1px);
+  box-shadow: 0 2px 8px rgba(66, 185, 131, 0.2);
+}
+
+.more-menu:hover .more-arrow,
+.more-menu:focus-within .more-arrow,
+.more-menu.open .more-arrow {
+  transform: rotate(180deg);
+}
+
+.dark .more-btn {
+  border-color: #2d2d44;
+  color: #aaa;
+}
+
+.dark .more-menu:hover .more-btn,
+.dark .more-menu:focus-within .more-btn,
+.dark .more-menu.open .more-btn {
+  background: rgba(66, 185, 131, 0.15);
+  color: #42b983;
+  border-color: #42b983;
+  box-shadow: 0 2px 8px rgba(66, 185, 131, 0.3);
+}
+
+.more-dropdown {
+  position: absolute;
+  top: calc(100% + 10px);
+  right: 0;
+  min-width: 160px;
+  padding: 6px;
+  background: #fff;
+  border: 1px solid #eee;
+  border-radius: 12px;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.1);
+  opacity: 0;
+  visibility: hidden;
+  transform: translateY(-10px) scale(0.96);
+  transform-origin: top right;
+  pointer-events: none;
+  transition: opacity 0.25s ease, transform 0.25s cubic-bezier(0.34, 1.56, 0.64, 1),
+    visibility 0.25s;
+}
+
+/* 悬停桥：补上按钮与面板之间的空隙，防止鼠标移动时收起 */
+.more-dropdown::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: -12px;
+  height: 12px;
+}
+
+.more-menu:hover .more-dropdown,
+.more-menu:focus-within .more-dropdown,
+.more-menu.open .more-dropdown {
+  opacity: 1;
+  visibility: visible;
+  transform: translateY(0) scale(1);
+  pointer-events: auto;
+}
+
+.dark .more-dropdown {
+  background: #1a1a2e;
+  border-color: #252540;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.45);
+}
+
+.more-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 12px;
+  border-radius: 8px;
+  color: #555;
+  text-decoration: none;
+  font-size: 13px;
+  white-space: nowrap;
+  transition: background 0.2s, color 0.2s;
+}
+
+.dark .more-item {
+  color: #bbb;
+}
+
+.more-item:hover {
+  background: #f0f9f4;
+  color: #42b983;
+}
+
+.dark .more-item:hover {
+  background: rgba(66, 185, 131, 0.15);
+  color: #42b983;
+}
+
+.more-item.active {
+  color: #42b983;
+  font-weight: 500;
 }
 
 .icon {
   width: 20px;
   height: 20px;
+}
+
+/* 窄屏隐藏导航图标，避免挤压换行 */
+@media (max-width: 680px) {
+  .nav-link .app-icon {
+    display: none;
+  }
+
+  .nav-links {
+    gap: 12px;
+  }
 }
 </style>

@@ -1,12 +1,12 @@
 <template>
   <Teleport to="body">
-    <Transition name="modal-overlay">
+    <Transition name="modal-overlay" appear :duration="{ enter: 300, leave: 360 }">
       <div
         v-if="visible"
         class="modal-overlay"
         @click.self="handleOverlayClick"
       >
-        <Transition name="modal-content" appear>
+        <Transition name="modal-content" appear :duration="{ enter: 350, leave: 300 }">
           <div
             v-if="visible"
             class="modal-content"
@@ -16,9 +16,7 @@
           >
             <div class="modal-header">
               <div class="modal-icon icon-info">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                  <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>
-                </svg>
+                <AppIcon name="配置_config" :size="22" />
               </div>
               <div class="modal-title-wrap">
                 <h3 class="modal-title">{{ resolvedTitle }}</h3>
@@ -96,6 +94,7 @@
 <script setup>
 import { ref, computed, watch, nextTick } from 'vue'
 import { t } from '../utils/i18n'
+import AppIcon from './AppIcon.vue'
 
 const props = defineProps({
   visible: { type: Boolean, default: false },
@@ -205,7 +204,7 @@ watch(
 .modal-overlay {
   position: fixed;
   top: 0; left: 0; right: 0; bottom: 0;
-  background: rgba(0, 0, 0, 0.5);
+  background: rgba(15, 15, 26, 0.55);
   backdrop-filter: blur(4px);
   -webkit-backdrop-filter: blur(4px);
   z-index: 10001;
@@ -215,10 +214,15 @@ watch(
   padding: 20px;
 }
 
-.modal-overlay.modal-overlay-enter-active,
-.modal-overlay.modal-overlay-leave-active {
+.modal-overlay.modal-overlay-enter-active {
   transition: background 0.3s ease;
 }
+
+/* 退场：遮罩比卡片多留 40ms */
+.modal-overlay.modal-overlay-leave-active {
+  transition: background 0.34s ease;
+}
+
 .modal-overlay.modal-overlay-enter-from,
 .modal-overlay.modal-overlay-leave-to {
   background: rgba(0, 0, 0, 0);
@@ -226,7 +230,7 @@ watch(
 
 .modal-content {
   position: relative;
-  background: #ffffff;
+  background: #fff;
   border-radius: 16px;
   box-shadow: 0 20px 60px rgba(0, 0, 0, 0.2);
   width: 100%;
@@ -236,17 +240,24 @@ watch(
 .modal-content.sm { max-width: 380px; }
 .modal-content.lg { max-width: 560px; }
 
-.modal-content.modal-content-enter-active,
-.modal-content.modal-content-leave-active {
+.modal-content.modal-content-enter-active {
   transition: opacity 0.25s ease, transform 0.35s cubic-bezier(0.34, 1.56, 0.64, 1);
 }
+
+/* 卡片退场必须挂在遮罩的过渡类上：两层 Transition 绑同一个 v-if 时，
+   退场是父元素整体移除，子元素自己的退场钩子不会触发，卡片会硬消失 */
+.modal-overlay.modal-overlay-leave-active .modal-content {
+  transition: opacity 0.26s ease-in, transform 0.3s cubic-bezier(0.4, 0, 0.6, 1);
+}
+
 .modal-content.modal-content-enter-from {
   opacity: 0;
   transform: scale(0.85) translateY(20px);
 }
-.modal-content.modal-content-leave-to {
+
+.modal-overlay.modal-overlay-leave-to .modal-content {
   opacity: 0;
-  transform: scale(0.9) translateY(-10px);
+  transform: scale(0.92) translateY(-14px);
 }
 
 .modal-header {
@@ -265,10 +276,10 @@ watch(
   display: flex;
   align-items: center;
   justify-content: center;
-  background: rgba(59, 130, 246, 0.12);
-  color: #3b82f6;
+  background: rgba(66, 185, 131, 0.12);
+  color: #42b983;
 }
-.modal-icon svg { width: 22px; height: 22px; }
+/* 图标尺寸由 AppIcon 的 size 属性决定 */
 
 .modal-title-wrap {
   flex: 1;
@@ -279,7 +290,7 @@ watch(
 .modal-title {
   font-size: 18px;
   font-weight: 600;
-  color: #1f2937;
+  color: #2c3e50;
   line-height: 1.4;
   margin: 0;
 }
@@ -287,7 +298,7 @@ watch(
 .modal-desc {
   margin-top: 6px;
   font-size: 13px;
-  color: #6b7280;
+  color: #666;
   line-height: 1.5;
 }
 
@@ -302,12 +313,12 @@ watch(
   display: flex;
   align-items: center;
   justify-content: center;
-  color: #9ca3af;
+  color: #999;
   transition: all 0.2s ease;
 }
 .modal-close:hover {
   background: rgba(0, 0, 0, 0.06);
-  color: #4b5563;
+  color: #555;
   transform: rotate(90deg);
 }
 .modal-close svg { width: 20px; height: 20px; }
@@ -318,7 +329,7 @@ watch(
 
 .input-wrap {
   position: relative;
-  border: 2px solid #e5e7eb;
+  border: 2px solid #e8e8e8;
   border-radius: 10px;
   transition: all 0.2s ease;
   padding: 0;
@@ -326,15 +337,15 @@ watch(
 }
 
 .input-wrap.focused {
-  border-color: #3b82f6;
-  background: #ffffff;
-  box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.1);
+  border-color: #42b983;
+  background: #fff;
+  box-shadow: 0 0 0 4px rgba(66, 185, 131, 0.1);
 }
 
 .input-wrap.has-error {
-  border-color: #ef4444;
-  background: #ffffff;
-  box-shadow: 0 0 0 4px rgba(239, 68, 68, 0.08);
+  border-color: #e0524b;
+  background: #fff;
+  box-shadow: 0 0 0 4px rgba(224, 82, 75, 0.08);
 }
 
 .prompt-input {
@@ -344,7 +355,7 @@ watch(
   background: transparent;
   padding: 12px 14px;
   font-size: 14px;
-  color: #1f2937;
+  color: #2c3e50;
   font-family: inherit;
   line-height: 1.5;
   border-radius: 8px;
@@ -358,7 +369,7 @@ watch(
 }
 
 .prompt-input::placeholder {
-  color: #9ca3af;
+  color: #999;
 }
 
 .input-counter {
@@ -366,7 +377,7 @@ watch(
   bottom: 6px;
   right: 10px;
   font-size: 11px;
-  color: #9ca3af;
+  color: #999;
   pointer-events: none;
 }
 
@@ -377,7 +388,7 @@ watch(
 .input-error {
   padding: 4px 14px 8px;
   font-size: 12px;
-  color: #ef4444;
+  color: #e0524b;
   line-height: 1.4;
 }
 
@@ -401,23 +412,23 @@ watch(
 }
 
 .modal-btn-cancel {
-  background: #f3f4f6;
-  color: #4b5563;
-  border: 1px solid #e5e7eb;
+  background: #f5f5f5;
+  color: #555;
+  border: 1px solid #e8e8e8;
 }
 .modal-btn-cancel:hover {
-  background: #e5e7eb;
+  background: #e8e8e8;
 }
 
 .modal-btn-confirm {
-  color: #ffffff;
-  background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
-  box-shadow: 0 2px 8px rgba(59, 130, 246, 0.25);
+  color: #fff;
+  background: linear-gradient(135deg, #42b983 0%, #2c7a52 100%);
+  box-shadow: 0 2px 8px rgba(66, 185, 131, 0.25);
 }
 .modal-btn-confirm:hover:not(:disabled) {
   transform: translateY(-1px);
-  box-shadow: 0 4px 14px rgba(59, 130, 246, 0.35);
-  background: linear-gradient(135deg, #60a5fa 0%, #3b82f6 100%);
+  box-shadow: 0 4px 14px rgba(66, 185, 131, 0.35);
+  background: linear-gradient(135deg, #4FC08D 0%, #42b983 100%);
 }
 .modal-btn-confirm:disabled {
   opacity: 0.55;
@@ -427,27 +438,27 @@ watch(
 /* 深色模式 */
 html.dark .modal-content {
   background: #1a1a2e;
-  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
+  box-shadow: 0 20px 60px rgba(15, 15, 26, 0.55);
 }
 html.dark .modal-title { color: #f0f0f0; }
 html.dark .modal-desc { color: #888; }
-html.dark .modal-close { color: #6b7280; }
+html.dark .modal-close { color: #666; }
 html.dark .modal-close:hover {
   background: rgba(255, 255, 255, 0.08);
-  color: #d1d5db;
+  color: #ccc;
 }
 html.dark .input-wrap {
   border-color: #2d2d44;
   background: #15152a;
 }
 html.dark .input-wrap.focused {
-  border-color: #3b82f6;
+  border-color: #42b983;
   background: #121226;
-  box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.15);
+  box-shadow: 0 0 0 4px rgba(66, 185, 131, 0.15);
 }
 html.dark .input-wrap.has-error {
-  border-color: #ef4444;
-  box-shadow: 0 0 0 4px rgba(239, 68, 68, 0.12);
+  border-color: #e0524b;
+  box-shadow: 0 0 0 4px rgba(224, 82, 75, 0.12);
 }
 html.dark .prompt-input { color: #e0e0e0; }
 html.dark .prompt-input::placeholder { color: #555; }
@@ -463,7 +474,7 @@ html.dark .modal-btn-cancel:hover {
 @media (max-width: 600px) {
   .modal-header { padding: 22px 18px 10px; gap: 12px; }
   .modal-icon { width: 40px; height: 40px; }
-  .modal-icon svg { width: 20px; height: 20px; }
+  .modal-icon .app-icon { width: 20px; height: 20px; }
   .modal-title { font-size: 16px; }
   .modal-body { padding: 6px 18px 0; }
   .modal-footer { padding: 18px 18px 22px; }

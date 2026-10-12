@@ -28,7 +28,11 @@ const messages = {
     switchLangTip: { zh: '切换语言', en: 'Switch language' },
     deskPet: { zh: '桌宠', en: 'Pet' },
     deskPetTip: { zh: '打开网页桌宠', en: 'Open desk pet' },
-    renkt: { zh: 'Renkt Shell', en: 'Renkt Shell' }
+    renkt: { zh: 'Renkt Shell', en: 'Renkt Shell' },
+    more: { zh: '更多', en: 'More' },
+    moreTip: { zh: '更多', en: 'More' },
+    menuPlugins: { zh: '插件中心', en: 'Plugin Hub' },
+    menuDemo: { zh: '功能演示', en: 'Playground' }
   },
   home: {
     welcome: { zh: '你好，欢迎来到我的网站 👋', en: 'Hi, welcome to my website 👋' },

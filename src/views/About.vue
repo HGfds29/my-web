@@ -10,19 +10,19 @@
       <p class="intro">{{ t('about.intro') }}</p>
     </div>
     <div class="stagger-item section" :style="{ '--delay': '0.2s' }">
-      <h2>{{ t('about.skills') }}</h2>
+      <h2><AppIcon name="工具_tool" :size="20" />{{ t('about.skills') }}</h2>
       <div class="skills">
         <span class="skill" v-for="(skill, i) in skills" :key="skill">{{ skill }}</span>
       </div>
     </div>
     <div class="stagger-item section" :style="{ '--delay': '0.25s' }">
-      <h2>{{ t('about.hobbies') }}</h2>
+      <h2><AppIcon name="更多2_more-two" :size="20" />{{ t('about.hobbies') }}</h2>
       <ul class="hobbies">
         <li v-for="hobby in hobbies" :key="hobby">{{ t(hobby) }}</li>
       </ul>
     </div>
     <div class="stagger-item section" :style="{ '--delay': '0.3s' }">
-      <h2>{{ t('about.contact') }}</h2>
+      <h2><AppIcon name="邮件安全_email-security" :size="20" />{{ t('about.contact') }}</h2>
 	  <p class="contact">{{ t('about.email') }}：3656754515@qq.com</p>
       <p class="contact">{{ t('about.email') }}：qwe15925906016@qq.com</p>
     </div>
@@ -34,6 +34,7 @@ import { onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { isLeaving } from '../router'
 import { t } from '../utils/i18n'
+import AppIcon from '../components/AppIcon.vue'
 
 const router = useRouter()
 
@@ -114,12 +115,19 @@ h1 {
 }
 
 .section h2 {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
   font-size: 22px;
   color: #2c3e50;
   margin-bottom: 16px;
   padding-bottom: 8px;
   border-bottom: 2px solid #42b983;
-  display: inline-block;
+}
+
+/* 图标固定用主色，避免在深色模式下跟着标题变成近白色 */
+.section h2 .app-icon {
+  color: #42b983;
 }
 
 .skills {

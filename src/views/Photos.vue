@@ -45,23 +45,15 @@
 
       <div class="toolbar">
         <div class="tool" :class="{ active: pinMode }" @click="togglePinMode" :title="t('photos.pinMode')">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-            <path d="M12 2v4M12 18v4M4.93 4.93l2.83 2.83M16.24 16.24l2.83 2.83M2 12h4M18 12h4M4.93 19.07l2.83-2.83M16.24 7.76l2.83-2.83"/>
-          </svg>
+          <AppIcon name="标签_tag" :size="20" />
           <span>{{ pinMode ? t('photos.pinSelected') : t('photos.pin') }}</span>
         </div>
         <div class="tool" :class="{ active: showBoard }" @click="toggleBoard" :title="t('photos.corkboard')">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-            <rect x="3" y="3" width="18" height="18" rx="2"/>
-            <path d="M3 9h18M9 3v18"/>
-          </svg>
+          <AppIcon :name="showBoard ? '预览-关闭_preview-close' : '文件柜_file-cabinet'" :size="20" />
           <span>{{ showBoard ? t('photos.hideBoard') : t('photos.board') }}</span>
         </div>
         <div class="tool" @click="resetLayout" :title="t('photos.resetTitle')">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-            <polyline points="1 4 1 10 7 10"/>
-            <path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10"/>
-          </svg>
+          <AppIcon name="删除_delete-two" :size="20" />
           <span>{{ t('photos.reset') }}</span>
         </div>
       </div>
@@ -72,6 +64,7 @@
     </div>
 
     <div v-if="photos.length === 0" class="empty stagger-item" :style="{ '--delay': '0.15s' }">
+      <AppIcon name="预览-打开_preview-open" :size="48" class="empty-icon" />
       <p>{{ t('photos.empty') }}</p>
       <p class="hint">{{ t('photos.emptyHint') }}</p>
     </div>
@@ -83,6 +76,7 @@ import { ref, onMounted, watch, nextTick } from 'vue'
 import { useRouter } from 'vue-router'
 import { isLeaving } from '../router'
 import { t } from '../utils/i18n'
+import AppIcon from '../components/AppIcon.vue'
 import photoConfig from '../data/photos.json'
 
 console.log('[Photos.vue] 组件初始化')
@@ -467,10 +461,7 @@ const goBack = () => {
   color: white;
 }
 
-.tool svg {
-  width: 24px;
-  height: 24px;
-}
+/* 图标尺寸由 AppIcon 的 size 属性控制，这里不再覆盖 */
 
 .polaroid {
   position: absolute;
@@ -598,6 +589,11 @@ const goBack = () => {
 .empty .hint {
   font-size: 13px;
   margin-top: 8px;
+}
+
+.empty-icon {
+  color: #dcdcdc;
+  margin-bottom: 14px;
 }
 
 :global(.dark) .photos-page {

@@ -540,3 +540,53 @@ html.dark .page-btn.active {
   border-color: #42b983 !important;
   color: #fff !important;
 }
+
+/* 照片集空状态的大图标（浅色下是浅灰，深色下要压暗） */
+html.dark .photos-page .empty-icon {
+  color: #33334d !important;
+}
+
+/* 弹窗 / 通知测试页（/demo）深色模式 */
+html.dark .demo-page {
+  color: #e0e0e0 !important;
+}
+
+html.dark .demo-page .panel {
+  background: #1a1a2e !important;
+  border-color: #2d2d44 !important;
+  box-shadow: none !important;
+}
+
+html.dark .demo-page .panel h2 {
+  color: #e0e0e0 !important;
+}
+
+html.dark .demo-page .subtitle {
+  color: #aaa !important;
+}
+
+html.dark .demo-page .demo-btn {
+  background: #23233c !important;
+  border-color: #2d2d44 !important;
+  color: #cfcfd6 !important;
+}
+
+html.dark .demo-page .demo-btn:hover {
+  border-color: #42b983 !important;
+  color: #42b983 !important;
+}
+
+html.dark .demo-page .demo-btn.danger {
+  background: #2a1c1f !important;
+  border-color: #4a2a2a !important;
+  color: #e2837c !important;
+}
+
+html.dark .demo-page .demo-btn.danger:hover {
+  border-color: #e0524b !important;
+  color: #e0524b !important;
+}
+
+html.dark .demo-page .note {
+  color: #888 !important;
+}

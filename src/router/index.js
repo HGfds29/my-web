@@ -10,6 +10,7 @@ import GameDetail from '../views/GameDetail.vue'
 import Plugins from '../views/Plugins.vue'
 import HeroMemorial from '../views/HeroMemorial.vue'
 import NotFound from '../views/NotFound.vue'
+import ModalDemo from '../views/ModalDemo.vue'
 
 // RenktShell.vue 已被 .gitignore 排除，属于本地专属页面：
 // 这里用 glob 动态解析，文件不存在时就不注册该路由，
@@ -93,6 +94,12 @@ const routes = [
     name: 'BlogDetail',
     component: BlogDetail,
     meta: { index: 3 }
+  },
+  {
+    path: '/demo',
+    name: 'ModalDemo',
+    component: ModalDemo,
+    meta: { index: 10 }
   },
   {
     path: '/:pathMatch(.*)*',
