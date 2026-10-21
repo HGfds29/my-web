@@ -11,6 +11,9 @@ import Plugins from '../views/Plugins.vue'
 import HeroMemorial from '../views/HeroMemorial.vue'
 import NotFound from '../views/NotFound.vue'
 import ModalDemo from '../views/ModalDemo.vue'
+import Chat from '../views/Chat.vue'
+import Login from '../views/Login.vue'
+import { loadSession, currentUser } from '../utils/auth'
 
 // RenktShell.vue 已被 .gitignore 排除，属于本地专属页面：
 // 这里用 glob 动态解析，文件不存在时就不注册该路由，
@@ -102,6 +105,18 @@ const routes = [
     meta: { index: 10 }
   },
   {
+    path: '/chat',
+    name: 'Chat',
+    component: Chat,
+    meta: { index: 11, requiresAuth: true }
+  },
+  {
+    path: '/login',
+    name: 'Login',
+    component: Login,
+    meta: { index: 12 }
+  },
+  {
     path: '/:pathMatch(.*)*',
     name: 'NotFound',
     component: NotFound,
@@ -116,7 +131,15 @@ const router = createRouter({
 
 let isNavigating = false
 
-router.beforeEach((to, from, next) => {
+router.beforeEach(async (to, from, next) => {
+  if (to.meta.requiresAuth) {
+    await loadSession()
+    if (!currentUser.value) {
+      next({ path: '/login', query: { redirect: to.fullPath } })
+      return
+    }
+  }
+
   if (isNavigating) {
     isNavigating = false
     next()

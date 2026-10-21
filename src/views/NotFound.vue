@@ -35,29 +35,29 @@ const goHome = () => {
 
 .stagger-item {
   opacity: 0;
-  transform: translateY(24px);
-  animation: fadeUp 0.5s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+  transform: translateX(30px);
+  animation: slideIn 0.45s ease forwards;
   animation-delay: var(--delay);
 }
 
-@keyframes fadeUp {
+@keyframes slideIn {
   to {
     opacity: 1;
-    transform: translateY(0);
+    transform: translateX(0);
   }
 }
 
 .leaving .stagger-item {
   opacity: 1;
-  transform: translateY(0);
-  animation: fadeOut 0.4s ease forwards;
+  transform: translateX(0);
+  animation: slideOut 0.4s ease forwards;
   animation-delay: var(--delay);
 }
 
-@keyframes fadeOut {
+@keyframes slideOut {
   to {
     opacity: 0;
-    transform: translateY(-16px);
+    transform: translateX(60px);
   }
 }
 

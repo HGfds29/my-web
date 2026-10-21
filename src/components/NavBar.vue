@@ -29,13 +29,13 @@
               </svg>
             </button>
             <div class="more-dropdown">
-              <router-link to="/plugins" class="more-item" active-class="active" @click="moreOpen = false">
-                <AppIcon name="配置_config" :size="16" />
-                <span>{{ t('nav.menuPlugins') }}</span>
-              </router-link>
               <router-link to="/demo" class="more-item" active-class="active" @click="moreOpen = false">
                 <AppIcon name="系统_system" :size="16" />
                 <span>{{ t('nav.menuDemo') }}</span>
+              </router-link>
+              <router-link to="/chat" class="more-item" active-class="active" @click="moreOpen = false">
+                <AppIcon name="沟通_communication" :size="16" />
+                <span>{{ t('nav.menuChat') }}</span>
               </router-link>
             </div>
           </div>
@@ -46,6 +46,29 @@
           </span>
           <span class="lang-text">{{ t('nav.switchLang') }}</span>
         </button>
+        <div class="user-menu" :class="{ open: userOpen }" @mouseenter="userOpen = true" @mouseleave="userOpen = false">
+          <button v-if="currentProfile" class="user-btn" @click="userOpen = !userOpen">
+            <span class="user-avatar">{{ (currentProfile.username || '?').slice(0, 1).toUpperCase() }}</span>
+            <span class="user-name">{{ currentProfile.username }}</span>
+            <svg class="more-arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+              <polyline points="6 15 12 9 18 15" />
+            </svg>
+          </button>
+          <router-link v-else to="/login" class="user-btn user-login">
+            <AppIcon name="用户_user" :size="16" />
+            <span>{{ t('nav.login') }}</span>
+          </router-link>
+          <div v-if="currentProfile" class="more-dropdown">
+            <router-link to="/chat" class="more-item" @click="userOpen = false">
+              <AppIcon name="沟通_communication" :size="16" />
+              <span>{{ t('nav.menuChat') }}</span>
+            </router-link>
+            <button class="more-item" @click="doLogout">
+              <AppIcon name="退出_exit" :size="16" />
+              <span>{{ t('nav.logout') }}</span>
+            </button>
+          </div>
+        </div>
         <button class="theme-toggle" @click="toggleTheme" :title="isDark ? t('nav.themeLight') : t('nav.themeDark')">
           <svg v-if="isDark" class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
             <circle cx="12" cy="12" r="5"/>
@@ -69,12 +92,22 @@
 
 <script setup>
 import { ref, onMounted, watch } from 'vue'
+import { useRouter } from 'vue-router'
 import { t, toggleLocale, locale } from '../utils/i18n'
 import AppIcon from './AppIcon.vue'
+import { currentProfile, loadSession, watchAuth, signOut } from '../utils/auth'
 
+const router = useRouter()
 const isDark = ref(false)
 const isSwitching = ref(false)
 const moreOpen = ref(false)
+const userOpen = ref(false)
+
+const doLogout = async () => {
+  await signOut()
+  userOpen.value = false
+  router.push('/home')
+}
 
 const toggleLanguage = () => {
   isSwitching.value = true
@@ -101,6 +134,8 @@ const toggleTheme = () => {
 }
 
 onMounted(() => {
+  loadSession()
+  watchAuth()
   const saved = localStorage.getItem('theme')
   if (saved) {
     isDark.value = saved === 'dark'
@@ -355,6 +390,77 @@ watch(isDark, (val) => {
 
 .more-menu {
   position: relative;
+}
+
+.user-menu {
+  position: relative;
+}
+
+.user-btn {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  background: none;
+  border: 1px solid #ddd;
+  cursor: pointer;
+  padding: 4px 10px;
+  border-radius: 20px;
+  color: #666;
+  font-size: 13px;
+  text-decoration: none;
+  transition: all 0.3s ease;
+}
+
+.user-login:hover {
+  background: #f0f9f4;
+  color: #42b983;
+  border-color: #42b983;
+  transform: translateY(-1px);
+  box-shadow: 0 2px 8px rgba(66, 185, 131, 0.2);
+}
+
+.user-avatar {
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  background: #42b983;
+  color: #fff;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 700;
+  font-size: 12px;
+}
+
+.user-name {
+  font-weight: 500;
+  max-width: 80px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.user-menu:hover .user-btn,
+.user-menu.open .user-btn {
+  background: #f0f9f4;
+  color: #42b983;
+  border-color: #42b983;
+}
+
+.dark .user-btn {
+  border-color: #2d2d44;
+  color: #aaa;
+}
+
+.dark .user-menu:hover .user-btn,
+.dark .user-menu.open .user-btn {
+  background: rgba(66, 185, 131, 0.15);
+  color: #42b983;
+  border-color: #42b983;
+}
+
+.user-menu .more-dropdown {
+  min-width: 140px;
 }
 
 .more-btn {
