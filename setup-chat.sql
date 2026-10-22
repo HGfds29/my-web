@@ -207,7 +207,7 @@ create policy "dm delete" on public.dm_messages for delete to authenticated
 alter table public.groups enable row level security;
 drop policy if exists "gr read" on public.groups;
 create policy "gr read" on public.groups for select to authenticated using (
-  public.is_group_member(id)
+  owner = auth.uid() or public.is_group_member(id)
 );
 drop policy if exists "gr insert" on public.groups;
 create policy "gr insert" on public.groups for insert to authenticated with check (owner = auth.uid());

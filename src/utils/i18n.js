@@ -248,6 +248,7 @@ const messages = {
     userNotFound: { zh: '未找到该用户', en: 'User not found' },
     requestSent: { zh: '好友请求已发送', en: 'Friend request sent' },
     groupInvalid: { zh: '请填写群名并选择成员', en: 'Enter name and select members' },
+    loginRequired: { zh: '登录状态已失效，请重新登录', en: 'Session expired, please sign in again' },
     banned: { zh: '你已被封禁', en: 'You are banned' },
     banReasonPh: { zh: '输入封禁原因（可留空）', en: 'Ban reason (optional)' },
     banDone: { zh: '已封禁', en: 'Banned' },

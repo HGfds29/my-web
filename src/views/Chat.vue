@@ -508,13 +508,15 @@ const rejectRequest = async (id) => {
 const createGroup = async () => {
   const name = groupName.value.trim()
   if (!name || !groupMembers.value.length) return showError(t('chat.groupInvalid'))
+  if (!myId.value) return showError(t('chat.loginRequired'))
   const { data: group, error } = await supabase.from('groups').insert({ name, owner: myId.value }).select().single()
   if (error) return showError(error.message)
   const members = [
     { group_id: group.id, user_id: myId.value, role: 'owner' },
     ...groupMembers.value.map((uid) => ({ group_id: group.id, user_id: uid, role: 'member' }))
   ]
-  await supabase.from('group_members').insert(members)
+  const { error: mErr } = await supabase.from('group_members').insert(members)
+  if (mErr) return showError(mErr.message)
   groups.value.push(group)
   openGroupModal.value = false
   groupName.value = ''; groupMembers.value = []
