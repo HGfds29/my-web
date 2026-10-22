@@ -77,6 +77,7 @@ import { useRouter } from 'vue-router'
 import { isLeaving } from '../router'
 import { t } from '../utils/i18n'
 import AppIcon from '../components/AppIcon.vue'
+import { showConfirm } from '../utils/modal'
 import photoConfig from '../data/photos.json'
 
 console.log('[Photos.vue] 组件初始化')
@@ -292,13 +293,19 @@ const toggleBoard = () => {
 
 const resetLayout = () => {
   console.log('[Photos/resetLayout] 重置布局')
-  if (!confirm(t('photos.confirmReset'))) return
-  console.log('[Photos/resetLayout] 用户确认重置')
-  document.cookie = `${COOKIE_KEY}=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/`
-  pinMode.value = false
-  showBoard.value = false
-  photos.value = initPhotos()
-  console.log('[Photos/resetLayout] 布局已重置')
+  // 用项目统一弹窗，避免原生 confirm 被浏览器扩展劫持后报错
+  showConfirm(t('photos.confirmReset'), {
+    title: t('photos.resetTitle'),
+    confirmText: t('photos.reset'),
+    cancelText: t('photos.cancel'),
+    onConfirm: () => {
+      document.cookie = `${COOKIE_KEY}=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/`
+      pinMode.value = false
+      showBoard.value = false
+      photos.value = initPhotos()
+      console.log('[Photos/resetLayout] 布局已重置')
+    }
+  })
 }
 
 const goBack = () => {

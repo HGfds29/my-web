@@ -24,7 +24,7 @@
     <div class="stagger-item section" :style="{ '--delay': '0.3s' }">
       <h2><AppIcon name="邮件安全_email-security" :size="20" />{{ t('about.contact') }}</h2>
 	  <p class="contact">{{ t('about.email') }}：3656754515@qq.com</p>
-      <p class="contact">{{ t('about.email') }}：qwe15925906016@qq.com</p>
+      <p class="contact">{{ t('about.email') }}：qwe15925906016@qq.com ({{ t('about.email1') }})</p>
     </div>
   </div>
 </template>
@@ -38,7 +38,7 @@ import AppIcon from '../components/AppIcon.vue'
 
 const router = useRouter()
 
-const skills = ['Vue 3', 'JavaScript', 'TypeScript', 'CSS', 'Vite', 'Node.js']
+const skills = ['Vue 3', 'JavaScript', 'TypeScript', 'CSS', 'Vite', 'Node.js', 'C++','C#','Python','Java','AI','SQL']
 const hobbies = ['about.hobby1', 'about.hobby2', 'about.hobby3']
 
 const goBack = () => {

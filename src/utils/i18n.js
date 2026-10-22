@@ -81,7 +81,8 @@ const messages = {
     hint: { zh: '💡 点击照片钉住/取消钉住，钉住的照片不能拖动', en: '💡 Click photo to pin/unpin. Pinned photos cannot be dragged.' },
     empty: { zh: '暂无照片', en: 'No photos yet' },
     emptyHint: { zh: '把照片放到 src/assets/photos/ 文件夹里就会自动显示啦', en: 'Put photos in the src/assets/photos/ folder and they will appear automatically' },
-    confirmReset: { zh: '确定要重置位置吗？所有照片会回到初始位置。', en: 'Reset all positions? All photos will return to their initial positions.' }
+    confirmReset: { zh: '确定要重置位置吗？所有照片会回到初始位置。', en: 'Reset all positions? All photos will return to their initial positions.' },
+    cancel: { zh: '取消', en: 'Cancel' }
   },
   about: {
     back: { zh: '← 返回首页', en: '← Back to Home' },
@@ -93,7 +94,8 @@ const messages = {
     hobby2: { zh: '听音乐', en: 'Music' },
     hobby3: { zh: '打游戏', en: 'Gaming' },
     contact: { zh: '联系方式', en: 'Contact' },
-    email: { zh: '邮箱', en: 'Email' }
+    email: { zh: '邮箱', en: 'Email' },
+    email1: { zh: '有时不会回复', en: 'May not reply promptly' }
   },
   games: {
     back: { zh: '← 返回首页', en: '← Back to Home' },

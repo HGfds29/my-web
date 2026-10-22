@@ -21,9 +21,9 @@
   <img src="https://img.shields.io/badge/Vue-3.5-4FC08D?logo=vuedotjs&logoColor=white" alt="Vue 3.5" />
   <img src="https://img.shields.io/badge/Vite-6-646CFF?logo=vite&logoColor=white" alt="Vite 6" />
   <img src="https://img.shields.io/badge/vue--router-4-42B883?logo=vuedotjs&logoColor=white" alt="vue-router 4" />
+  <img src="https://img.shields.io/badge/Supabase-Auth%20%2F%20DB%20%2F%20Realtime-3FCF8E?logo=supabase&logoColor=white" alt="Supabase" />
   <img src="https://img.shields.io/badge/Node-18%2B-339933?logo=nodedotjs&logoColor=white" alt="Node 18+" />
   <img src="https://img.shields.io/badge/i18n-ZH%20%2F%20EN-00A98F" alt="i18n ZH / EN" />
-  <img src="https://img.shields.io/badge/backend-none-8E8E93" alt="No backend" />
   <img src="https://img.shields.io/badge/license-MIT-blue" alt="MIT License" />
 </p>
 
@@ -47,10 +47,11 @@
 
 ## 中文 <span id="zh"></span>
 
-> 一个纯前端的个人网站：博客、照片墙、游戏笔记，外加几个自娱自乐的小东西。没有后端，所有内容都是仓库里的 JSON 和文件。
+> 个人网站 + 一个小型社区：博客、照片墙、游戏笔记由仓库里的 JSON 驱动；登录、实时聊天、好友与群组走 Supabase。没有自建后端。
 
 ### 目录
 
+- [预览](#预览)
 - [技术栈](#技术栈)
 - [功能特性](#功能特性)
 - [页面与路由](#页面与路由)
@@ -64,16 +65,39 @@
 - [项目数据](#项目数据)
 - [许可证](#许可证)
 
+### 预览
+
+<p align="center">
+  <img src="docs/screenshots/home-light.png" alt="首页（浅色模式）" width="880" />
+</p>
+
+| 首页 · 深色 | 博客列表 |
+| :---: | :---: |
+| <img src="docs/screenshots/home-dark.png" alt="首页（深色模式）" width="410" /> | <img src="docs/screenshots/blog-light.png" alt="博客列表" width="410" /> |
+
+| 登录 | 弹窗 · 深色 |
+| :---: | :---: |
+| <img src="docs/screenshots/login-light.png" alt="登录页" width="410" /> | <img src="docs/screenshots/demo-modal-dark.png" alt="弹窗（深色模式）" width="410" /> |
+
+| 游戏笔记 |
+| :---: |
+| <img src="docs/screenshots/games-light.png" alt="游戏笔记" width="410" /> |
+
+> [!NOTE]
+> 截图由无头浏览器在构建产物上实拍（1200×780，浅色与深色各取一版），不是设计稿。聊天页需要登录，故未收录。
+
 ### 技术栈
 
 | 类别 | 用了什么 | 说明 |
 | :--- | :--- | :--- |
 | 框架 | Vue 3.5 · Composition API · `<script setup>` | 不引状态库，靠组件内状态 + 单例模块共享 |
 | 构建 | Vite 6 | `base: '/my-web/'`，产物路径带前缀以适配 GitHub Pages |
-| 路由 | vue-router 4 · Hash 模式 | 静态托管不需要服务端重写规则 |
+| 路由 | vue-router 4 · Hash 模式 | 静态托管不需要服务端重写规则，带登录守卫 |
 | 样式 | 原生 CSS + `html.dark` | 组件内 scoped；跨组件的深色规则集中在 `global.css` |
 | 国际化 | 自研轻量 i18n | 中/英双语，支持 `t('a.b.c')` 与 `{n}` 插值 |
-| 数据 | 本地 JSON | `blog.json` / `games.json` / `photos.json`，改文件即改内容 |
+| 图标 | 59 个线性 SVG + `<AppIcon>` | 图标只当遮罩，颜色走 `currentColor` |
+| 后端 | Supabase | Auth 登录、Postgres（全部表开 RLS）、Realtime 实时订阅、Storage 存聊天图片 |
+| 内容数据 | 本地 JSON | `blog.json` / `games.json` / `photos.json`，改文件即改内容 |
 | 交互组件 | 自研弹窗与 Toast | 命令式调用，不依赖任何 UI 库 |
 
 ### 功能特性
@@ -83,6 +107,16 @@
 - ✨ 页面左右滑入 + Stagger 延迟动画（路由守卫控制方向与离场时机）
 - 🌗 深色 / 浅色主题，跟随系统偏好，选择持久化到 `localStorage`
 - 📱 响应式布局，移动端可用
+- 🖼️ 弹窗进退场动画：入场回弹、退场加速内缩，遮罩比卡片多留 60ms
+
+**💬 登录与聊天（Supabase）**
+
+- 🔐 邮箱注册 / 登录，支持重发确认邮件，会话持久化；`/chat` 有路由守卫，未登录会带 `redirect` 参数跳到登录页
+- ⚡ 公共聊天室：Realtime 订阅新消息，无需刷新
+- 👥 好友申请与私聊（`friendships` / `friend_requests` / `dm_messages`）
+- 🗂️ 群组与群消息（`groups` / `group_members` / `group_messages`）
+- 🚫 封禁名单（`bans`）、聊天图片上传（Storage bucket）
+- 🔒 9 张表全部启用 RLS 策略，权限在数据库层收敛
 
 **📚 内容**
 
@@ -98,6 +132,7 @@
 - ⌨️ 输入弹窗：必填、长度、正则校验，带字数计数器
 - ⏳ 加载弹窗：可取消、可显示百分比进度
 - 🔔 Toast 通知：队列管理、鼠标悬停**暂停计时**、7 种弹出位置
+- 🎯 图标：`<AppIcon name="游戏手柄_game-handle" :size="18" />`，颜色自动跟随所在位置
 
 **🌏 其他**
 
@@ -117,12 +152,15 @@
 | 🎮 游戏笔记 | `#/games` | 游戏列表（分页） |
 | 🕹️ 游戏详情 | `#/games/:id` | 单个游戏的介绍 |
 | 🧩 插件中心 | `#/plugins` | Renkt Shell 插件库与开发指南 |
+| 🔐 登录 | `#/login` | 邮箱注册 / 登录 |
+| 💬 聊天 | `#/chat` | **需登录**；公共聊天、好友私聊、群组 |
+| 🧪 弹窗测试 | `#/demo` | 逐个触发弹窗 / 输入框 / 加载 / Toast，检查动画与配色 |
 | 🖥️ Renkt Shell | `#/renkt` | 产品页，**本地专属**，文件不存在时自动不注册该路由 |
 | 🚩 英雄纪念 | `#/hero-memorial` | 隐藏导航栏，从彩蛋进入 |
 | 🚫 404 | 任意未匹配路径 | 友好提示 + 返回首页 |
 
 > [!NOTE]
-> 根路径 `/` 会重定向到 `/home`。路由的 `meta.index` 决定页面切换时的滑动方向。
+> 根路径 `/` 会重定向到 `/home`。路由的 `meta.index` 决定页面切换时的滑动方向；`meta.requiresAuth` 的页面会先被登录守卫拦截。
 
 ### 项目结构
 
@@ -130,18 +168,22 @@
 .
 ├── index.html                 # HTML 入口（含 hash 兜底）
 ├── vite.config.js             # base: '/my-web/'
-├── .gitignore
+├── setup-chat.sql             # 聊天系统建表脚本（9 张表 + RLS + Realtime + Storage，幂等可重复运行）
+├── .env.example               # Supabase 配置模板（复制为 .env.local）
+├── docs/screenshots/          # README 用的实拍截图
 ├── src/
 │   ├── main.js                # 入口：初始化广告拦截 → 挂载应用
 │   ├── App.vue                # 根组件：导航栏 + 路由出口 + 全局弹窗 / Toast
-│   ├── router/index.js        # 路由表 + 离场过渡守卫
-│   ├── views/                 # 11 个页面组件
-│   ├── components/            # 6 个组件（导航栏、3 个弹窗、Toast 容器、彩蛋旗帜）
+│   ├── router/index.js        # 路由表 + 登录守卫 + 离场过渡守卫
+│   ├── views/                 # 14 个页面组件
+│   ├── components/            # 7 个组件（AppIcon、导航栏、3 个弹窗、Toast 容器、彩蛋旗帜）
 │   ├── utils/
 │   │   ├── modal.js           # 命令式弹窗控制
 │   │   ├── toast.js           # Toast 队列控制
 │   │   ├── i18n.js            # 双语词条与 t() 实现
-│   │   └── adBlocker.js       # 广告拦截
+│   │   ├── adBlocker.js       # 广告拦截
+│   │   ├── supabase.js        # Supabase 客户端 + 数据访问
+│   │   └── auth.js            # 会话、注册、登录、登出、资料
 │   ├── data/                  # blog.json / games.json / photos.json
 │   └── assets/
 │       ├── css/global.css     # 全局样式 + 所有深色模式规则
@@ -149,9 +191,10 @@
 │       └── photos/            # 照片墙素材（目录需自建，放入图片即自动展示）
 ├── public/
 │   ├── favicon.ico
+│   ├── svg/                   # 59 个线性图标（AppIcon 的素材源）
 │   ├── desk-pet/              # 桌宠素材（约 15 MB，未入库）
 │   └── Renkt Shell/           # Renkt Shell 发行包（约 63 MB，未入库）
-└── dist/                      # 构建产物（已加入 .gitignore）
+└── dist/                      # 构建产物（主仓库不跟踪，内有独立 git 仓库用于发布）
 ```
 
 ### 架构与数据流
@@ -159,20 +202,24 @@
 ```mermaid
 flowchart TD
   A["main.js<br/>初始化广告拦截"] --> B["App.vue"]
-  B --> C["NavBar.vue<br/>导航 + 主题 + 语言"]
+  B --> C["NavBar.vue<br/>导航 + 主题 + 语言 + 登录态"]
   B --> D["router-view"]
-  B --> E["全局弹窗 ×3<br/>ToastContainer<br/>FlagEasterEgg"]
+  B --> E["全局弹窗 x3<br/>ToastContainer<br/>FlagEasterEgg"]
   D --> F["views/ 页面组件"]
   F --> G["utils/<br/>modal · toast · i18n"]
   F --> H["data/*.json"]
+  F --> S["utils/<br/>supabase · auth"]
+  S --> SB["Supabase<br/>Auth · Postgres(RLS)<br/>Realtime · Storage"]
   G --> E
 
   classDef core fill:#42b98330,stroke:#42b983,stroke-width:1px
   classDef page fill:#4FC08D24,stroke:#4FC08D,stroke-width:1px
   classDef util fill:#88888824,stroke:#888888,stroke-dasharray:4
+  classDef svc fill:#3FCF8E24,stroke:#3FCF8E,stroke-width:1px
   class B core
   class D,F page
   class G,H util
+  class S,SB svc
 ```
 
 ### 快速开始
@@ -181,9 +228,24 @@ flowchart TD
 
 ```bash
 npm install
-npm run dev        # 启动开发服务器
-npm run build      # 构建生产版本到 dist/
-npm run preview    # 本地预览构建结果
+cp .env.example .env.local     # 然后填入两个 Supabase 变量
+npm run dev                    # 启动开发服务器
+npm run build                  # 构建生产版本到 dist/
+npm run preview                # 本地预览构建结果
+```
+
+> [!IMPORTANT]
+> **登录和聊天需要先配置 Supabase**，否则这两块功能不可用（博客、照片墙、游戏笔记等 JSON 驱动的部分不受影响，可以正常运行）。
+
+配置三步：
+
+1. 在 [Supabase](https://supabase.com/) 建一个项目
+2. 打开 SQL Editor，整段执行根目录的 `setup-chat.sql`（幂等，重复跑也没事）
+3. 把 Project URL 和 publishable key 填进 `.env.local`：
+
+```dotenv
+VITE_SUPABASE_URL=https://xxxxxxxx.supabase.co
+VITE_SUPABASE_PUBLISHABLE_KEY=sb_publishable_xxxxxxxx
 ```
 
 > [!TIP]
@@ -199,15 +261,17 @@ npm run preview    # 本地预览构建结果
 线上有两份：GitHub Pages（`HGfds29.github.io/my-web`）和国内镜像（`qwe159259.3vkj.vip`）。
 
 > [!WARNING]
-> **`dist/` 已加入 `.gitignore`，不再纳入版本控制。** 如果之前是靠提交 `dist/` 让 Pages 生效的，现在需要换一种方式：
+> **`VITE_*` 变量会在构建时被内联进产物。** 所以构建机器上也必须有 `.env.local`（或在 CI 里注入同名环境变量）；不是在服务器上运行时再读。产物里能看到 publishable key 属正常现象 —— 它只是公开标识，真正的权限由数据库的 RLS 策略控制。
 
 | 方式 | 做法 |
 | :--- | :--- |
 | 发布到 `gh-pages` 分支 | `npm run build` 后把 `dist/` 内容推到 `gh-pages` 分支，并在仓库设置里把 Pages 源指向该分支 |
-| GitHub Actions | 在 workflow 里 `npm ci && npm run build`，再把 `dist/` 作为 Pages 产物发布 |
+| GitHub Actions | 在 workflow 里注入 `VITE_*` secrets，`npm ci && npm run build`，再把 `dist/` 作为 Pages 产物发布 |
 | 手动上传 | `npm run build` 后把 `dist/` 里的文件上传到虚拟主机 / 国内镜像 |
 
 `vite.config.js` 里的 `base` 必须与部署路径一致：部署在子路径（如 `/my-web/`）就保持 `'/my-web/'`；部署在域名根目录要改成 `'/'`。
+
+另外，`.gitignore` 现在**不再忽略** `dist/`；仓库里的 `dist/` 目前是一个嵌套的独立 git 仓库（`dist/.git`），用于单独发布构建产物，主仓库不会跟踪它里面的文件。
 
 ### 本地专属文件
 
@@ -221,10 +285,10 @@ npm run preview    # 本地预览构建结果
 
 | 路径 | 大小 | 说明 |
 | :--- | :--- | :--- |
+| `.env.local` | — | Supabase 的 URL 与 key，属于本地密钥，只提交 `.env.example` 模板 |
 | `src/views/RenktShell.vue` | — | Renkt Shell 产品页源码，仅本地保留 |
 | `public/Renkt Shell/` | ≈ 63 MB | 发行包，含 `Renkt-v1.2.5.zip` |
 | `public/desk-pet/` | ≈ 15 MB | 桌宠页面与素材 |
-| `dist/` | — | 构建产物 |
 | `node_modules/` | — | 依赖，用 `npm install` 还原 |
 
 关于 `RenktShell.vue`：路由**没有**用静态 `import` 引它，而是用 `import.meta.glob('../views/Renkt*.vue')` 动态解析。文件不存在时 `/renkt` 路由就不会注册，所以**别人 clone 后依然能正常构建**。相应地，插件中心里指向该页面的按钮在没有此文件时会跳到 404 页 —— 这是预期行为，不是 bug。
@@ -245,13 +309,47 @@ html.dark .game-item { border-color: #2d2d44 !important; }
 > [!IMPORTANT]
 > 原因：Vue 3.5 的 scoped 样式编译器会把 `:global(.dark) .game-item` 编译成 `.dark { ... }` —— **`:global()` 之后的后代选择器会被整段丢弃**，规则只命中挂在 `<html>` 上的类名，等于废代码。这个坑在本项目历史上踩过一次，导致整页深色模式失效。
 
+**两层 `<Transition>` 不要绑在同一个 `v-if` 上。** 入场时父元素先插入、子元素再挂载，所以内层动画能播；但退场时父元素是整体移除的，子元素「跟着走」，**内层 Transition 的退场钩子根本不会触发**。弹窗踩过这个坑，表现是「遮罩在淡出、卡片硬消失」：
+
+```css
+/* 正确：卡片的退场挂在遮罩的过渡类上 */
+.modal-overlay.modal-overlay-leave-active .modal-content {
+  transition: opacity 0.26s ease-in, transform 0.3s cubic-bezier(0.4, 0, 0.6, 1);
+}
+.modal-overlay.modal-overlay-leave-to .modal-content {
+  opacity: 0;
+  transform: scale(0.92) translateY(-14px);
+}
+```
+
+**图标统一用 `<AppIcon>`，不要用 `<img>` 直接引 SVG。** `<AppIcon>` 把 SVG 当遮罩、颜色交给 `currentColor`，所以图标会自动适配深色模式、悬停态和错误/警告的状态色；用 `<img>` 的话颜色是写死在文件里的。
+
 **其他约定**
 
 - 离场动画时长 `LEAVE_DURATION = 450`（在 `router/index.js`）必须与页面 CSS 动画时长一致，改一处要改另一处
-- 新增页面三步：在 `views/` 建组件 → 在 `router/index.js` 注册 → 给它一个 `meta.index`（决定滑动方向）
+- 新增页面三步：在 `views/` 建组件 → 在 `router/index.js` 注册 → 给它一个 `meta.index`（决定滑动方向）；需要登录再加 `meta.requiresAuth`
 - 深色配色参考值：背景 `#1a1a2e`、边框 `#2d2d44`、主色 `#42b983`、正文 `#e0e0e0`、次要文字 `#aaa`
+- 语义色：成功 `#4FC08D`、错误 `#e0524b`、警告 `#d9932b`
 
 ### 常见问题
+
+<details>
+<summary><b>登录或聊天不能用了？</b></summary>
+
+<br />
+
+按顺序检查三处：`.env.local` 是否存在且两个变量都有值 → `setup-chat.sql` 是否在同一个 Supabase 项目里执行过 → 浏览器控制台是否有 RLS 或 401 报错。改完 `.env.local` 必须重启 `npm run dev`（Vite 只在启动时读取环境变量）。
+
+</details>
+
+<details>
+<summary><b>构建后聊天请求全部失败？</b></summary>
+
+<br />
+
+`VITE_*` 是**构建时**内联的，不是运行时读取。检查构建机器上是否有 `.env.local`，或 CI 是否注入了同名变量。
+
+</details>
 
 <details>
 <summary><b>照片墙不显示我放进去的图片？</b></summary>
@@ -292,7 +390,7 @@ html.dark .game-item { border-color: #2d2d44 !important; }
 ### 项目数据
 
 <p align="center">
-  <img src="https://skillicons.dev/icons?i=vue,vite,js,css,html,nodejs,npm,git,github&theme=dark" alt="技术栈图标" />
+  <img src="https://skillicons.dev/icons?i=vue,vite,js,css,html,nodejs,npm,git,github,supabase&theme=dark" alt="技术栈图标" />
 </p>
 
 <p align="center">
@@ -340,10 +438,11 @@ MIT © 2026 [HGfds29](https://github.com/HGfds29)
 
 ## English <span id="en"></span>
 
-> A pure front-end personal website: blog, photo wall, game notes, plus a few small toys. No backend — all content lives in JSON files and assets inside this repo.
+> A personal site plus a small community: blog, photo wall and game notes are driven by JSON in the repo; sign-in, realtime chat, friends and groups run on Supabase. No self-hosted backend.
 
 ### Table of Contents
 
+- [Preview](#preview)
 - [Tech Stack](#tech-stack)
 - [Features](#features)
 - [Pages and Routes](#pages-and-routes)
@@ -357,16 +456,39 @@ MIT © 2026 [HGfds29](https://github.com/HGfds29)
 - [Project Metrics](#project-metrics)
 - [License](#license)
 
+### Preview
+
+<p align="center">
+  <img src="docs/screenshots/home-light.png" alt="Home (light)" width="880" />
+</p>
+
+| Home · dark | Blog list |
+| :---: | :---: |
+| <img src="docs/screenshots/home-dark.png" alt="Home (dark)" width="410" /> | <img src="docs/screenshots/blog-light.png" alt="Blog list" width="410" /> |
+
+| Game notes | Plugin hub · dark |
+| :---: | :---: |
+| <img src="docs/screenshots/games-light.png" alt="Game notes" width="410" /> | <img src="docs/screenshots/plugins-dark.png" alt="Plugin hub (dark)" width="410" /> |
+
+| Login | Dialog · dark |
+| :---: | :---: |
+| <img src="docs/screenshots/login-light.png" alt="Login page" width="410" /> | <img src="docs/screenshots/demo-modal-dark.png" alt="Dialog (dark)" width="410" /> |
+
+> [!NOTE]
+> Screenshots are real captures of the production build (1200×780, one per theme), not mockups. The chat page requires sign-in, so it is not included.
+
 ### Tech Stack
 
 | Category | What | Notes |
 | :--- | :--- | :--- |
 | Framework | Vue 3.5 · Composition API · `<script setup>` | No state library — component state plus singleton modules |
 | Build | Vite 6 | `base: '/my-web/'` so asset URLs work under a sub-path |
-| Router | vue-router 4 · Hash mode | Static hosting needs no server rewrite rules |
-| Styling | Plain CSS + `html.dark` | Scoped per component; all cross-component dark rules live in `global.css` |
-| i18n | Hand-rolled, lightweight | Chinese / English, supports `t('a.b.c')` and `{n}` interpolation |
-| Data | Local JSON | `blog.json` / `games.json` / `photos.json` — edit the file, change the site |
+| Router | vue-router 4 · Hash mode | Static hosting needs no rewrites; includes an auth guard |
+| Styling | Plain CSS + `html.dark` | Scoped per component; cross-component dark rules live in `global.css` |
+| i18n | Hand-rolled, lightweight | Chinese / English, `t('a.b.c')` plus `{n}` interpolation |
+| Icons | 59 line SVGs + `<AppIcon>` | SVGs are used only as a mask; colour comes from `currentColor` |
+| Backend | Supabase | Auth, Postgres with RLS on every table, Realtime subscriptions, Storage for chat images |
+| Content data | Local JSON | `blog.json` / `games.json` / `photos.json` — edit the file, change the site |
 | UI widgets | Hand-rolled modals & toasts | Imperative API, zero UI-library dependencies |
 
 ### Features
@@ -376,6 +498,16 @@ MIT © 2026 [HGfds29](https://github.com/HGfds29)
 - ✨ Direction-aware slide transitions with staggered entrance animations
 - 🌗 Dark / light theme that follows the system preference and persists to `localStorage`
 - 📱 Responsive and mobile friendly
+- 🖼️ Dialog motion: springy entrance, accelerating shrink on exit, overlay lingers 60 ms longer
+
+**💬 Auth and chat (Supabase)**
+
+- 🔐 Email sign-up / sign-in with resendable confirmation mail and a persisted session; `/chat` is guarded and redirects to `/login` with a `redirect` query
+- ⚡ Public room: new messages arrive over Realtime without a refresh
+- 👥 Friend requests and direct messages (`friendships` / `friend_requests` / `dm_messages`)
+- 🗂️ Groups and group messages (`groups` / `group_members` / `group_messages`)
+- 🚫 Ban list (`bans`) and chat image uploads (Storage bucket)
+- 🔒 Nine tables, all with row level security policies — authorisation lives in the database
 
 **📚 Content**
 
@@ -391,6 +523,7 @@ MIT © 2026 [HGfds29](https://github.com/HGfds29)
 - ⌨️ Prompt dialog with required / length / regex validation and a character counter
 - ⏳ Loading dialog that can be cancelled and can show percentage progress
 - 🔔 Toast notifications: queue management, **timer pause on hover**, 7 positions
+- 🎯 Icons: `<AppIcon name="游戏手柄_game-handle" :size="18" />` — colour follows its surroundings
 
 **🌏 Extras**
 
@@ -410,12 +543,15 @@ MIT © 2026 [HGfds29](https://github.com/HGfds29)
 | 🎮 Game notes | `#/games` | Paginated game list |
 | 🕹️ Game detail | `#/games/:id` | Single game write-up |
 | 🧩 Plugin hub | `#/plugins` | Renkt Shell plugin library and dev guide |
+| 🔐 Login | `#/login` | Email sign-up / sign-in |
+| 💬 Chat | `#/chat` | **Requires sign-in**; public room, DMs, groups |
+| 🧪 Playground | `#/demo` | Trigger every dialog / prompt / loader / toast to check motion and colour |
 | 🖥️ Renkt Shell | `#/renkt` | Product page, **local-only**; the route is skipped when the file is absent |
 | 🚩 Hero memorial | `#/hero-memorial` | Hides the nav bar; reached via the easter egg |
 | 🚫 404 | any unmatched path | Friendly message + back home |
 
 > [!NOTE]
-> `/` redirects to `/home`. A route's `meta.index` decides the slide direction during navigation.
+> `/` redirects to `/home`. A route's `meta.index` decides the slide direction; routes with `meta.requiresAuth` are intercepted by the auth guard first.
 
 ### Project Structure
 
@@ -423,18 +559,22 @@ MIT © 2026 [HGfds29](https://github.com/HGfds29)
 .
 ├── index.html                 # HTML shell (with a hash fallback)
 ├── vite.config.js             # base: '/my-web/'
-├── .gitignore
+├── setup-chat.sql             # Chat schema (9 tables + RLS + Realtime + Storage, idempotent)
+├── .env.example               # Supabase config template (copy to .env.local)
+├── docs/screenshots/          # Screenshots used by this README
 ├── src/
 │   ├── main.js                # Entry: init ad blocker → mount app
 │   ├── App.vue                # Root: nav bar + router outlet + global modals / toasts
-│   ├── router/index.js        # Route table + leave-transition guard
-│   ├── views/                 # 11 page components
-│   ├── components/            # 6 components (nav bar, 3 modals, toast container, flag egg)
+│   ├── router/index.js        # Route table + auth guard + leave-transition guard
+│   ├── views/                 # 14 page components
+│   ├── components/            # 7 components (AppIcon, nav bar, 3 modals, toast container, flag egg)
 │   ├── utils/
 │   │   ├── modal.js           # Imperative dialog control
 │   │   ├── toast.js           # Toast queue control
 │   │   ├── i18n.js            # Bilingual dictionary and t()
-│   │   └── adBlocker.js       # Ad blocker
+│   │   ├── adBlocker.js       # Ad blocker
+│   │   ├── supabase.js        # Supabase client + data access
+│   │   └── auth.js            # Session, sign-up, sign-in, sign-out, profile
 │   ├── data/                  # blog.json / games.json / photos.json
 │   └── assets/
 │       ├── css/global.css     # Global styles + every dark-mode rule
@@ -442,9 +582,10 @@ MIT © 2026 [HGfds29](https://github.com/HGfds29)
 │       └── photos/            # Photo wall assets (create the folder, then drop files in)
 ├── public/
 │   ├── favicon.ico
+│   ├── svg/                   # 59 line icons (the source assets for AppIcon)
 │   ├── desk-pet/              # Desk-pet assets (~15 MB, not committed)
 │   └── Renkt Shell/           # Renkt Shell release (~63 MB, not committed)
-└── dist/                      # Build output (git-ignored)
+└── dist/                      # Build output (not tracked by the main repo; holds its own git repo for publishing)
 ```
 
 ### Architecture
@@ -452,20 +593,24 @@ MIT © 2026 [HGfds29](https://github.com/HGfds29)
 ```mermaid
 flowchart TD
   A["main.js<br/>init ad blocker"] --> B["App.vue"]
-  B --> C["NavBar.vue<br/>nav + theme + locale"]
+  B --> C["NavBar.vue<br/>nav + theme + locale + session"]
   B --> D["router-view"]
   B --> E["Global modals x3<br/>ToastContainer<br/>FlagEasterEgg"]
   D --> F["views/ pages"]
   F --> G["utils/<br/>modal · toast · i18n"]
   F --> H["data/*.json"]
+  F --> S["utils/<br/>supabase · auth"]
+  S --> SB["Supabase<br/>Auth · Postgres(RLS)<br/>Realtime · Storage"]
   G --> E
 
   classDef core fill:#42b98330,stroke:#42b983,stroke-width:1px
   classDef page fill:#4FC08D24,stroke:#4FC08D,stroke-width:1px
   classDef util fill:#88888824,stroke:#888888,stroke-dasharray:4
+  classDef svc fill:#3FCF8E24,stroke:#3FCF8E,stroke-width:1px
   class B core
   class D,F page
   class G,H util
+  class S,SB svc
 ```
 
 ### Quick Start
@@ -474,9 +619,24 @@ Requires Node.js 18+ (20 or newer recommended).
 
 ```bash
 npm install
-npm run dev        # Start the dev server
-npm run build      # Build for production into dist/
-npm run preview    # Preview the production build locally
+cp .env.example .env.local     # then fill in the two Supabase values
+npm run dev                    # start the dev server
+npm run build                  # build for production into dist/
+npm run preview                # preview the production build locally
+```
+
+> [!IMPORTANT]
+> **Auth and chat need Supabase configured**, otherwise those two features are unavailable (everything JSON-driven — blog, photo wall, game notes — works without it).
+
+Three steps:
+
+1. Create a project on [Supabase](https://supabase.com/)
+2. Open the SQL editor and run the whole `setup-chat.sql` from the repo root (idempotent, safe to re-run)
+3. Put the project URL and publishable key into `.env.local`:
+
+```dotenv
+VITE_SUPABASE_URL=https://xxxxxxxx.supabase.co
+VITE_SUPABASE_PUBLISHABLE_KEY=sb_publishable_xxxxxxxx
 ```
 
 > [!TIP]
@@ -492,15 +652,17 @@ npm run preview    # Preview the production build locally
 There are two live copies: GitHub Pages (`HGfds29.github.io/my-web`) and a China mirror (`qwe159259.3vkj.vip`).
 
 > [!WARNING]
-> **`dist/` is git-ignored and no longer tracked.** If Pages previously worked by committing `dist/`, switch to one of these:
+> **`VITE_*` variables are inlined at build time.** The build machine therefore needs `.env.local` too (or the same variables injected as CI secrets) — they are not read at runtime by the server. Seeing the publishable key inside the bundle is expected: it is only a public identifier, and authorisation is enforced by the database's RLS policies.
 
 | Approach | How |
 | :--- | :--- |
 | Publish to a `gh-pages` branch | `npm run build`, push the contents of `dist/` to `gh-pages`, point Pages at that branch |
-| GitHub Actions | `npm ci && npm run build` in a workflow, then publish `dist/` as the Pages artifact |
+| GitHub Actions | Inject `VITE_*` secrets in the workflow, `npm ci && npm run build`, then publish `dist/` as the Pages artifact |
 | Manual upload | `npm run build`, then upload the contents of `dist/` to your host / mirror |
 
 The `base` value in `vite.config.js` must match the deploy path: keep `'/my-web/'` for a sub-path, change it to `'/'` for a domain root.
+
+Note that `.gitignore` currently does **not** ignore `dist/`; the `dist/` in this repo is its own nested git repository (`dist/.git`) used to publish the build output separately, and the main repo does not track its contents.
 
 ### Local-only Files
 
@@ -514,10 +676,10 @@ The `base` value in `vite.config.js` must match the deploy path: keep `'/my-web/
 
 | Path | Size | Notes |
 | :--- | :--- | :--- |
+| `.env.local` | — | Supabase URL and key — local secrets; only the `.env.example` template is committed |
 | `src/views/RenktShell.vue` | — | Renkt Shell product page source, kept local |
 | `public/Renkt Shell/` | ≈ 63 MB | Release bundle including `Renkt-v1.2.5.zip` |
 | `public/desk-pet/` | ≈ 15 MB | Desk-pet page and assets |
-| `dist/` | — | Build output |
 | `node_modules/` | — | Dependencies, restored by `npm install` |
 
 About `RenktShell.vue`: the router does **not** statically import it. It resolves the view with `import.meta.glob('../views/Renkt*.vue')`, so when the file is missing the `/renkt` route is simply not registered and **a fresh clone still builds successfully**. Consequently, the button in the plugin hub that points at that page lands on the 404 page when the file is absent — expected, not a bug.
@@ -538,13 +700,47 @@ html.dark .game-item { border-color: #2d2d44 !important; }
 > [!IMPORTANT]
 > Why: the Vue 3.5 scoped-style compiler turns `:global(.dark) .game-item` into `.dark { ... }` — **everything after `:global()` is dropped**, so the rule only matches the class on `<html>` and does nothing. This project hit that trap once, which silently broke an entire page's dark mode.
 
+**Never bind two nested `<Transition>`s to the same `v-if`.** On enter the parent element is inserted first and the child mounts inside it, so the inner animation plays; on leave the parent is removed as a whole, the child goes with it, and **the inner Transition's leave hook never fires**. The dialogs hit exactly this — the overlay faded out while the card vanished instantly:
+
+```css
+/* Correct: drive the card's exit from the overlay's transition classes */
+.modal-overlay.modal-overlay-leave-active .modal-content {
+  transition: opacity 0.26s ease-in, transform 0.3s cubic-bezier(0.4, 0, 0.6, 1);
+}
+.modal-overlay.modal-overlay-leave-to .modal-content {
+  opacity: 0;
+  transform: scale(0.92) translateY(-14px);
+}
+```
+
+**Always use `<AppIcon>` instead of an `<img>` pointing at an SVG.** `<AppIcon>` treats the SVG as a mask and takes the colour from `currentColor`, so icons adapt to dark mode, hover states and error/warning state colours automatically; with `<img>` the colour is baked into the file.
+
 **Other conventions**
 
 - `LEAVE_DURATION = 450` in `router/index.js` must match the page CSS animation duration — change both together
-- Adding a page takes three steps: create the component in `views/`, register it in `router/index.js`, give it a `meta.index` (which drives the slide direction)
+- Adding a page takes three steps: create the component in `views/`, register it in `router/index.js`, give it a `meta.index` (which drives the slide direction); add `meta.requiresAuth` if it needs a session
 - Dark palette reference: background `#1a1a2e`, border `#2d2d44`, accent `#42b983`, text `#e0e0e0`, muted `#aaa`
+- Semantic colours: success `#4FC08D`, error `#e0524b`, warning `#d9932b`
 
 ### FAQ
+
+<details>
+<summary><b>Sign-in or chat stopped working</b></summary>
+
+<br />
+
+Check three things in order: does `.env.local` exist with both variables set → has `setup-chat.sql` been run against the same Supabase project → is the browser console showing RLS or 401 errors. After editing `.env.local` you must restart `npm run dev` (Vite only reads env vars at startup).
+
+</details>
+
+<details>
+<summary><b>Every chat request fails after building</b></summary>
+
+<br />
+
+`VITE_*` variables are inlined **at build time**, not read at runtime. Check that the build machine has `.env.local`, or that CI injects the same variables.
+
+</details>
 
 <details>
 <summary><b>My images do not show up on the photo wall</b></summary>
@@ -585,7 +781,7 @@ See "Local-only files" above: without `RenktShell.vue` the `/renkt` route is not
 ### Project Metrics
 
 <p align="center">
-  <img src="https://skillicons.dev/icons?i=vue,vite,js,css,html,nodejs,npm,git,github&theme=dark" alt="Tech stack icons" />
+  <img src="https://skillicons.dev/icons?i=vue,vite,js,css,html,nodejs,npm,git,github,supabase&theme=dark" alt="Tech stack icons" />
 </p>
 
 <p align="center">
