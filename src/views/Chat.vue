@@ -1,8 +1,11 @@
 <template>
   <div class="chat-page" :class="{ leaving: isLeaving }">
     <div class="chat-container stagger-item" :style="{ '--delay': '0.05s' }">
+      <!-- 移动端遮罩 -->
+      <div v-if="sidebarOpen" class="sidebar-mask" @click="sidebarOpen = false"></div>
+
       <!-- 侧边栏 -->
-      <aside class="sidebar">
+      <aside class="sidebar" :class="{ open: sidebarOpen }">
         <div class="profile-bar">
           <div class="avatar">{{ (currentProfile?.username || '?').slice(0, 1).toUpperCase() }}</div>
           <div class="user-info">
@@ -68,6 +71,11 @@
       <!-- 主区 -->
       <main class="main">
         <div class="main-head">
+          <button class="menu-btn" @click="sidebarOpen = true" aria-label="menu">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+              <path d="M3 6h18M3 12h18M3 18h18" />
+            </svg>
+          </button>
           <h2>{{ viewTitle }}</h2>
           <div class="head-actions">
             <button v-if="view.type === 'group' && (myGroupRole === 'owner' || myGroupRole === 'admin' || isAdmin)" class="mini-btn" @click="openGroupManage">{{ t('chat.manageMembers') }}</button>
@@ -629,11 +637,12 @@ onBeforeUnmount(() => {
 </script>
 
 <style scoped>
-.chat-page { min-height: calc(100vh - 60px); padding: 16px; font-family: Avenir, Helvetica, Arial, sans-serif; color: #2c3e50; }
+.chat-page { min-height: calc(100vh - 60px); min-height: calc(100dvh - 60px); padding: 16px; font-family: Avenir, Helvetica, Arial, sans-serif; color: #2c3e50; }
 
 .chat-container {
   display: flex;
   height: calc(100vh - 92px);
+  height: calc(100dvh - 92px);
   max-width: 1100px;
   margin: 0 auto;
   background: #fff;
@@ -765,6 +774,8 @@ onBeforeUnmount(() => {
 }
 .icon-btn:hover, .icon-btn.active { border-color: #42b983; color: #42b983; background: #f0f9f4; }
 .hidden-file { display: none; }
+.menu-btn { display: none; }
+.sidebar-mask { display: none; }
 
 .emoji-panel {
   position: absolute; bottom: 64px; left: 12px; display: grid; grid-template-columns: repeat(10, 1fr); gap: 2px;
@@ -839,4 +850,68 @@ html.dark .admin-name { color: #ddd; }
 html.dark .role-tag.owner { background: rgba(230,126,34,0.15); }
 html.dark .role-tag.admin { background: rgba(74,127,214,0.15); }
 html.dark .role-tag.banned { background: rgba(224,85,85,0.15); }
+
+html.dark .menu-btn { border-color: #2d2d44; color: #ccc; }
+
+/* ============ 移动端适配 ============ */
+@media (max-width: 768px) {
+  .chat-page { min-height: 0; height: calc(100vh - 60px); height: calc(100dvh - 60px); padding: 0; }
+  .chat-container {
+    height: 100%;
+    max-width: none;
+    border-radius: 0;
+    border-left: none;
+    border-right: none;
+    position: relative;
+  }
+
+  .menu-btn {
+    display: inline-flex; align-items: center; justify-content: center;
+    width: 34px; height: 34px; flex-shrink: 0;
+    background: none; border: 1px solid #ddd; border-radius: 8px; color: #666; cursor: pointer;
+  }
+
+  .main-head { align-items: center; gap: 8px; padding: 10px 12px; }
+  .main-head h2 { flex: 1; font-size: 16px; }
+  .conv-hint { display: none; }
+  .head-actions { gap: 6px; }
+
+  .sidebar {
+    position: absolute; top: 0; bottom: 0; left: 0;
+    width: 82%; max-width: 320px; z-index: 30;
+    transform: translateX(-100%);
+    transition: transform 0.25s ease;
+    box-shadow: 0 0 24px rgba(0, 0, 0, 0.18);
+  }
+  .sidebar.open { transform: translateX(0); }
+  .sidebar-mask {
+    display: block; position: absolute; inset: 0;
+    background: rgba(0, 0, 0, 0.35); z-index: 25;
+  }
+  .nav-item { padding: 12px 14px; }
+  .nav-section { overflow-y: visible; }
+
+  .msg-list { padding: 12px; gap: 10px; }
+  .bubble { max-width: 85%; }
+  .msg-img { max-width: 60vw; max-height: 60vw; }
+  .act-btn { padding: 6px; }
+
+  .input-row {
+    padding: 8px;
+    padding-bottom: calc(8px + env(safe-area-inset-bottom));
+    gap: 6px;
+  }
+  .msg-input { font-size: 16px; padding: 8px 10px; min-width: 0; }
+  .send-btn { padding: 8px 14px; }
+  .icon-btn { padding: 6px; }
+
+  .emoji-panel {
+    left: 8px; right: 8px; bottom: 60px;
+    grid-template-columns: repeat(8, 1fr);
+    max-height: 45vh; max-height: 45dvh; overflow-y: auto;
+  }
+  .modal-mask { padding: 12px; }
+  .modal-card { max-height: 85vh; max-height: 85dvh; padding: 18px; }
+  .modal-card.wide { max-width: 100%; }
+}
 </style>
