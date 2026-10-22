@@ -90,7 +90,10 @@
                 <button class="act-btn" :title="t('chat.copy')" @click="copyMsg(msg)">
                   <AppIcon name="复制_copy" :size="13" />
                 </button>
-                <button v-if="(isMine(msg) && canRecall(msg)) || canManageMsg(msg)" class="act-btn" :title="t('chat.recall')" @click="recallMsg(msg)">
+                <button v-if="isMine(msg) && canRecall(msg)" class="act-btn" :title="t('chat.recall')" @click="recallMsg(msg)">
+                  <AppIcon name="撤回_recall" :size="13" />
+                </button>
+                <button v-else-if="canManageMsg(msg)" class="act-btn" :title="t('chat.adminDelete')" @click="recallMsg(msg)">
                   <AppIcon name="撤回_recall" :size="13" />
                 </button>
               </div>
@@ -211,16 +214,18 @@ import { useRouter } from 'vue-router'
 import { isLeaving } from '../router'
 import { t } from '../utils/i18n'
 import { supabase, chatClientId } from '../utils/supabase'
-import { currentProfile, signOut, loadProfile } from '../utils/auth'
+import { currentUser, currentProfile, signOut, loadProfile } from '../utils/auth'
 import { showError, showSuccess } from '../utils/modal'
 import AppIcon from '../components/AppIcon.vue'
 
 const router = useRouter()
 
-const myId = computed(() => currentProfile.value?.id)
+// 身份以登录用户为准（刷新后立即可用），不依赖资料是否加载完成
+const myId = computed(() => currentUser.value?.id || currentProfile.value?.id)
 const isAdmin = computed(() => !!currentProfile.value?.is_admin)
 
 const view = ref({ type: 'public' })
+const sidebarOpen = ref(false)
 const messages = ref([])
 const friends = ref([])
 const groups = ref([])
@@ -263,7 +268,11 @@ const viewTitle = computed(() => {
 })
 
 const isMine = (msg) => {
-  if (view.value.type === 'public') return msg.client_id === chatClientId || ownIds.has(msg.id)
+  // 公共聊天室优先按账号判断；老消息没有 user_id 时回退到浏览器标识
+  if (view.value.type === 'public') {
+    if (msg.user_id) return msg.user_id === myId.value
+    return msg.client_id === chatClientId || ownIds.has(msg.id)
+  }
   if (view.value.type === 'dm') return msg.from_user === myId.value
   if (view.value.type === 'group') return msg.user_id === myId.value
   return false
@@ -299,6 +308,7 @@ const removeMessage = (id) => {
 }
 
 const switchView = (v) => {
+  sidebarOpen.value = false
   view.value = v
   messages.value = []
   seenIds.clear()
@@ -352,7 +362,7 @@ const send = async () => {
   try {
     if (view.value.type === 'public') {
       const { data, error } = await supabase.from('messages')
-        .insert({ username: currentProfile.value?.username, content, client_id: chatClientId })
+        .insert({ username: currentProfile.value?.username, content, client_id: chatClientId, user_id: myId.value })
         .select().single()
       if (error) throw error
       ownIds.add(data.id); addMessage(data)
@@ -396,7 +406,7 @@ const onFilePick = async (e) => {
     let row
     if (view.value.type === 'public') {
       const { data, error } = await supabase.from('messages')
-        .insert({ username: currentProfile.value?.username, content: '', image_url, client_id: chatClientId })
+        .insert({ username: currentProfile.value?.username, content: '', image_url, client_id: chatClientId, user_id: myId.value })
         .select().single()
       if (error) throw error; row = data
     } else if (view.value.type === 'dm') {
@@ -429,8 +439,10 @@ const recallMsg = async (msg) => {
   if (view.value.type === 'public') q = supabase.from('messages').delete().eq('id', msg.id)
   else if (view.value.type === 'dm') q = supabase.from('dm_messages').delete().eq('id', msg.id)
   else q = supabase.from('group_messages').delete().eq('id', msg.id)
-  const { error } = await q
+  // 回查被删除的行，RLS 拒绝时不要假装成功
+  const { data, error } = await q.select('id')
   if (error) { showError(`${t('chat.recallError')}: ${error.message}`); return }
+  if (!data?.length) { showError(t('chat.recallDenied')); return }
   removeMessage(msg.id)
 }
 

@@ -222,6 +222,8 @@ const messages = {
     copyFailed: { zh: '复制失败', en: 'Copy failed' },
     recall: { zh: '撤回', en: 'Recall' },
     recallError: { zh: '撤回失败', en: 'Recall failed' },
+    recallDenied: { zh: '没有权限撤回这条消息', en: 'You cannot recall this message' },
+    adminDelete: { zh: '管理员删除', en: 'Delete (admin)' },
     imageTypeError: { zh: '只能上传图片文件', en: 'Only image files are allowed' },
     imageSizeError: { zh: '图片不能超过 5MB', en: 'Image must be under 5MB' },
     imageUploadError: { zh: '图片上传失败', en: 'Image upload failed' },

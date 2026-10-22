@@ -33,7 +33,9 @@ async function fetchProfile(user) {
 }
 
 export async function loadSession() {
-  const { data: { user } } = await supabase.auth.getUser()
+  // 用本地会话恢复登录态，避免 getUser() 依赖网络导致刷新后掉登录
+  const { data: { session } } = await supabase.auth.getSession()
+  const user = session?.user || null
   currentUser.value = user
   if (!user) {
     currentProfile.value = null

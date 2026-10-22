@@ -37,6 +37,7 @@ alter table public.messages add column if not exists username text not null defa
 alter table public.messages add column if not exists content text not null default '';
 alter table public.messages add column if not exists image_url text;
 alter table public.messages add column if not exists client_id uuid;
+alter table public.messages add column if not exists user_id uuid;
 alter table public.messages alter column username drop default;
 alter table public.messages alter column content drop default;
 
@@ -112,6 +113,39 @@ create table if not exists public.bans (
 
 -- ============ 第二阶段：RLS 策略（所有表已存在，避免前向引用） ============
 
+-- 用 SECURITY DEFINER 函数做归属判断，绕过 RLS，避免策略自引用导致递归（42P17）
+create or replace function public.is_group_member(gid uuid)
+returns boolean language sql security definer stable set search_path = public as $$
+  select exists (
+    select 1 from public.group_members
+    where group_id = gid and user_id = auth.uid()
+  );
+$$;
+
+create or replace function public.is_group_owner(gid uuid)
+returns boolean language sql security definer stable set search_path = public as $$
+  select exists (
+    select 1 from public.groups
+    where id = gid and owner = auth.uid()
+  );
+$$;
+
+create or replace function public.is_group_admin(gid uuid)
+returns boolean language sql security definer stable set search_path = public as $$
+  select exists (
+    select 1 from public.group_members
+    where group_id = gid and user_id = auth.uid() and role in ('owner', 'admin')
+  );
+$$;
+
+create or replace function public.is_app_admin()
+returns boolean language sql security definer stable set search_path = public as $$
+  select exists (
+    select 1 from public.profiles
+    where id = auth.uid() and is_admin = true
+  );
+$$;
+
 alter table public.profiles enable row level security;
 drop policy if exists "profiles read" on public.profiles;
 create policy "profiles read" on public.profiles for select to authenticated using (true);
@@ -127,10 +161,15 @@ drop policy if exists "chat delete" on public.messages;
 alter table public.messages enable row level security;
 create policy "chat read" on public.messages for select to anon, authenticated using (true);
 create policy "chat insert" on public.messages for insert to anon, authenticated with check (
-  char_length(username) between 1 and 12 and char_length(coalesce(content,'')) between 0 and 200
+  char_length(username) between 1 and 12
+  and char_length(coalesce(content,'')) between 0 and 200
+  and (user_id is null or user_id = auth.uid())
 );
 create policy "chat delete" on public.messages for delete to anon, authenticated
-  using (client_id = (current_setting('request.headers', true)::jsonb->>'x-client-id')::uuid
+  using (user_id = auth.uid()
+         or (client_id is not null
+             and client_id = (current_setting('request.headers', true)::jsonb->>'x-client-id')::uuid
+             and user_id is null)
          or exists (select 1 from public.profiles p where p.id = auth.uid() and p.is_admin = true));
 
 alter table public.friend_requests enable row level security;
@@ -168,7 +207,7 @@ create policy "dm delete" on public.dm_messages for delete to authenticated
 alter table public.groups enable row level security;
 drop policy if exists "gr read" on public.groups;
 create policy "gr read" on public.groups for select to authenticated using (
-  exists (select 1 from public.group_members gm where gm.group_id = groups.id and gm.user_id = auth.uid())
+  public.is_group_member(id)
 );
 drop policy if exists "gr insert" on public.groups;
 create policy "gr insert" on public.groups for insert to authenticated with check (owner = auth.uid());
@@ -176,57 +215,40 @@ create policy "gr insert" on public.groups for insert to authenticated with chec
 alter table public.group_members enable row level security;
 drop policy if exists "gm read" on public.group_members;
 create policy "gm read" on public.group_members for select to authenticated using (
-  user_id = auth.uid() or exists (
-    select 1 from public.group_members gm2
-    where gm2.group_id = group_members.group_id and gm2.user_id = auth.uid()
-  )
+  user_id = auth.uid() or public.is_group_member(group_id)
 );
 drop policy if exists "gm insert" on public.group_members;
 create policy "gm insert" on public.group_members for insert to authenticated with check (
-  user_id = auth.uid() or exists (
-    select 1 from public.groups g where g.id = group_members.group_id and g.owner = auth.uid()
-  )
+  user_id = auth.uid() or public.is_group_owner(group_id)
 );
 -- 群主可修改成员角色（任命/撤销管理员）
 drop policy if exists "gm update" on public.group_members;
 create policy "gm update" on public.group_members for update to authenticated using (
-  exists (select 1 from public.groups g where g.id = group_members.group_id and g.owner = auth.uid())
-  or exists (select 1 from public.profiles p where p.id = auth.uid() and p.is_admin = true)
+  public.is_group_owner(group_id) or public.is_app_admin()
 );
 -- 群主/管理员可踢人（不能踢群主自己）
 drop policy if exists "gm delete" on public.group_members;
 create policy "gm delete" on public.group_members for delete to authenticated using (
-  exists (select 1 from public.profiles p where p.id = auth.uid() and p.is_admin = true)
-  or exists (
-    select 1 from public.groups g
-    where g.id = group_members.group_id and g.owner = auth.uid()
-  )
-  or exists (
-    select 1 from public.group_members gm2
-    where gm2.group_id = group_members.group_id
-      and gm2.user_id = auth.uid() and gm2.role = 'admin'
-  )
+  public.is_app_admin()
+  or public.is_group_owner(group_id)
+  or (public.is_group_admin(group_id) and role <> 'owner')
 );
 
 alter table public.group_messages enable row level security;
 drop policy if exists "gmess read" on public.group_messages;
 create policy "gmess read" on public.group_messages for select to authenticated using (
-  exists (select 1 from public.group_members gm where gm.group_id = group_messages.group_id and gm.user_id = auth.uid())
+  public.is_group_member(group_id)
 );
 drop policy if exists "gmess insert" on public.group_messages;
 create policy "gmess insert" on public.group_messages for insert to authenticated with check (
-  exists (select 1 from public.group_members gm where gm.group_id = group_messages.group_id and gm.user_id = auth.uid())
+  user_id = auth.uid() and public.is_group_member(group_id)
 );
 drop policy if exists "gmess delete" on public.group_messages;
 create policy "gmess delete" on public.group_messages for delete to authenticated using (
   (user_id = auth.uid()
    and client_id = (current_setting('request.headers', true)::jsonb->>'x-client-id')::uuid)
-  or exists (select 1 from public.profiles p where p.id = auth.uid() and p.is_admin = true)
-  or exists (
-    select 1 from public.group_members gm
-    where gm.group_id = group_messages.group_id
-      and gm.user_id = auth.uid() and gm.role in ('owner','admin')
-  )
+  or public.is_app_admin()
+  or public.is_group_admin(group_id)
 );
 
 -- 封禁表：管理员可增删，用户只能看自己是否被封
