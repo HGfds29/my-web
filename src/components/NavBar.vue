@@ -160,7 +160,14 @@ watch(isDark, (val) => {
   background: #fff;
   border-bottom: 1px solid #eee;
   z-index: 1000;
-  transition: background 0.3s, border-color 0.3s;
+  will-change: transform;
+  transition: background 0.3s, border-color 0.3s,
+    transform 0.55s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+/* 登录页：顶栏向上滑出隐藏 */
+.navbar.nav-hidden {
+  transform: translateY(-100%);
 }
 
 .dark .navbar {

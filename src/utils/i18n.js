@@ -289,7 +289,17 @@ const messages = {
     confirmSent: { zh: '确认邮件已发送到 {email}，请点击邮件中的链接完成注册后再登录。', en: 'Confirmation email sent to {email}. Click the link in the email, then log in.' },
     resend: { zh: '重新发送确认邮件', en: 'Resend confirmation email' },
     resending: { zh: '发送中...', en: 'Sending...' },
-    resendDone: { zh: '确认邮件已重新发送', en: 'Confirmation email resent' }
+    resendDone: { zh: '确认邮件已重新发送', en: 'Confirmation email resent' },
+    visualTitle: { zh: '实时聊天室', en: 'Live Chat Room' },
+    visualDesc: { zh: '登录后即可与好友实时聊天，离线消息也不会丢。', en: 'Sign in to chat with friends in real time. Offline messages are kept.' },
+    featureRealtime: { zh: '实时同步', en: 'Real-time' },
+    featureRealtimeDesc: { zh: '消息秒达，无需刷新', en: 'Instant delivery, no refresh' },
+    featureGroup: { zh: '群聊与好友', en: 'Groups & friends' },
+    featureGroupDesc: { zh: '建群、加好友、私聊', en: 'Groups, friends, direct messages' },
+    featureImage: { zh: '图片分享', en: 'Image sharing' },
+    featureImageDesc: { zh: '上传即看，支持复制', en: 'Upload, preview and copy' },
+    featureSecurity: { zh: '消息安全', en: 'Message safety' },
+    featureSecurityDesc: { zh: '分级权限，可撤回', en: 'Tiered roles, recallable' }
   },
   modal: {
     titleError: { zh: '错误', en: 'Error' },

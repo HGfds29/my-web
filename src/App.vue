@@ -1,6 +1,6 @@
 <template>
-  <NavBar v-if="!hideNav" />
-  <div class="page-wrapper" :class="{ 'no-nav': hideNav }">
+  <NavBar v-if="!hideNav" :class="{ 'nav-hidden': isLogin && navReady }" />
+  <div class="page-wrapper" :class="{ 'no-nav': hideNav || isLogin }">
     <router-view />
   </div>
   <FlagEasterEgg />
@@ -57,7 +57,7 @@
 </template>
 
 <script setup>
-import { computed } from 'vue'
+import { computed, onMounted, ref } from 'vue'
 import { useRoute } from 'vue-router'
 import NavBar from './components/NavBar.vue'
 import FlagEasterEgg from './components/FlagEasterEgg.vue'
@@ -83,6 +83,15 @@ import {
 
 const route = useRoute()
 const hideNav = computed(() => !!route.meta.hideNav)
+const isLogin = computed(() => route.name === 'Login')
+
+// 首屏直接进入登录页时，让顶栏先完成一帧绘制再向上滑出，保证动画可见
+const navReady = ref(false)
+onMounted(() => {
+  requestAnimationFrame(() => {
+    requestAnimationFrame(() => { navReady.value = true })
+  })
+})
 </script>
 
 <style>
