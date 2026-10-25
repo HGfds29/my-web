@@ -42,6 +42,7 @@
           <div v-if="mode === 'signup'" class="field">
             <label>{{ t('login.username') }}</label>
             <input v-model="form.username" maxlength="12" required :placeholder="t('login.usernamePh')" />
+            <p class="field-hint">{{ t('login.usernameHint') }}</p>
           </div>
           <div class="field">
             <label>{{ t('login.email') }}</label>
@@ -49,7 +50,14 @@
           </div>
           <div class="field">
             <label>{{ t('login.password') }}</label>
-            <input v-model="form.password" type="password" :minlength="6" required :placeholder="t('login.passwordPh')" />
+            <input
+              v-model="form.password"
+              type="password"
+              :minlength="6"
+              required
+              :placeholder="mode === 'signup' ? t('login.passwordPhSignup') : t('login.passwordPh')"
+            />
+            <p v-if="mode === 'signup'" class="field-hint">{{ t('login.passwordHint') }}</p>
           </div>
           <button type="submit" class="submit-btn" :disabled="loading">
             {{ loading ? t('login.loading') : (mode === 'login' ? t('login.login') : t('login.signup')) }}
@@ -76,7 +84,7 @@ import { ref, reactive, onMounted, onBeforeUnmount } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import { isLeaving } from '../router'
 import { t } from '../utils/i18n'
-import { signIn, signUp, resendConfirm } from '../utils/auth'
+import { signIn, signUp, resendConfirm, isUsernameTaken } from '../utils/auth'
 import { showError, showSuccess } from '../utils/modal'
 import AppIcon from '../components/AppIcon.vue'
 import chatImage from '../assets/QQ20261024-010930.png'
@@ -157,6 +165,9 @@ const form = reactive({ email: '', password: '', username: '' })
 const pendingEmail = ref('')
 const resending = ref(false)
 
+/* 注册密码复杂度：至少 6 位，含大写、小写与数字 */
+const PASSWORD_RE = /^(?=.*[A-Z])(?=.*[a-z])(?=.*\d).{6,}$/
+
 const toggleMode = () => {
   mode.value = mode.value === 'login' ? 'signup' : 'login'
 }
@@ -192,6 +203,15 @@ const submit = async () => {
     } else {
       if (!form.username.trim()) {
         showError(t('login.usernameRequired'))
+        return
+      }
+      if (!PASSWORD_RE.test(form.password)) {
+        showError(t('login.passwordWeak'))
+        return
+      }
+      const taken = await isUsernameTaken(form.username)
+      if (taken === true) {
+        showError(t('login.usernameTaken'))
         return
       }
       const { data, error } = await signUp({ email: form.email, password: form.password, username: form.username.trim() })
@@ -519,6 +539,17 @@ h1 {
 .field input:focus {
   border-color: #42b983;
   box-shadow: 0 0 0 3px rgba(66, 185, 131, 0.15);
+}
+
+.field-hint {
+  margin: 0;
+  font-size: 11px;
+  line-height: 1.4;
+  color: #9a9aa5;
+}
+
+html.dark .field-hint {
+  color: #8a8a9a;
 }
 
 .submit-btn {

@@ -85,6 +85,7 @@
 
 > [!NOTE]
 > 截图由无头浏览器在构建产物上实拍（1200×780，浅色与深色各取一版），不是设计稿。聊天页需要登录，故未收录。
+> 界面改动后一条命令即可重拍：`node plugins/screenshots.mjs`（自动构建 → 起临时静态服务 → 无头浏览器逐页截图）。
 
 ### 技术栈
 
@@ -171,6 +172,9 @@
 ├── setup-chat.sql             # 聊天系统建表脚本（9 张表 + RLS + Realtime + Storage，幂等可重复运行）
 ├── .env.example               # Supabase 配置模板（复制为 .env.local）
 ├── docs/screenshots/          # README 用的实拍截图
+├── plugins/
+│   ├── terminalPretty.js      # Vite 插件：把构建 / 开发 / 失败的终端输出画成方框
+│   └── screenshots.mjs        # 构建 + 起服务 + 无头浏览器，一条命令重拍全部截图
 ├── src/
 │   ├── main.js                # 入口：初始化广告拦截 → 挂载应用
 │   ├── App.vue                # 根组件：导航栏 + 路由出口 + 全局弹窗 / Toast
@@ -230,7 +234,9 @@ flowchart TD
 npm install
 cp .env.example .env.local     # 然后填入两个 Supabase 变量
 npm run dev                    # 启动开发服务器
-npm run build                  # 构建生产版本到 dist/
+npm run build                  # 构建生产版本到 dist/（不生成 sourcemap，约 631 kB）
+npm run build -- --sourcemap   # 需要调试时：额外生成 sourcemap（约 2.9 MB）
+npm run build:map              # 同上，等价的简写
 npm run preview                # 本地预览构建结果
 ```
 
@@ -387,6 +393,26 @@ html.dark .game-item { border-color: #2d2d44 !important; }
 
 </details>
 
+<details>
+<summary><b>为什么 <code>npm run build -map</code> 打不开 sourcemap？</b></summary>
+
+<br />
+
+因为参数到不了 Vite：
+
+1. npm 把单横杠参数按短选项拆分，`-map` 变成 `-m -a -p` 并被 npm 自己消费（实测脚本只收到 `build`）；
+2. 就算用 `npm run build -- -map` 硬传到 Vite，Vite 的 CLI（cac）也会因为不认识该参数直接抛 `Unknown option '-a'`。
+
+所以要用 Vite 原生的 `--sourcemap`：
+
+```bash
+npm run build -- --sourcemap   # 或等价的 npm run build:map
+```
+
+默认构建不生成 sourcemap（约 631 kB），开启后约 2.9 MB —— 单是 `.map` 就 2.28 MB。
+
+</details>
+
 ### 项目数据
 
 <p align="center">
@@ -476,6 +502,7 @@ MIT © 2026 [HGfds29](https://github.com/HGfds29)
 
 > [!NOTE]
 > Screenshots are real captures of the production build (1200×780, one per theme), not mockups. The chat page requires sign-in, so it is not included.
+> After UI changes, regenerate them all with one command: `node plugins/screenshots.mjs` (builds → serves → captures via a headless browser).
 
 ### Tech Stack
 
@@ -562,6 +589,9 @@ MIT © 2026 [HGfds29](https://github.com/HGfds29)
 ├── setup-chat.sql             # Chat schema (9 tables + RLS + Realtime + Storage, idempotent)
 ├── .env.example               # Supabase config template (copy to .env.local)
 ├── docs/screenshots/          # Screenshots used by this README
+├── plugins/
+│   ├── terminalPretty.js      # Vite plugin: boxed terminal output for build / dev / failure
+│   └── screenshots.mjs        # Build + serve + headless browser, regenerates every screenshot
 ├── src/
 │   ├── main.js                # Entry: init ad blocker → mount app
 │   ├── App.vue                # Root: nav bar + router outlet + global modals / toasts
@@ -621,7 +651,9 @@ Requires Node.js 18+ (20 or newer recommended).
 npm install
 cp .env.example .env.local     # then fill in the two Supabase values
 npm run dev                    # start the dev server
-npm run build                  # build for production into dist/
+npm run build                  # build into dist/ (no sourcemap, ~631 kB)
+npm run build -- --sourcemap   # debugging: also emit sourcemaps (~2.9 MB)
+npm run build:map              # same thing, shorter alias
 npm run preview                # preview the production build locally
 ```
 
@@ -775,6 +807,26 @@ Positions are stored in a cookie (`photo_album_pos`). With many photos the paylo
 <br />
 
 See "Local-only files" above: without `RenktShell.vue` the `/renkt` route is not registered. Expected behaviour.
+
+</details>
+
+<details>
+<summary><b>Why doesn't <code>npm run build -map</code> enable sourcemaps?</b></summary>
+
+<br />
+
+Because the flag never reaches Vite:
+
+1. npm parses single-dash arguments as clusters of short options, so `-map` becomes `-m -a -p` and is consumed by npm itself (the script only receives `build`);
+2. even forcing it through with `npm run build -- -map`, Vite's CLI (cac) rejects the unknown option with `Unknown option '-a'`.
+
+Use Vite's native flag instead:
+
+```bash
+npm run build -- --sourcemap   # or the equivalent npm run build:map
+```
+
+A default build emits no sourcemaps (~631 kB); with them it is ~2.9 MB, of which the `.map` file alone is 2.28 MB.
 
 </details>
 

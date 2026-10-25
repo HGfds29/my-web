@@ -51,8 +51,22 @@ function normalizeError(error) {
     error.message = '网络连接失败，请检查网络后重试'
   } else if (/email not confirmed/i.test(error.message)) {
     error.message = '邮箱未确认，请先到邮箱点击确认链接后再登录'
+  } else if (/duplicate key|database error saving new user/i.test(error.message)) {
+    error.message = '该用户名已被占用，请换一个'
   }
   return error
+}
+
+// 注册前预查用户名是否已被占用；接口不可用时返回 null 表示跳过预检
+export async function isUsernameTaken(username) {
+  const name = (username || '').trim()
+  if (!name) return false
+  const { data, error } = await supabase.rpc('username_taken', { name })
+  if (error) {
+    console.warn('[auth] 用户名重复校验失败，跳过预检', error)
+    return null
+  }
+  return data === true
 }
 
 export async function signUp({ email, password, username }) {

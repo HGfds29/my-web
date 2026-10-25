@@ -12,6 +12,7 @@ import HeroMemorial from '../views/HeroMemorial.vue'
 import NotFound from '../views/NotFound.vue'
 import ModalDemo from '../views/ModalDemo.vue'
 import Chat from '../views/Chat.vue'
+import Discussion from '../views/Discussion.vue'
 import Login from '../views/Login.vue'
 import { loadSession, currentUser } from '../utils/auth'
 
@@ -115,6 +116,12 @@ const routes = [
     name: 'Login',
     component: Login,
     meta: { index: 12 }
+  },
+  {
+    path: '/discussion',
+    name: 'Discussion',
+    component: Discussion,
+    meta: { index: 13 }
   },
   {
     path: '/:pathMatch(.*)*',

@@ -300,3 +300,18 @@ create policy "chat images upload" on storage.objects
 drop policy if exists "chat images read" on storage.objects;
 create policy "chat images read" on storage.objects
   for select to anon, authenticated using (bucket_id = 'chat-images');
+
+-- ============ 第四阶段：注册前用户名查重 ============
+-- profiles 的读策略只对 authenticated 开放，未登录时无法直接查询。
+-- 这里提供一个 SECURITY DEFINER 的只读函数，允许匿名用户判断用户名是否已存在。
+create or replace function public.username_taken(name text)
+returns boolean
+language sql
+security definer
+stable
+set search_path = public
+as $$
+  select exists (select 1 from public.profiles where lower(username) = lower(trim(name)));
+$$;
+
+grant execute on function public.username_taken(text) to anon, authenticated;

@@ -37,6 +37,10 @@
                 <AppIcon name="沟通_communication" :size="16" />
                 <span>{{ t('nav.menuChat') }}</span>
               </router-link>
+              <router-link to="/discussion" class="more-item" active-class="active" @click="moreOpen = false">
+                <AppIcon name="评论_comments" :size="16" />
+                <span>{{ t('nav.menuDiscussion') }}</span>
+              </router-link>
             </div>
           </div>
         </div>
@@ -46,8 +50,14 @@
           </span>
           <span class="lang-text">{{ t('nav.switchLang') }}</span>
         </button>
-        <div class="user-menu" :class="{ open: userOpen }" @mouseenter="userOpen = true" @mouseleave="userOpen = false">
-          <button v-if="currentProfile" class="user-btn" @click="userOpen = !userOpen">
+        <div ref="userMenuRef" class="user-menu" :class="{ open: userOpen }">
+          <button
+            v-if="currentProfile"
+            class="user-btn"
+            aria-haspopup="true"
+            :aria-expanded="userOpen"
+            @click.stop="userOpen = !userOpen"
+          >
             <span class="user-avatar">{{ (currentProfile.username || '?').slice(0, 1).toUpperCase() }}</span>
             <span class="user-name">{{ currentProfile.username }}</span>
             <svg class="more-arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
@@ -58,12 +68,37 @@
             <AppIcon name="用户_user" :size="16" />
             <span>{{ t('nav.login') }}</span>
           </router-link>
-          <div v-if="currentProfile" class="more-dropdown">
-            <router-link to="/chat" class="more-item" @click="userOpen = false">
+
+          <div v-if="currentProfile" class="user-card">
+            <div class="user-card-head">
+              <span class="user-card-avatar">{{ (currentProfile.username || '?').slice(0, 1).toUpperCase() }}</span>
+              <div class="user-card-info">
+                <p class="user-card-name">
+                  {{ currentProfile.username }}
+                  <span v-if="isAdmin" class="role-badge">{{ t('nav.adminBadge') }}</span>
+                </p>
+                <p class="user-card-email">{{ currentUser?.email || '' }}</p>
+              </div>
+            </div>
+            <div class="user-card-divider"></div>
+            <router-link to="/chat" class="user-card-item" @click="userOpen = false">
               <AppIcon name="沟通_communication" :size="16" />
               <span>{{ t('nav.menuChat') }}</span>
             </router-link>
-            <button class="more-item" @click="doLogout">
+            <router-link to="/discussion" class="user-card-item" @click="userOpen = false">
+              <AppIcon name="评论_comments" :size="16" />
+              <span>{{ t('nav.menuDiscussion') }}</span>
+            </router-link>
+            <button class="user-card-item" @click="changePassword">
+              <AppIcon name="设置_setting" :size="16" />
+              <span>{{ t('nav.changePassword') }}</span>
+            </button>
+            <button class="user-card-item" @click="copyUserId">
+              <AppIcon name="复制_copy" :size="16" />
+              <span>{{ t('nav.copyId') }}</span>
+            </button>
+            <div class="user-card-divider"></div>
+            <button class="user-card-item danger" @click="doLogout">
               <AppIcon name="退出_exit" :size="16" />
               <span>{{ t('nav.logout') }}</span>
             </button>
@@ -91,22 +126,71 @@
 </template>
 
 <script setup>
-import { ref, onMounted, watch } from 'vue'
+import { computed, ref, onMounted, onUnmounted, watch } from 'vue'
 import { useRouter } from 'vue-router'
 import { t, toggleLocale, locale } from '../utils/i18n'
 import AppIcon from './AppIcon.vue'
-import { currentProfile, loadSession, watchAuth, signOut } from '../utils/auth'
+import { currentUser, currentProfile, loadSession, watchAuth, signOut } from '../utils/auth'
+import { supabase } from '../utils/supabase'
+import { showPrompt, showError, showSuccess } from '../utils/modal'
 
 const router = useRouter()
 const isDark = ref(false)
 const isSwitching = ref(false)
 const moreOpen = ref(false)
 const userOpen = ref(false)
+const userMenuRef = ref(null)
+
+const isAdmin = computed(() => currentProfile.value?.is_admin === true)
+
+const closeUserMenu = (event) => {
+  if (userOpen.value && userMenuRef.value && !userMenuRef.value.contains(event.target)) {
+    userOpen.value = false
+  }
+}
+
+const onKeydown = (event) => {
+  if (event.key === 'Escape') userOpen.value = false
+}
 
 const doLogout = async () => {
   await signOut()
   userOpen.value = false
   router.push('/home')
+}
+
+/* 修改密码：与注册使用同一套复杂度规则 */
+const PASSWORD_RE = /^(?=.*[A-Z])(?=.*[a-z])(?=.*\d).{6,}$/
+
+const changePassword = () => {
+  userOpen.value = false
+  showPrompt({
+    title: t('nav.changePassword'),
+    message: t('nav.passwordRule'),
+    placeholder: t('nav.newPasswordPh'),
+    inputType: 'password',
+    pattern: PASSWORD_RE,
+    patternError: t('nav.passwordRule'),
+    confirmText: t('nav.save'),
+    cancelText: t('nav.cancel'),
+    onConfirm: async (value) => {
+      const { error } = await supabase.auth.updateUser({ password: value })
+      if (error) return showError(error.message)
+      showSuccess(t('nav.passwordChanged'))
+    }
+  })
+}
+
+const copyUserId = async () => {
+  userOpen.value = false
+  const id = currentUser.value?.id
+  if (!id) return
+  try {
+    await navigator.clipboard.writeText(id)
+    showSuccess(t('nav.idCopied'))
+  } catch {
+    showError(t('nav.copyFailed'))
+  }
 }
 
 const toggleLanguage = () => {
@@ -136,6 +220,8 @@ const toggleTheme = () => {
 onMounted(() => {
   loadSession()
   watchAuth()
+  document.addEventListener('click', closeUserMenu)
+  document.addEventListener('keydown', onKeydown)
   const saved = localStorage.getItem('theme')
   if (saved) {
     isDark.value = saved === 'dark'
@@ -143,6 +229,11 @@ onMounted(() => {
     isDark.value = window.matchMedia('(prefers-color-scheme: dark)').matches
   }
   applyTheme(isDark.value)
+})
+
+onUnmounted(() => {
+  document.removeEventListener('click', closeUserMenu)
+  document.removeEventListener('keydown', onKeydown)
 })
 
 watch(isDark, (val) => {
@@ -466,8 +557,172 @@ watch(isDark, (val) => {
   border-color: #42b983;
 }
 
-.user-menu .more-dropdown {
-  min-width: 140px;
+.user-menu .more-arrow {
+  transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+.user-menu.open .more-arrow {
+  transform: rotate(180deg);
+}
+
+/* ---------- 用户 Hover Card ---------- */
+.user-card {
+  position: absolute;
+  top: calc(100% + 12px);
+  right: 0;
+  width: 268px;
+  padding: 8px;
+  background: #fff;
+  border: 1px solid #eee;
+  border-radius: 14px;
+  box-shadow: 0 18px 44px rgba(0, 0, 0, 0.14);
+  opacity: 0;
+  visibility: hidden;
+  transform: translateY(-8px) scale(0.97);
+  transform-origin: top right;
+  pointer-events: none;
+  transition: opacity 0.22s ease, transform 0.26s cubic-bezier(0.34, 1.56, 0.64, 1),
+    visibility 0.22s;
+  z-index: 1002;
+}
+
+.user-menu.open .user-card {
+  opacity: 1;
+  visibility: visible;
+  transform: translateY(0) scale(1);
+  pointer-events: auto;
+}
+
+.user-card-head {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 10px 14px;
+}
+
+.user-card-avatar {
+  width: 42px;
+  height: 42px;
+  flex-shrink: 0;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #42b983, #2fa572);
+  color: #fff;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 700;
+  font-size: 17px;
+  box-shadow: 0 4px 12px rgba(66, 185, 131, 0.28);
+}
+
+.user-card-info {
+  min-width: 0;
+}
+
+.user-card-name {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin: 0;
+  font-size: 14px;
+  font-weight: 600;
+  color: #2c3e50;
+  white-space: nowrap;
+}
+
+.role-badge {
+  padding: 1px 6px;
+  border-radius: 10px;
+  background: rgba(66, 185, 131, 0.15);
+  color: #42b983;
+  font-size: 10px;
+  font-weight: 600;
+}
+
+.user-card-email {
+  margin: 3px 0 0;
+  font-size: 12px;
+  color: #999;
+  max-width: 180px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.user-card-divider {
+  height: 1px;
+  margin: 4px 8px;
+  background: #f0f0f0;
+}
+
+.user-card-item {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  width: 100%;
+  padding: 9px 10px;
+  border: none;
+  border-radius: 8px;
+  background: none;
+  color: #555;
+  font-size: 13px;
+  font-family: inherit;
+  text-align: left;
+  text-decoration: none;
+  cursor: pointer;
+  transition: background 0.18s, color 0.18s;
+}
+
+.user-card-item:hover {
+  background: #f0f9f4;
+  color: #42b983;
+}
+
+.user-card-item.danger {
+  color: #e05a5a;
+}
+
+.user-card-item.danger:hover {
+  background: rgba(224, 90, 90, 0.1);
+  color: #d24b4b;
+}
+
+.dark .user-card {
+  background: #1a1a2e;
+  border-color: #252540;
+  box-shadow: 0 18px 44px rgba(0, 0, 0, 0.5);
+}
+
+.dark .user-card-name {
+  color: #e8e8e8;
+}
+
+.dark .user-card-divider {
+  background: #252540;
+}
+
+.dark .user-card-item {
+  color: #bbb;
+}
+
+.dark .user-card-item:hover {
+  background: rgba(66, 185, 131, 0.15);
+  color: #42b983;
+}
+
+.dark .user-card-item.danger {
+  color: #e05a5a;
+}
+
+.dark .user-card-item.danger:hover {
+  background: rgba(224, 90, 90, 0.16);
+  color: #ff7b7b;
+}
+
+@media (max-width: 480px) {
+  .user-card {
+    width: 240px;
+  }
 }
 
 .more-btn {

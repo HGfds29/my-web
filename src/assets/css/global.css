@@ -590,3 +590,130 @@ html.dark .demo-page .demo-btn.danger:hover {
 html.dark .demo-page .note {
   color: #888 !important;
 }
+
+/* 讨论区深色模式 */
+html.dark .discussion-page {
+  color: #e0e0e0 !important;
+}
+
+html.dark .discussion-page .page-header h1,
+html.dark .discussion-page .article h2,
+html.dark .discussion-page .post-card h3 {
+  color: #f0f0f0 !important;
+}
+
+html.dark .discussion-page .post-card,
+html.dark .discussion-page .editor-form,
+html.dark .discussion-page .login-hint {
+  background: #1a1a2e !important;
+  border-color: #2d2d44 !important;
+}
+
+html.dark .discussion-page .post-card:hover {
+  border-color: #42b983 !important;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.35) !important;
+}
+
+html.dark .discussion-page .excerpt,
+html.dark .discussion-page .comments .hint,
+html.dark .discussion-page .login-hint p {
+  color: #999 !important;
+}
+
+html.dark .discussion-page .meta,
+html.dark .discussion-page .comment-head {
+  color: #888 !important;
+}
+
+html.dark .discussion-page .comment-head .name {
+  color: #ddd !important;
+}
+
+html.dark .discussion-page .article,
+html.dark .discussion-page .comment-item,
+html.dark .discussion-page .footer {
+  border-color: #2d2d44 !important;
+}
+
+html.dark .discussion-page .footer {
+  color: #888 !important;
+}
+
+html.dark .discussion-page .editor-form input,
+html.dark .discussion-page .editor-form textarea,
+html.dark .discussion-page .comment-form textarea {
+  background: #131322 !important;
+  border-color: #2d2d44 !important;
+  color: #e0e0e0 !important;
+}
+
+html.dark .discussion-page .details-block {
+  background: #142a20 !important;
+  border-left-color: #42b983 !important;
+}
+
+html.dark .discussion-page .details {
+  color: #aaa !important;
+}
+
+html.dark .discussion-page .search-bar input,
+html.dark .discussion-page .page-btn {
+  background: #131322 !important;
+  border-color: #2d2d44 !important;
+  color: #ccc !important;
+}
+
+html.dark .discussion-page .page-btn:hover:not(:disabled) {
+  border-color: #42b983 !important;
+  color: #42b983 !important;
+}
+
+html.dark .discussion-page .page-btn.active {
+  background: #42b983 !important;
+  border-color: #42b983 !important;
+  color: #fff !important;
+}
+
+html.dark .discussion-page .tag {
+  color: #42b983 !important;
+}
+
+html.dark .discussion-page .reply-banner {
+  background: rgba(66, 185, 131, 0.12) !important;
+}
+
+html.dark .discussion-page .comment-item.reply-item {
+  border-left-color: #2d2d44 !important;
+}
+
+html.dark .discussion-page .cover,
+html.dark .discussion-page .cover-thumb {
+  border-color: #2d2d44 !important;
+}
+
+html.dark .discussion-page .image-preview img,
+html.dark .discussion-page .comment-image {
+  border-color: #2d2d44 !important;
+}
+
+html.dark .discussion-page .trash-confirm {
+  background: #1b1b2b;
+  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.5);
+}
+
+html.dark .discussion-page .trash-action.cancel {
+  color: #9aa0b0;
+  border-left-color: #2d2d44;
+}
+
+html.dark .discussion-page .trash-action.cancel:hover {
+  background: rgba(255, 255, 255, 0.07);
+  color: #d8d8e4;
+}
+
+html.dark .discussion-page .trash-btn:hover,
+html.dark .discussion-page .trash-wrap.open .trash-btn {
+  color: #ff6b6b;
+  background: rgba(255, 107, 107, 0.12);
+}
+

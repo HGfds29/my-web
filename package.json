@@ -1,10 +1,11 @@
 {
-  "name": "vue3_cli_default",
-  "version": "0.0.0",
+  "name": "my-web",
+  "version": "2.2.7-beta",
   "type": "module",
   "scripts": {
     "dev": "vite",
     "build": "vite build",
+    "build:map": "vite build --sourcemap",
     "preview": "vite preview"
   },
   "dependencies": {
