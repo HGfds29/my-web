@@ -59,25 +59,28 @@ import { computed, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { isLeaving } from '../router'
 import { t } from '../utils/i18n'
+import { createLogger } from '../utils/logger'
 import blogList from '../data/blog.json'
 
-console.log('[Home.vue] 组件初始化')
+const log = createLogger('Home')
+// 模块初始化：首页展示个人介绍入口、最新文章预览与开源信息
+log.info('首页模块已初始化：个人介绍入口、最新文章预览与开源信息')
 
 const router = useRouter()
 
 const latestPosts = computed(() => {
   const posts = [...blogList].sort((a, b) => new Date(b.date) - new Date(a.date)).slice(0, 3)
-  console.log('[Home/latestPosts] 最新文章:', posts.map(p => p.title))
+  log.debug('最新文章计算完成', { count: posts.length, ids: posts.map(p => p.id) })
   return posts
 })
 
 const goToPost = (id) => {
-  console.log('[Home/goToPost] 跳转到文章 ID:', id)
+  log.info('打开文章详情', { id })
   router.push(`/blog/${id}`)
 }
 
 onMounted(() => {
-  console.log('[Home/onMounted] 首页已加载完成')
+  log.info('Home 页面已加载', { latest: latestPosts.value.length })
 })
 </script>
 
@@ -143,7 +146,7 @@ onMounted(() => {
 .btn {
   display: inline-block;
   padding: 10px 24px;
-  background: #42b983;
+  background: var(--accent, #42b983);
   color: white;
   text-decoration: none;
   border-radius: 6px;
@@ -157,8 +160,8 @@ onMounted(() => {
 
 .btn-ghost {
   background: transparent;
-  color: #42b983;
-  border: 1px solid #42b983;
+  color: var(--accent, #42b983);
+  border: 1px solid var(--accent, #42b983);
 }
 
 .btn-ghost:hover {
@@ -173,7 +176,7 @@ onMounted(() => {
   font-size: 22px;
   margin-bottom: 20px;
   padding-bottom: 8px;
-  border-bottom: 2px solid #42b983;
+  border-bottom: 2px solid var(--accent, #42b983);
   display: inline-block;
 }
 
@@ -208,14 +211,14 @@ onMounted(() => {
 }
 
 .read-more {
-  color: #42b983;
+  color: var(--accent, #42b983);
   font-size: 13px;
 }
 
 .view-all {
   display: inline-block;
   margin-top: 16px;
-  color: #42b983;
+  color: var(--accent, #42b983);
   text-decoration: none;
   font-size: 14px;
 }
@@ -239,7 +242,7 @@ onMounted(() => {
 .tag {
   padding: 6px 14px;
   background: #f0f9f4;
-  color: #42b983;
+  color: var(--accent, #42b983);
   border-radius: 4px;
   font-size: 13px;
 }

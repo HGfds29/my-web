@@ -7,15 +7,27 @@
 </template>
 
 <script setup>
+import { onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { isLeaving } from '../router'
 import { t } from '../utils/i18n'
+import { createLogger } from '../utils/logger'
+
+const log = createLogger('NotFound')
+// 模块初始化：404 页提示未知路由并提供返回首页入口
+log.info('404 模块已初始化：提示未知路由并提供返回首页入口')
 
 const router = useRouter()
 
 const goHome = () => {
+  log.info('从 404 页返回首页')
   router.push('/')
 }
+
+onMounted(() => {
+  log.warn('访问了未知路由', { path: window.location.hash || '#/' })
+  log.info('NotFound 页面已加载')
+})
 </script>
 
 <style scoped>
@@ -76,8 +88,8 @@ const goHome = () => {
 .home-btn {
   margin-top: 32px;
   background: none;
-  border: 1px solid #42b983;
-  color: #42b983;
+  border: 1px solid var(--accent, #42b983);
+  color: var(--accent, #42b983);
   padding: 10px 28px;
   border-radius: 4px;
   cursor: pointer;

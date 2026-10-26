@@ -1,6 +1,12 @@
 import { ref } from 'vue'
+import { createLogger } from './logger'
 
-console.log('[toast.js] Toast 控制模块初始化')
+const log = createLogger('toast')
+
+const VALID_TYPES = ['info', 'success', 'warning', 'error', 'loading']
+const VALID_POSITIONS = ['top-right', 'top-left', 'top-center', 'bottom-right', 'bottom-left', 'bottom-center', 'center']
+
+log.info('Toast 控制模块初始化')
 
 const toasts = ref([])
 const position = ref('top-right')
@@ -18,6 +24,7 @@ const removeToast = (id) => {
   clearTimeout(timers.get(id))
   timers.delete(id)
   paused.delete(id)
+  log.debug('移除 Toast', { id, found: idx !== -1 })
 }
 
 const scheduleAutoDismiss = (item) => {
@@ -56,7 +63,17 @@ const pushToast = (options) => {
     _startTime: Date.now()
   }
 
-  console.log(`[toast/pushToast] 显示Toast，id=${id}, type=${type}`)
+  if (!VALID_TYPES.includes(type)) {
+    log.warn(`未知 Toast 类型：${type}，按原值渲染`)
+  }
+
+  log.info(`入队 Toast：id=${id}`, {
+    type,
+    duration,
+    titleLength: String(title || '').length,
+    messageLength: String(message || '').length,
+    clickable: typeof onClick === 'function'
+  })
 
   toasts.value.push(item)
   scheduleAutoDismiss(item)
@@ -64,13 +81,13 @@ const pushToast = (options) => {
 }
 
 const dismiss = (id) => {
-  console.log(`[toast/dismiss] 移除Toast，id=${id}`)
+  log.debug('关闭 Toast', { id })
   const item = toasts.value.find((t) => t.id === id)
   if (item && typeof item.onClose === 'function') {
     try {
       item.onClose()
     } catch (e) {
-      console.error('[toast/dismiss] onClose 回调出错:', e)
+      log.error('Toast onClose 回调出错', e)
     }
   }
   removeToast(id)
@@ -84,7 +101,7 @@ const pauseTimer = (id) => {
   item._remaining = Math.max(0, item._remaining - elapsed)
   clearTimeout(timers.get(id))
   timers.delete(id)
-  console.log(`[toast/pauseTimer] 暂停Toast，id=${id}, 剩余=${item._remaining}ms`)
+  log.debug('暂停 Toast 计时', { id, remaining: item._remaining })
 }
 
 const resumeTimer = (id) => {
@@ -100,11 +117,11 @@ const resumeTimer = (id) => {
     }
   }, remaining)
   timers.set(id, timer)
-  console.log(`[toast/resumeTimer] 恢复Toast，id=${id}, 剩余=${remaining}ms`)
+  log.debug('恢复 Toast 计时', { id, remaining })
 }
 
 const clearAll = () => {
-  console.log('[toast/clearAll] 清除所有Toast')
+  log.debug('清除所有 Toast', { count: toasts.value.length })
   toasts.value = []
   timers.forEach((t) => clearTimeout(t))
   timers.clear()
@@ -118,10 +135,11 @@ const toastError = (message, opts = {}) => pushToast({ ...opts, type: 'error', m
 const toastLoading = (message, opts = {}) => pushToast({ ...opts, type: 'loading', message, duration: opts.duration ?? 0 })
 
 const setPosition = (pos) => {
-  const valid = ['top-right', 'top-left', 'top-center', 'bottom-right', 'bottom-left', 'bottom-center', 'center']
-  if (valid.includes(pos)) {
-    console.log(`[toast/setPosition] 设置Toast位置: ${pos}`)
+  if (VALID_POSITIONS.includes(pos)) {
     position.value = pos
+    log.debug('设置 Toast 位置', { position: pos })
+  } else {
+    log.warn(`无效的 Toast 位置：${pos}`)
   }
 }
 

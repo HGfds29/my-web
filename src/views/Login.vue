@@ -86,8 +86,13 @@ import { isLeaving } from '../router'
 import { t } from '../utils/i18n'
 import { signIn, signUp, resendConfirm, isUsernameTaken } from '../utils/auth'
 import { showError, showSuccess } from '../utils/modal'
+import { createLogger } from '../utils/logger'
 import AppIcon from '../components/AppIcon.vue'
 import chatImage from '../assets/QQ20261024-010930.png'
+
+const log = createLogger('Login')
+// 模块初始化：登录 / 注册、用户名与密码校验、邮箱确认重发、登录后跳转
+log.info('登录模块已初始化：登录/注册、输入校验、邮箱确认重发与登录后跳转')
 
 const features = [
   { key: 'featureRealtime', icon: '消息_message-one', delay: '0.55s' },
@@ -155,6 +160,7 @@ const onLeave = () => {
 }
 
 onBeforeUnmount(() => {
+  log.debug('Login 页面已卸载，取消倾斜动画帧')
   if (raf) cancelAnimationFrame(raf)
   raf = 0
 })
@@ -170,13 +176,19 @@ const PASSWORD_RE = /^(?=.*[A-Z])(?=.*[a-z])(?=.*\d).{6,}$/
 
 const toggleMode = () => {
   mode.value = mode.value === 'login' ? 'signup' : 'login'
+  log.info('切换认证模式', { mode: mode.value })
 }
 
 const resend = async () => {
+  log.info('重新发送确认邮件')
   resending.value = true
   try {
     const { error } = await resendConfirm(pendingEmail.value)
-    if (error) return showError(error.message)
+    if (error) {
+      log.error('重新发送确认邮件失败', error.message)
+      return showError(error.message)
+    }
+    log.info('确认邮件已重新发送')
     showSuccess(t('login.resendDone'))
   } finally {
     resending.value = false
@@ -184,8 +196,10 @@ const resend = async () => {
 }
 
 onMounted(() => {
+  log.info('Login 页面已加载', { mode: mode.value })
   const err = sessionStorage.getItem('auth_redirect_error')
   if (err) {
+    log.info('读取到跳转前的错误提示', { length: err.length })
     sessionStorage.removeItem('auth_redirect_error')
     showError(err)
   }
@@ -193,39 +207,51 @@ onMounted(() => {
 
 const submit = async () => {
   loading.value = true
+  log.info(mode.value === 'login' ? '开始登录' : '开始注册', { username: form.username })
   try {
     if (mode.value === 'login') {
-      const { error } = await signIn({ email: form.email, password: form.password })
+      const { data, error } = await signIn({ email: form.email, password: form.password })
       if (error) {
+        log.error('登录失败', error.message)
+        if (/邮箱未确认|email not confirm/i.test(error.message)) {
+          log.warn('登录被拒：邮箱尚未确认', { username: form.username })
+        }
         showError(error.message)
         return
       }
+      log.info('登录成功', { userId: data?.user?.id })
     } else {
       if (!form.username.trim()) {
+        log.warn('校验失败：用户名为空')
         showError(t('login.usernameRequired'))
         return
       }
       if (!PASSWORD_RE.test(form.password)) {
+        log.warn('校验失败：密码复杂度不足', { length: form.password.length })
         showError(t('login.passwordWeak'))
         return
       }
       const taken = await isUsernameTaken(form.username)
       if (taken === true) {
+        log.warn('校验失败：用户名已被占用', { username: form.username })
         showError(t('login.usernameTaken'))
         return
       }
       const { data, error } = await signUp({ email: form.email, password: form.password, username: form.username.trim() })
       if (error) {
+        log.error('注册失败', error.message)
         showError(error.message)
         return
       }
       // 开启了邮箱确认：注册后没有 session，需要先去邮箱点确认链接
       if (!data?.session) {
+        log.info('注册成功，等待邮箱确认', { userId: data?.user?.id })
         pendingEmail.value = form.email
         mode.value = 'login'
         showSuccess(t('login.confirmSent', { email: form.email }))
         return
       }
+      log.info('注册成功', { userId: data?.user?.id })
     }
     router.push(route.query.redirect || '/chat')
   } finally {
@@ -309,7 +335,7 @@ const submit = async () => {
   pointer-events: none;
   background: radial-gradient(
     340px circle at var(--px, 50%) var(--py, 50%),
-    rgba(66, 185, 131, 0.22),
+    rgba(var(--accent-rgb, 66, 185, 131), 0.22),
     transparent 65%
   );
   opacity: 0;
@@ -380,7 +406,7 @@ const submit = async () => {
 .feature-icon {
   display: inline-flex;
   margin-top: 1px;
-  color: #42b983;
+  color: var(--accent, #42b983);
   transition: transform 0.28s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
@@ -409,7 +435,7 @@ const submit = async () => {
   transition: color 0.2s ease;
 }
 
-.feature:hover .feature-text strong { color: #42b983; }
+.feature:hover .feature-text strong { color: var(--accent, #42b983); }
 .feature:hover .feature-text span { color: #5b5b66; }
 html.dark .feature:hover .feature-text span { color: #b0b0c0; }
 
@@ -473,7 +499,7 @@ html.dark .feature:hover .feature-text span { color: #b0b0c0; }
   margin: 0 0 8px;
   font-size: 11px;
   letter-spacing: 0.22em;
-  color: #42b983;
+  color: var(--accent, #42b983);
 }
 
 .stagger-item {
@@ -537,8 +563,8 @@ h1 {
 }
 
 .field input:focus {
-  border-color: #42b983;
-  box-shadow: 0 0 0 3px rgba(66, 185, 131, 0.15);
+  border-color: var(--accent, #42b983);
+  box-shadow: 0 0 0 3px rgba(var(--accent-rgb, 66, 185, 131), 0.15);
 }
 
 .field-hint {
@@ -554,7 +580,7 @@ html.dark .field-hint {
 
 .submit-btn {
   margin-top: 6px;
-  background: #42b983;
+  background: var(--accent, #42b983);
   color: #fff;
   border: none;
   border-radius: 8px;
@@ -582,7 +608,7 @@ html.dark .field-hint {
   background: none;
   border: none;
   padding: 0;
-  color: #42b983;
+  color: var(--accent, #42b983);
   cursor: pointer;
   font-size: 14px;
 }
@@ -604,7 +630,7 @@ html.dark .field-hint {
   background: none;
   border: none;
   padding: 0;
-  color: #42b983;
+  color: var(--accent, #42b983);
   font-size: 13px;
   cursor: pointer;
 }
@@ -620,7 +646,7 @@ html.dark .field input:focus { background: #16162a; }
 html.dark .visual-inner { box-shadow: 0 24px 60px rgba(0, 0, 0, 0.55); }
 html.dark .feature-text strong { color: #d8d8e0; }
 html.dark .feature-text span { color: #8a8a9a; }
-html.dark .confirm-tip { background: rgba(66, 185, 131, 0.08); border-color: rgba(66, 185, 131, 0.3); color: #8fd3b4; }
+html.dark .confirm-tip { background: rgba(var(--accent-rgb, 66, 185, 131), 0.08); border-color: rgba(var(--accent-rgb, 66, 185, 131), 0.3); color: #8fd3b4; }
 
 /* ---------- 移动端 ---------- */
 @media (max-width: 768px) {

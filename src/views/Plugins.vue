@@ -148,13 +148,16 @@ def cmd_add(args):
 </template>
 
 <script setup>
-import { ref, computed, onMounted } from 'vue'
+import { ref, computed, onMounted, watch } from 'vue'
 import { useRouter } from 'vue-router'
 import { isLeaving } from '../router'
 import { t, locale } from '../utils/i18n'
+import { createLogger } from '../utils/logger'
 import AppIcon from '../components/AppIcon.vue'
 
-console.log('[Plugins.vue] 组件初始化')
+const log = createLogger('Plugins')
+// 模块初始化：插件分类筛选、插件下载与作品提交入口
+log.info('插件页模块已初始化：插件分类筛选、下载与提交入口')
 
 const router = useRouter()
 const activeCategory = ref('all')
@@ -273,14 +276,23 @@ const plugins = computed(() => [
 ])
 
 const filteredPlugins = computed(() => {
-  if (activeCategory.value === 'all') return plugins.value
-  return plugins.value.filter(p => p.category.includes(activeCategory.value))
+  if (activeCategory.value === 'all') {
+    log.debug('筛选插件列表', { category: 'all', count: plugins.value.length })
+    return plugins.value
+  }
+  const list = plugins.value.filter(p => p.category.includes(activeCategory.value))
+  log.debug('筛选插件列表', { category: activeCategory.value, count: list.length })
+  return list
 })
 
 const getCategoryCount = (key) => {
   if (key === 'all') return plugins.value.length
   return plugins.value.filter(p => p.category.includes(key)).length
 }
+
+watch(activeCategory, (val) => {
+  log.info('切换插件分类', { category: val, count: getCategoryCount(val) })
+})
 
 const installSteps = computed(() => [
   {
@@ -308,12 +320,12 @@ const devTips = computed(() => ([
 ]))
 
 const goBack = () => {
-  console.log('[Plugins/goBack] 返回首页')
+  log.info('返回首页')
   router.push('/')
 }
 
 const downloadPlugin = (plugin) => {
-  console.log('[Plugins/downloadPlugin] 下载插件:', plugin.name)
+  log.info('点击下载插件', { name: plugin.name, version: plugin.version })
   const link = document.createElement('a')
   link.href = import.meta.env.BASE_URL + 'Renkt Shell/1.2.5/Renkt/plugins/' + plugin.file
   link.download = plugin.file
@@ -323,12 +335,14 @@ const downloadPlugin = (plugin) => {
 }
 
 const goSubmit = () => {
-  console.log('[Plugins/goSubmit] 跳转提交插件')
+  log.info('跳转提交插件入口')
   router.push('/renkt')
 }
 
 onMounted(() => {
-  console.log('[Plugins/onMounted] 插件页面已加载')
+  log.debug('开始加载插件列表')
+  log.info('插件列表加载完成', { plugins: plugins.value.length, categories: categories.value.length })
+  log.info('Plugins 页面已加载', { category: activeCategory.value })
 })
 </script>
 
@@ -373,7 +387,7 @@ onMounted(() => {
 .back-btn {
   background: none;
   border: none;
-  color: #42b983;
+  color: var(--accent, #42b983);
   cursor: pointer;
   font-size: 14px;
   padding: 0;
@@ -396,7 +410,7 @@ onMounted(() => {
   display: flex;
   align-items: center;
   justify-content: center;
-  color: #42b983;
+  color: var(--accent, #42b983);
   background: linear-gradient(135deg, #f0f9f4 0%, #e8f5ef 100%);
   border-radius: 18px;
   flex-shrink: 0;
@@ -445,13 +459,13 @@ onMounted(() => {
 }
 .filter-btn.active {
   background: #ffffff;
-  border-color: #42b983;
+  border-color: var(--accent, #42b983);
   color: #2c7a52;
-  box-shadow: 0 2px 8px rgba(66, 185, 131, 0.15);
+  box-shadow: 0 2px 8px rgba(var(--accent-rgb, 66, 185, 131), 0.15);
 }
 .filter-icon { display: flex; align-items: center; }
 .filter-count {
-  background: rgba(66, 185, 131, 0.15);
+  background: rgba(var(--accent-rgb, 66, 185, 131), 0.15);
   color: #2c7a52;
   padding: 1px 8px;
   border-radius: 10px;
@@ -459,7 +473,7 @@ onMounted(() => {
   font-weight: 600;
 }
 .filter-btn.active .filter-count {
-  background: #42b983;
+  background: var(--accent, #42b983);
   color: white;
 }
 
@@ -480,9 +494,9 @@ onMounted(() => {
   transition: all 0.3s ease;
 }
 .plugin-card:hover {
-  border-color: #42b983;
+  border-color: var(--accent, #42b983);
   transform: translateY(-4px);
-  box-shadow: 0 12px 32px rgba(66, 185, 131, 0.15);
+  box-shadow: 0 12px 32px rgba(var(--accent-rgb, 66, 185, 131), 0.15);
 }
 .plugin-card.official {
   background: linear-gradient(180deg, #fbfefc 0%, #ffffff 60%);
@@ -503,7 +517,7 @@ onMounted(() => {
   display: flex;
   align-items: center;
   justify-content: center;
-  background: rgba(66, 185, 131, 0.1);
+  background: rgba(var(--accent-rgb, 66, 185, 131), 0.1);
   border-radius: 12px;
 }
 .badge {
@@ -588,7 +602,7 @@ onMounted(() => {
 .feature-item svg {
   width: 14px;
   height: 14px;
-  color: #42b983;
+  color: var(--accent, #42b983);
   flex-shrink: 0;
   margin-top: 2px;
 }
@@ -614,7 +628,7 @@ onMounted(() => {
   display: inline-flex;
   align-items: center;
   gap: 6px;
-  background: #42b983;
+  background: var(--accent, #42b983);
   color: white;
   border: none;
   padding: 8px 16px;
@@ -628,7 +642,7 @@ onMounted(() => {
 .download-btn:hover {
   background: #3aa876;
   transform: translateY(-1px);
-  box-shadow: 0 4px 14px rgba(66, 185, 131, 0.3);
+  box-shadow: 0 4px 14px rgba(var(--accent-rgb, 66, 185, 131), 0.3);
 }
 .download-btn svg { width: 15px; height: 15px; }
 
@@ -648,7 +662,7 @@ onMounted(() => {
   color: #2c3e50;
   margin-bottom: 20px;
   padding-bottom: 8px;
-  border-bottom: 2px solid #42b983;
+  border-bottom: 2px solid var(--accent, #42b983);
   display: inline-block;
 }
 .desc {
@@ -674,14 +688,14 @@ onMounted(() => {
   transition: all 0.25s ease;
 }
 .step-item:hover {
-  border-color: #42b983;
+  border-color: var(--accent, #42b983);
   background: #fafefc;
 }
 .step-num {
   width: 36px;
   height: 36px;
   flex-shrink: 0;
-  background: #42b983;
+  background: var(--accent, #42b983);
   color: white;
   border-radius: 50%;
   display: flex;
@@ -780,7 +794,7 @@ onMounted(() => {
   align-items: center;
   gap: 8px;
   padding: 12px 22px;
-  background: linear-gradient(135deg, #42b983 0%, #2e8b63 100%);
+  background: linear-gradient(135deg, var(--accent, #42b983) 0%, #2e8b63 100%);
   color: white;
   border: none;
   border-radius: 10px;
@@ -789,11 +803,11 @@ onMounted(() => {
   cursor: pointer;
   transition: all 0.25s ease;
   font-family: inherit;
-  box-shadow: 0 4px 14px rgba(66, 185, 131, 0.25);
+  box-shadow: 0 4px 14px rgba(var(--accent-rgb, 66, 185, 131), 0.25);
 }
 .submit-btn:hover {
   transform: translateY(-2px);
-  box-shadow: 0 8px 24px rgba(66, 185, 131, 0.35);
+  box-shadow: 0 8px 24px rgba(var(--accent-rgb, 66, 185, 131), 0.35);
 }
 .submit-btn svg { width: 18px; height: 18px; }
 

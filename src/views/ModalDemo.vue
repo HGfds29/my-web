@@ -60,10 +60,11 @@
 </template>
 
 <script setup>
-import { onUnmounted } from 'vue'
+import { onMounted, onUnmounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { isLeaving } from '../router'
 import { locale } from '../utils/i18n'
+import { createLogger } from '../utils/logger'
 import AppIcon from '../components/AppIcon.vue'
 import {
   showInfo,
@@ -89,41 +90,55 @@ import {
 
 const router = useRouter()
 
+const log = createLogger('ModalDemo')
+// 模块初始化：演示页集中触发内置弹窗、输入框、加载动画与 Toast
+log.info('弹窗演示页模块已初始化：集中触发内置弹窗、输入框、加载与 Toast')
+
 /** 这一页是开发用的测试页，文案就近处理，不进 i18n 词条表 */
 const L = (zh, en) => (locale.value === 'zh' ? zh : en)
 
 const goBack = () => {
+  log.debug('演示按钮：返回首页')
   router.push('/')
 }
 
-const onInfo = () => showInfo(L('这是一条信息提示，用来检查图标与配色。', 'An informational message to check icons and colors.'))
-const onSuccess = () => showSuccess(L('操作已经成功完成。', 'The operation completed successfully.'))
-const onWarning = () => showWarning(L('注意：这一步可能无法撤销。', 'Careful — this step may not be reversible.'))
-const onError = () => showError(L('出错了，请稍后重试。', 'Something went wrong, please try again later.'))
+const onInfo = () => { log.debug('演示按钮：信息弹窗'); showInfo(L('这是一条信息提示，用来检查图标与配色。', 'An informational message to check icons and colors.')) }
+const onSuccess = () => { log.debug('演示按钮：成功弹窗'); showSuccess(L('操作已经成功完成。', 'The operation completed successfully.')) }
+const onWarning = () => { log.debug('演示按钮：警告弹窗'); showWarning(L('注意：这一步可能无法撤销。', 'Careful — this step may not be reversible.')) }
+const onError = () => { log.debug('演示按钮：错误弹窗'); showError(L('出错了，请稍后重试。', 'Something went wrong, please try again later.')) }
 
-const onConfirm = () => showConfirm(L('确定要执行这个操作吗？', 'Run this action?'), {
-  onConfirm: () => toastSuccess(L('已确认', 'Confirmed')),
-  onCancel: () => toastInfo(L('已取消', 'Cancelled'))
-})
+const onConfirm = () => {
+  log.debug('演示按钮：确认框')
+  showConfirm(L('确定要执行这个操作吗？', 'Run this action?'), {
+    onConfirm: () => toastSuccess(L('已确认', 'Confirmed')),
+    onCancel: () => toastInfo(L('已取消', 'Cancelled'))
+  })
+}
 
-const onPromptText = () => showPrompt({
-  title: L('请输入昵称', 'Enter a nickname'),
-  message: L('3–12 个字符，且不能包含空格', '3–12 characters, no spaces'),
-  minLength: 3,
-  maxLength: 12,
-  pattern: /^\S+$/,
-  patternError: L('不能包含空格', 'Spaces are not allowed'),
-  onConfirm: (value) => toastSuccess(L(`收到：${value}`, `Got: ${value}`))
-})
+const onPromptText = () => {
+  log.debug('演示按钮：单行输入弹窗')
+  showPrompt({
+    title: L('请输入昵称', 'Enter a nickname'),
+    message: L('3–12 个字符，且不能包含空格', '3–12 characters, no spaces'),
+    minLength: 3,
+    maxLength: 12,
+    pattern: /^\S+$/,
+    patternError: L('不能包含空格', 'Spaces are not allowed'),
+    onConfirm: (value) => toastSuccess(L(`收到：${value}`, `Got: ${value}`))
+  })
+}
 
-const onPromptArea = () => showPrompt({
-  title: L('写点什么', 'Say something'),
-  message: L('多行输入，最多 120 字', 'Multi-line input, up to 120 characters'),
-  inputType: 'textarea',
-  textareaRows: 5,
-  maxLength: 120,
-  onConfirm: (value) => toastSuccess(L(`收到 ${value.length} 个字符`, `Got ${value.length} characters`))
-})
+const onPromptArea = () => {
+  log.debug('演示按钮：多行输入弹窗')
+  showPrompt({
+    title: L('写点什么', 'Say something'),
+    message: L('多行输入，最多 120 字', 'Multi-line input, up to 120 characters'),
+    inputType: 'textarea',
+    textareaRows: 5,
+    maxLength: 120,
+    onConfirm: (value) => toastSuccess(L(`收到 ${value.length} 个字符`, `Got ${value.length} characters`))
+  })
+}
 
 let progressTimer = null
 let closeTimer = null
@@ -136,6 +151,7 @@ const clearTimers = () => {
 }
 
 const onLoadingPlain = () => {
+  log.debug('演示按钮：普通加载弹窗')
   clearTimers()
   showLoading({
     title: L('加载中', 'Loading'),
@@ -145,6 +161,7 @@ const onLoadingPlain = () => {
 }
 
 const onLoadingProgress = () => {
+  log.debug('演示按钮：带进度条的加载弹窗')
   clearTimers()
   let percent = 0
   showLoading({ percent: 0, message: L('正在处理', 'Processing') })
@@ -162,6 +179,7 @@ const onLoadingProgress = () => {
 }
 
 const onLoadingCancel = () => {
+  log.debug('演示按钮：可取消的加载弹窗')
   clearTimers()
   showLoading({
     title: L('可取消的加载', 'Cancelable loading'),
@@ -174,12 +192,13 @@ const onLoadingCancel = () => {
   })
 }
 
-const onToastInfo = () => toastInfo(L('这是一条信息 Toast', 'An info toast'))
-const onToastSuccess = () => toastSuccess(L('保存成功', 'Saved successfully'))
-const onToastWarning = () => toastWarning(L('磁盘空间不足', 'Low disk space'))
-const onToastError = () => toastError(L('网络请求失败', 'Request failed'))
+const onToastInfo = () => { log.debug('演示按钮：信息 Toast'); toastInfo(L('这是一条信息 Toast', 'An info toast')) }
+const onToastSuccess = () => { log.debug('演示按钮：成功 Toast'); toastSuccess(L('保存成功', 'Saved successfully')) }
+const onToastWarning = () => { log.debug('演示按钮：警告 Toast'); toastWarning(L('磁盘空间不足', 'Low disk space')) }
+const onToastError = () => { log.debug('演示按钮：错误 Toast'); toastError(L('网络请求失败', 'Request failed')) }
 
 const onToastLoading = () => {
+  log.debug('演示按钮：加载后转成功的 Toast')
   const id = toastLoading(L('正在保存…', 'Saving…'))
   setTimeout(() => {
     dismiss(id)
@@ -193,11 +212,17 @@ let positionIndex = 0
 const onToastPosition = () => {
   positionIndex = (positionIndex + 1) % POSITIONS.length
   const pos = POSITIONS[positionIndex]
+  log.debug('演示按钮：切换 Toast 弹出位置', { position: pos })
   setPosition(pos)
   toastInfo(L(`弹出位置：${pos}`, `Position: ${pos}`))
 }
 
+onMounted(() => {
+  log.info('ModalDemo 页面已加载')
+})
+
 onUnmounted(() => {
+  log.debug('ModalDemo 页面已卸载，清理计时器与加载弹窗')
   clearTimers()
   hideLoading()
 })
@@ -251,7 +276,7 @@ onUnmounted(() => {
   top: 20px;
   background: none;
   border: none;
-  color: #42b983;
+  color: var(--accent, #42b983);
   cursor: pointer;
   font-size: 14px;
   padding: 0;
@@ -289,11 +314,11 @@ onUnmounted(() => {
   font-size: 18px;
   margin: 0 0 16px;
   padding-bottom: 8px;
-  border-bottom: 2px solid #42b983;
+  border-bottom: 2px solid var(--accent, #42b983);
 }
 
 .panel h2 .app-icon {
-  color: #42b983;
+  color: var(--accent, #42b983);
 }
 
 .grid {
@@ -317,10 +342,10 @@ onUnmounted(() => {
 }
 
 .demo-btn:hover {
-  border-color: #42b983;
-  color: #42b983;
+  border-color: var(--accent, #42b983);
+  color: var(--accent, #42b983);
   transform: translateY(-1px);
-  box-shadow: 0 3px 10px rgba(66, 185, 131, 0.18);
+  box-shadow: 0 3px 10px rgba(var(--accent-rgb, 66, 185, 131), 0.18);
 }
 
 .demo-btn:active {

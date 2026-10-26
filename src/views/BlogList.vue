@@ -65,7 +65,12 @@ import { ref, computed, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { isLeaving } from '../router'
 import { t } from '../utils/i18n'
+import { createLogger } from '../utils/logger'
 import blogList from '../data/blog.json'
+
+const log = createLogger('BlogList')
+// 模块初始化：博客列表的分页浏览与详情跳转
+log.info('博客列表模块已初始化：文章分页浏览与详情跳转')
 
 const router = useRouter()
 const currentPage = ref(1)
@@ -83,34 +88,49 @@ const currentPosts = computed(() => {
 })
 
 const goToPage = (page) => {
-  if (page < 1 || page > totalPages.value) return
+  if (page < 1 || page > totalPages.value) {
+    log.warn('翻页被忽略：页码超出范围', { page, total: totalPages.value })
+    return
+  }
+  log.info('翻页', { from: currentPage.value, to: page })
   pageDirection.value = page > currentPage.value ? 'forward' : 'backward'
   currentPage.value = page
 }
 
 const prevPage = () => {
   if (currentPage.value > 1) {
+    log.info('上一页', { from: currentPage.value, to: currentPage.value - 1 })
     pageDirection.value = 'backward'
     currentPage.value--
+  } else {
+    log.debug('已在第一页，忽略上一页')
   }
 }
 
 const nextPage = () => {
   if (currentPage.value < totalPages.value) {
+    log.info('下一页', { from: currentPage.value, to: currentPage.value + 1 })
     pageDirection.value = 'forward'
     currentPage.value++
+  } else {
+    log.debug('已在最后一页，忽略下一页')
   }
 }
 
 const goToDetail = (id) => {
+  log.info('打开文章详情', { id, page: currentPage.value })
   router.push(`/blog/${id}`)
 }
 
 const goBack = () => {
+  log.info('返回首页')
   router.push('/')
 }
 
 onMounted(() => {
+  log.debug('开始加载博客列表数据', { source: 'src/data/blog.json' })
+  log.info('博客列表数据加载完成', { total: blogList.length, pages: totalPages.value })
+  log.info('BlogList 页面已加载')
 })
 </script>
 
@@ -162,7 +182,7 @@ onMounted(() => {
   top: 20px;
   background: none;
   border: none;
-  color: #42b983;
+  color: var(--accent, #42b983);
   cursor: pointer;
   font-size: 14px;
   padding: 0;
@@ -192,7 +212,7 @@ onMounted(() => {
   font-size: 22px;
   margin-bottom: 20px;
   padding-bottom: 8px;
-  border-bottom: 2px solid #42b983;
+  border-bottom: 2px solid var(--accent, #42b983);
   display: inline-block;
 }
 
@@ -268,7 +288,7 @@ onMounted(() => {
 }
 
 .read-more {
-  color: #42b983;
+  color: var(--accent, #42b983);
   font-size: 13px;
 }
 
@@ -297,8 +317,8 @@ onMounted(() => {
 }
 
 .page-btn:hover:not(:disabled) {
-  border-color: #42b983;
-  color: #42b983;
+  border-color: var(--accent, #42b983);
+  color: var(--accent, #42b983);
 }
 
 .page-btn:disabled {
@@ -307,9 +327,9 @@ onMounted(() => {
 }
 
 .page-btn.active {
-  background: #42b983;
+  background: var(--accent, #42b983);
   color: #fff;
-  border-color: #42b983;
+  border-color: var(--accent, #42b983);
 }
 
 .page-num {
@@ -343,12 +363,12 @@ onMounted(() => {
 }
 
 :global(.dark) .page-btn:hover:not(:disabled) {
-  border-color: #42b983;
-  color: #42b983;
+  border-color: var(--accent, #42b983);
+  color: var(--accent, #42b983);
 }
 
 :global(.dark) .page-btn.active {
-  background: #42b983;
+  background: var(--accent, #42b983);
   color: #fff;
 }
 </style>

@@ -40,6 +40,11 @@ import { computed, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { isLeaving } from '../router'
 import { t, locale } from '../utils/i18n'
+import { createLogger } from '../utils/logger'
+
+const log = createLogger('HeroMemorial')
+// 模块初始化：英雄纪念页展示纪念标题与致敬视频
+log.info('英雄纪念页模块已初始化：展示纪念标题与致敬视频')
 
 const router = useRouter()
 
@@ -54,10 +59,13 @@ const heroSub = computed(() => {
 const videoUrl = 'https://player.bilibili.com/player.html?bvid=BV1jb7B6SEay&page=1&high_quality=1&autoplay=0'
 
 const goBack = () => {
+  log.info('返回首页')
   router.push('/')
 }
 
 onMounted(() => {
+  log.info('HeroMemorial 页面已加载', { locale: locale.value })
+  log.debug('纪念视频地址已就绪', { url: videoUrl })
 })
 </script>
 
@@ -166,7 +174,7 @@ onMounted(() => {
 .back-btn {
   background: none;
   border: none;
-  color: #42b983;
+  color: var(--accent, #42b983);
   cursor: pointer;
   font-size: 14px;
   padding: 0;

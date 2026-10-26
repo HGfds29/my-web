@@ -210,6 +210,7 @@ const DEFAULT_SHOTS = [
   { name: 'home-dark', hash: '#/home', theme: 'dark' },
   { name: 'blog-light', hash: '#/blog', theme: 'light' },
   { name: 'games-light', hash: '#/games', theme: 'light' },
+  { name: 'discussion-light', hash: '#/discussion', theme: 'light' },
   { name: 'plugins-dark', hash: '#/plugins', theme: 'dark' },
   { name: 'login-light', hash: '#/login', theme: 'light' },
   { name: 'demo-modal-dark', hash: '#/demo', theme: 'dark', click: '成功' }

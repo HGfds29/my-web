@@ -94,7 +94,12 @@
 <script setup>
 import { ref, computed, watch, nextTick } from 'vue'
 import { t } from '../utils/i18n'
+import { createLogger } from '../utils/logger'
 import AppIcon from './AppIcon.vue'
+
+const log = createLogger('PromptModal')
+
+log.info('输入弹窗组件已初始化（必填 / 长度 / pattern 校验）')
 
 const props = defineProps({
   visible: { type: Boolean, default: false },
@@ -133,20 +138,24 @@ const validate = () => {
   const val = inputValue.value
   if (props.required && !val.trim()) {
     inputError.value = t('modal.promptRequired')
+    log.warn('校验未通过：必填项为空', { length: val.length })
     return false
   }
   if (props.minLength && val.length < props.minLength) {
     inputError.value = t('modal.promptMinLength', { n: props.minLength })
+    log.warn('校验未通过：长度不足', { length: val.length, minLength: props.minLength })
     return false
   }
   if (props.maxLength && val.length > props.maxLength) {
     inputError.value = t('modal.promptMaxLength', { n: props.maxLength })
+    log.warn('校验未通过：超出最大长度', { length: val.length, maxLength: props.maxLength })
     return false
   }
   if (props.pattern) {
     const reg = typeof props.pattern === 'string' ? new RegExp(props.pattern) : props.pattern
     if (!reg.test(val)) {
       inputError.value = props.patternError || t('modal.promptPatternError')
+      log.warn('校验未通过：pattern 不匹配', { length: val.length })
       return false
     }
   }
@@ -164,23 +173,33 @@ const closeModal = () => {
 }
 
 const handleConfirm = () => {
-  if (!validate()) return
+  if (!validate()) {
+    log.warn('确认被拦截：输入未通过校验')
+    return
+  }
+  log.info('用户确认输入', {
+    inputType: props.inputType,
+    valueLength: inputValue.value.length
+  })
   emit('confirm', inputValue.value)
   closeModal()
 }
 
 const handleCancel = () => {
+  log.info('用户取消输入', { inputType: props.inputType })
   emit('cancel')
   closeModal()
 }
 
 const handleClose = () => {
+  log.debug('点击关闭按钮')
   emit('close')
   closeModal()
 }
 
 const handleOverlayClick = () => {
   if (props.closeOnOverlay) {
+    log.debug('点击遮罩关闭')
     emit('close')
     closeModal()
   }
@@ -189,6 +208,11 @@ const handleOverlayClick = () => {
 watch(
   () => props.visible,
   (val) => {
+    log.debug(val ? '输入弹窗显示' : '输入弹窗关闭', {
+      inputType: props.inputType,
+      size: props.size,
+      titleLength: String(resolvedTitle.value).length
+    })
     if (val) {
       inputValue.value = props.defaultValue || ''
       inputError.value = ''
@@ -276,8 +300,8 @@ watch(
   display: flex;
   align-items: center;
   justify-content: center;
-  background: rgba(66, 185, 131, 0.12);
-  color: #42b983;
+  background: rgba(var(--accent-rgb, 66, 185, 131), 0.12);
+  color: var(--accent, #42b983);
 }
 /* 图标尺寸由 AppIcon 的 size 属性决定 */
 
@@ -337,9 +361,9 @@ watch(
 }
 
 .input-wrap.focused {
-  border-color: #42b983;
+  border-color: var(--accent, #42b983);
   background: #fff;
-  box-shadow: 0 0 0 4px rgba(66, 185, 131, 0.1);
+  box-shadow: 0 0 0 4px rgba(var(--accent-rgb, 66, 185, 131), 0.1);
 }
 
 .input-wrap.has-error {
@@ -422,13 +446,13 @@ watch(
 
 .modal-btn-confirm {
   color: #fff;
-  background: linear-gradient(135deg, #42b983 0%, #2c7a52 100%);
-  box-shadow: 0 2px 8px rgba(66, 185, 131, 0.25);
+  background: linear-gradient(135deg, var(--accent, #42b983) 0%, #2c7a52 100%);
+  box-shadow: 0 2px 8px rgba(var(--accent-rgb, 66, 185, 131), 0.25);
 }
 .modal-btn-confirm:hover:not(:disabled) {
   transform: translateY(-1px);
-  box-shadow: 0 4px 14px rgba(66, 185, 131, 0.35);
-  background: linear-gradient(135deg, #4FC08D 0%, #42b983 100%);
+  box-shadow: 0 4px 14px rgba(var(--accent-rgb, 66, 185, 131), 0.35);
+  background: linear-gradient(135deg, #4FC08D 0%, var(--accent, #42b983) 100%);
 }
 .modal-btn-confirm:disabled {
   opacity: 0.55;
@@ -452,9 +476,9 @@ html.dark .input-wrap {
   background: #15152a;
 }
 html.dark .input-wrap.focused {
-  border-color: #42b983;
+  border-color: var(--accent, #42b983);
   background: #121226;
-  box-shadow: 0 0 0 4px rgba(66, 185, 131, 0.15);
+  box-shadow: 0 0 0 4px rgba(var(--accent-rgb, 66, 185, 131), 0.15);
 }
 html.dark .input-wrap.has-error {
   border-color: #e0524b;

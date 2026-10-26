@@ -25,12 +25,21 @@
 </template>
 
 <script setup>
-import { ref } from 'vue'
+import { ref, watch } from 'vue'
 import { useRouter } from 'vue-router'
+import { createLogger } from '../utils/logger'
+
+const log = createLogger('FlagEasterEgg')
+
+log.info('右下角彩蛋组件已初始化（悬停显现旗帜）')
 
 const router = useRouter()
 const isVisible = ref(false)
 const isHovering = ref(false)
+
+watch(isVisible, (val) => {
+  log.debug(val ? '鼠标进入彩蛋区域' : '鼠标离开彩蛋区域')
+})
 
 const onLeave = () => {
   isVisible.value = false
@@ -38,6 +47,7 @@ const onLeave = () => {
 }
 
 const goToMemorial = () => {
+  log.info('触发彩蛋：跳转纪念页')
   router.push('/hero-memorial')
 }
 </script>

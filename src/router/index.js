@@ -15,6 +15,9 @@ import Chat from '../views/Chat.vue'
 import Discussion from '../views/Discussion.vue'
 import Login from '../views/Login.vue'
 import { loadSession, currentUser } from '../utils/auth'
+import { createLogger } from '../utils/logger'
+
+const log = createLogger('router')
 
 // RenktShell.vue 已被 .gitignore 排除，属于本地专属页面：
 // 这里用 glob 动态解析，文件不存在时就不注册该路由，
@@ -136,24 +139,34 @@ const router = createRouter({
   routes
 })
 
+log.info(`路由表已注册 ${routes.length} 条`)
+if (!renktShellView) {
+  log.warn('未找到 RenktShell.vue，/renkt 路由已跳过（本地专属页面）')
+}
+
 let isNavigating = false
+let transitionStartedAt = 0
 
 router.beforeEach(async (to, from, next) => {
   if (to.meta.requiresAuth) {
+    log.debug(`路由守卫：${to.fullPath} 需要登录，检查会话`)
     await loadSession()
     if (!currentUser.value) {
+      log.warn(`未登录访问 ${to.fullPath}，重定向到登录页`)
       next({ path: '/login', query: { redirect: to.fullPath } })
       return
     }
   }
 
   if (isNavigating) {
+    log.debug(`继续上次被中断的导航 → ${to.fullPath}`)
     isNavigating = false
     next()
     return
   }
 
   if (!from.name) {
+    log.debug(`首屏进入 ${to.fullPath}`)
     next()
     return
   }
@@ -163,7 +176,9 @@ router.beforeEach(async (to, from, next) => {
 
   leaveDirection.value = toIndex > fromIndex ? 'right' : 'left'
 
+  transitionStartedAt = performance.now()
   isLeaving.value = true
+  log.debug(`开始页面过渡 ${from.fullPath} → ${to.fullPath}，方向 ${leaveDirection.value}，${LEAVE_DURATION}ms`)
 
   next(false)
 
@@ -174,7 +189,14 @@ router.beforeEach(async (to, from, next) => {
   }, LEAVE_DURATION)
 })
 
-router.afterEach((to, from) => {
+router.afterEach((to, from, failure) => {
+  if (failure) {
+    log.error(`页面切换失败：${to.fullPath}`, failure)
+    return
+  }
+  const cost = transitionStartedAt ? Math.round(performance.now() - transitionStartedAt) : 0
+  transitionStartedAt = 0
+  log.info(`页面切换完成：${from.fullPath || '(首屏)'} → ${to.fullPath}${cost ? `（${cost}ms）` : ''}`)
 })
 
 export default router

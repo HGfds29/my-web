@@ -224,9 +224,14 @@ import { t } from '../utils/i18n'
 import { supabase, chatClientId } from '../utils/supabase'
 import { currentUser, currentProfile, signOut, loadProfile } from '../utils/auth'
 import { showError, showSuccess } from '../utils/modal'
+import { createLogger } from '../utils/logger'
 import AppIcon from '../components/AppIcon.vue'
 
 const router = useRouter()
+const log = createLogger('Chat')
+
+// 模块初始化：说明本文件负责聊天室页面（公共频道 / 私聊 / 群聊、消息收发、图片上传、权限与封禁）
+log.once('module-init', 'info', '聊天室模块已初始化：负责公共频道 / 私聊 / 群聊、消息收发、图片上传、权限与封禁')
 
 // 身份以登录用户为准（刷新后立即可用），不依赖资料是否加载完成
 const myId = computed(() => currentUser.value?.id || currentProfile.value?.id)
@@ -321,6 +326,7 @@ const switchView = (v) => {
   messages.value = []
   seenIds.clear()
   loading.value = true
+  log.info('切换会话视图', { type: v.type, target: v.target || 'public', name: v.name || '' })
   loadConversation()
 }
 
@@ -330,7 +336,7 @@ const loadConversation = async () => {
   seenIds.clear()
   if (view.value.type === 'public') {
     const { data, error } = await supabase.from('messages').select('*').order('created_at', { ascending: false }).limit(50)
-    if (error) { showError(error.message) }
+    if (error) { log.error('加载公共频道消息失败（表 messages）', error.message); showError(error.message) }
     else { messages.value = data.reverse(); data.forEach((m) => seenIds.add(m.id)) }
   } else if (view.value.type === 'dm') {
     const { data, error } = await supabase
@@ -339,7 +345,7 @@ const loadConversation = async () => {
       .or(`from_user.eq.${myId.value},to_user.eq.${myId.value}`)
       .order('created_at', { ascending: false })
       .limit(50)
-    if (error) { showError(error.message) }
+    if (error) { log.error('加载私聊消息失败（表 dm_messages）', error.message); showError(error.message) }
     else {
       const filtered = data.filter((m) => m.from_user === view.value.target || m.to_user === view.value.target)
       messages.value = filtered.reverse()
@@ -355,40 +361,52 @@ const loadConversation = async () => {
       .eq('group_id', view.value.target)
       .order('created_at', { ascending: false })
       .limit(50)
-    if (error) { showError(error.message) }
+    if (error) { log.error('加载群聊消息失败（表 group_messages）', error.message); showError(error.message) }
     else { messages.value = data.reverse(); data.forEach((m) => seenIds.add(m.id)) }
   }
   loading.value = false
+  const tableName = view.value.type === 'public' ? 'messages' : view.value.type === 'dm' ? 'dm_messages' : 'group_messages'
+  log.info(`会话消息加载完成（表 ${tableName}）：${messages.value.length} 条`, { type: view.value.type })
   scrollToBottom()
 }
 
 const send = async () => {
-  if (isBanned.value) return showError(banInfo.value ? `${t('chat.banned')}: ${banInfo.value.reason || '-'}` : t('chat.banned'))
+  if (isBanned.value) {
+    log.warn('发送被拦截：账号已被禁言', { reason: banInfo.value?.reason || '-' })
+    return showError(banInfo.value ? `${t('chat.banned')}: ${banInfo.value.reason || '-'}` : t('chat.banned'))
+  }
   const content = draft.value.trim()
   if (!content || sending.value) return
   sending.value = true
+  log.debug('开始发送文本消息', { type: view.value.type, length: content.length, hasImage: false })
+  let sentId = null
   try {
     if (view.value.type === 'public') {
       const { data, error } = await supabase.from('messages')
         .insert({ username: currentProfile.value?.username, content, client_id: chatClientId, user_id: myId.value })
         .select().single()
       if (error) throw error
+      sentId = data.id
       ownIds.add(data.id); addMessage(data)
     } else if (view.value.type === 'dm') {
       const { data, error } = await supabase.from('dm_messages')
         .insert({ from_user: myId.value, to_user: view.value.target, content, client_id: chatClientId })
         .select().single()
       if (error) throw error
+      sentId = data.id
       ownIds.add(data.id); addMessage({ ...data, from_username: currentProfile.value?.username })
     } else if (view.value.type === 'group') {
       const { data, error } = await supabase.from('group_messages')
         .insert({ group_id: view.value.target, user_id: myId.value, content, client_id: chatClientId })
         .select().single()
       if (error) throw error
+      sentId = data.id
       ownIds.add(data.id); addMessage({ ...data, username: currentProfile.value?.username })
     }
+    log.info('消息发送成功', { type: view.value.type, messageId: sentId })
     draft.value = ''
   } catch (e) {
+    log.error('消息发送失败（可能是 RLS 权限限制或网络异常）', { type: view.value.type, message: e?.message || e })
     showError(`${t('chat.sendError')}: ${e.message}`)
   } finally {
     sending.value = false
@@ -404,11 +422,13 @@ const onFilePick = async (e) => {
   if (!file) return
   if (!file.type.startsWith('image/')) return showError(t('chat.imageTypeError'))
   if (file.size > 5 * 1024 * 1024) return showError(t('chat.imageSizeError'))
+  log.debug('开始上传图片', { fileName: file.name, sizeMB: (file.size / 1024 / 1024).toFixed(2), type: view.value.type })
   try {
     const ext = file.name.split('.').pop() || 'png'
     const path = `${chatClientId}/${Date.now()}.${ext}`
     const { error: upErr } = await supabase.storage.from('chat-images').upload(path, file, { cacheControl: '31536000' })
     if (upErr) throw upErr
+    log.info('图片上传成功', { path })
     const { data: urlData } = supabase.storage.from('chat-images').getPublicUrl(path)
     const image_url = urlData.publicUrl
     let row
@@ -430,6 +450,7 @@ const onFilePick = async (e) => {
     }
     ownIds.add(row.id); addMessage(row)
   } catch (err) {
+    log.error('图片上传或消息写入失败', { status: err?.status || err?.statusCode || 'unknown', message: err?.message || err })
     showError(`${t('chat.imageUploadError')}: ${err.message}`)
   }
 }
@@ -439,7 +460,7 @@ const insertEmoji = (em) => { draft.value += em; emojiOpen.value = false }
 const copyMsg = async (msg) => {
   const text = msg.image_url ? msg.image_url : msg.content
   try { await navigator.clipboard.writeText(text); showSuccess(t('chat.copied')) }
-  catch { showError(t('chat.copyFailed')) }
+  catch (e) { log.warn('复制失败：剪贴板不可用', { message: e?.message || e, messageId: msg.id }); showError(t('chat.copyFailed')) }
 }
 
 const recallMsg = async (msg) => {
@@ -449,8 +470,8 @@ const recallMsg = async (msg) => {
   else q = supabase.from('group_messages').delete().eq('id', msg.id)
   // 回查被删除的行，RLS 拒绝时不要假装成功
   const { data, error } = await q.select('id')
-  if (error) { showError(`${t('chat.recallError')}: ${error.message}`); return }
-  if (!data?.length) { showError(t('chat.recallDenied')); return }
+  if (error) { log.error('删除消息失败（可能是 RLS 权限限制）', { type: view.value.type, message: error.message }); showError(`${t('chat.recallError')}: ${error.message}`); return }
+  if (!data?.length) { log.warn('删除消息未生效：权限不足或消息已不存在', { type: view.value.type, messageId: msg.id }); showError(t('chat.recallDenied')); return }
   removeMessage(msg.id)
 }
 
@@ -484,15 +505,16 @@ const sendFriendRequest = async () => {
   const { data: target } = await supabase.from('profiles').select('id').eq('username', name).single()
   if (!target) return showError(t('chat.userNotFound'))
   const { error } = await supabase.from('friend_requests').insert({ from_user: myId.value, to_user: target.id })
-  if (error) showError(error.message)
-  else { showSuccess(t('chat.requestSent')); searchUser.value = '' }
+  if (error) { log.error('好友申请发送失败（表 friend_requests）', { message: error.message }); showError(error.message) }
+  else { log.info('好友申请已发送', { targetId: target.id }); showSuccess(t('chat.requestSent')); searchUser.value = '' }
 }
 
 const acceptRequest = async (id) => {
   const req = incoming.value.find((r) => r.id === id)
   if (!req) return
+  log.info('同意好友申请', { requestId: id, fromUserId: req.from_user })
   const { error } = await supabase.from('friend_requests').update({ status: 'accepted' }).eq('id', id)
-  if (error) return showError(error.message)
+  if (error) { log.error('同意好友申请失败（表 friend_requests）', error.message); return showError(error.message) }
   const a = myId.value, b = req.from_user
   await supabase.from('friendships').insert({ user_a: a, user_b: b })
   incoming.value = incoming.value.filter((r) => r.id !== id)
@@ -500,8 +522,9 @@ const acceptRequest = async (id) => {
 }
 
 const rejectRequest = async (id) => {
+  log.info('拒绝好友申请', { requestId: id })
   const { error } = await supabase.from('friend_requests').update({ status: 'rejected' }).eq('id', id)
-  if (error) return showError(error.message)
+  if (error) { log.error('拒绝好友申请失败（表 friend_requests）', error.message); return showError(error.message) }
   incoming.value = incoming.value.filter((r) => r.id !== id)
 }
 
@@ -510,13 +533,14 @@ const createGroup = async () => {
   if (!name || !groupMembers.value.length) return showError(t('chat.groupInvalid'))
   if (!myId.value) return showError(t('chat.loginRequired'))
   const { data: group, error } = await supabase.from('groups').insert({ name, owner: myId.value }).select().single()
-  if (error) return showError(error.message)
+  if (error) { log.error('创建群聊失败（表 groups）', { name, message: error.message }); return showError(error.message) }
   const members = [
     { group_id: group.id, user_id: myId.value, role: 'owner' },
     ...groupMembers.value.map((uid) => ({ group_id: group.id, user_id: uid, role: 'member' }))
   ]
   const { error: mErr } = await supabase.from('group_members').insert(members)
   if (mErr) return showError(mErr.message)
+  log.info('群聊创建成功', { groupId: group.id })
   groups.value.push(group)
   openGroupModal.value = false
   groupName.value = ''; groupMembers.value = []
@@ -528,7 +552,7 @@ const myGroupRole = ref('')
 const loadBanStatus = async () => {
   const { data } = await supabase.from('bans').select('*').eq('user_id', myId.value)
   const active = (data || []).filter((b) => b.is_permanent || new Date(b.expires_at) > new Date())
-  if (active.length) { isBanned.value = true; banInfo.value = active[0] }
+  if (active.length) { isBanned.value = true; banInfo.value = active[0]; log.warn('当前账号处于禁言状态', { userId: myId.value, reason: active[0].reason || '-' }) }
   else { isBanned.value = false; banInfo.value = null }
 }
 
@@ -546,14 +570,15 @@ const loadAdminUsers = async () => {
 const banUser = async (user) => {
   const reason = prompt(t('chat.banReasonPh'))
   const { error } = await supabase.from('bans').insert({ user_id: user.id, banned_by: myId.value, reason: reason || null })
-  if (error) return showError(error.message)
+  if (error) { log.error('禁言用户失败（表 bans）', { targetUserId: user.id, message: error.message }); return showError(error.message) }
+  log.info('禁言已生效', { targetUserId: user.id })
   showSuccess(t('chat.banDone'))
   loadAdminUsers()
 }
 
 const unbanUser = async (user) => {
   const { error } = await supabase.from('bans').delete().eq('user_id', user.id)
-  if (error) return showError(error.message)
+  if (error) { log.error('解除禁言失败（表 bans）', { targetUserId: user.id, message: error.message }); return showError(error.message) }
   showSuccess(t('chat.unbanDone'))
   loadAdminUsers()
 }
@@ -574,8 +599,9 @@ const openGroupManage = async () => {
 }
 
 const kickMember = async (uid) => {
+  log.info('移出群成员', { groupId: view.value.target, targetUserId: uid })
   const { error } = await supabase.from('group_members').delete().eq('group_id', view.value.target).eq('user_id', uid)
-  if (error) return showError(error.message)
+  if (error) { log.error('移出群成员失败（表 group_members）', { targetUserId: uid, message: error.message }); return showError(error.message) }
   showSuccess(t('chat.kickDone'))
   openGroupManage()
 }
@@ -600,7 +626,13 @@ const closeEmoji = (e) => {
 }
 
 onMounted(async () => {
-  await loadProfile()
+  log.info('聊天室页面已加载')
+  log.debug('开始加载登录态与用户资料')
+  const profileTask = loadProfile()
+  // 仅旁路记录失败，不改变原有的异常传播与后续流程
+  profileTask.catch((e) => log.error('加载用户资料失败', e?.message || e))
+  await profileTask
+  log.info('登录态与资料加载完成', { userId: myId.value, username: currentProfile.value?.username || '-' })
   if (!myId.value) { router.push('/login?redirect=/chat'); return }
   loadBanStatus()
   loadFriends()
@@ -612,6 +644,7 @@ onMounted(async () => {
   channel
     .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'messages' }, (p) => {
       if (view.value.type === 'public') addMessage(p.new)
+      log.debug('订阅收到新消息', { table: 'messages', type: 'INSERT', count: 1 })
     })
     .on('postgres_changes', { event: 'DELETE', schema: 'public', table: 'messages' }, (p) => {
       if (view.value.type === 'public') removeMessage(p.old.id)
@@ -620,19 +653,25 @@ onMounted(async () => {
       if (view.value.type === 'dm' && (p.new.from_user === view.value.target || p.new.to_user === view.value.target)) {
         addMessage(p.new)
       }
+      log.debug('订阅收到新消息', { table: 'dm_messages', type: 'INSERT', count: 1 })
     })
     .on('postgres_changes', { event: 'DELETE', schema: 'public', table: 'dm_messages' }, (p) => removeMessage(p.old.id))
     .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'group_messages' }, (p) => {
       if (view.value.type === 'group' && p.new.group_id === view.value.target) addMessage(p.new)
+      log.debug('订阅收到新消息', { table: 'group_messages', type: 'INSERT', count: 1 })
     })
     .on('postgres_changes', { event: 'DELETE', schema: 'public', table: 'group_messages' }, (p) => removeMessage(p.old.id))
     .on('postgres_changes', { event: '*', schema: 'public', table: 'friend_requests' }, () => loadRequests())
-    .subscribe()
+    .subscribe((status) => {
+      if (status === 'SUBSCRIBED') log.info('实时订阅已建立', { channel: 'chat-all' })
+      else if (status === 'CHANNEL_ERROR' || status === 'TIMED_OUT') log.warn('实时订阅异常，消息可能延迟', { channel: 'chat-all', status })
+    })
 
   document.addEventListener('click', closeEmoji)
 })
 
 onBeforeUnmount(() => {
+  log.debug('聊天室页面已卸载，取消实时订阅并移除事件监听', { channel: 'chat-all' })
   if (channel) supabase.removeChannel(channel)
   document.removeEventListener('click', closeEmoji)
 })
@@ -671,7 +710,7 @@ onBeforeUnmount(() => {
 
 .profile-bar { display: flex; align-items: center; gap: 10px; padding: 14px; border-bottom: 1px solid #eee; }
 .avatar {
-  width: 38px; height: 38px; border-radius: 50%; background: #42b983; color: #fff;
+  width: 38px; height: 38px; border-radius: 50%; background: var(--accent, #42b983); color: #fff;
   display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 16px;
 }
 .user-info { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
@@ -683,8 +722,8 @@ onBeforeUnmount(() => {
 .search-row input {
   flex: 1; border: 1px solid #ddd; border-radius: 6px; padding: 6px 8px; font-size: 13px; outline: none; background: #fff;
 }
-.search-row input:focus { border-color: #42b983; }
-.add-btn { background: #42b983; color: #fff; border: none; border-radius: 6px; padding: 0 10px; font-size: 12px; cursor: pointer; }
+.search-row input:focus { border-color: var(--accent, #42b983); }
+.add-btn { background: var(--accent, #42b983); color: #fff; border: none; border-radius: 6px; padding: 0 10px; font-size: 12px; cursor: pointer; }
 .add-btn:hover { background: #3aa876; }
 
 .nav-section { padding: 8px 0; overflow-y: auto; }
@@ -699,10 +738,10 @@ onBeforeUnmount(() => {
   transition: background 0.15s;
 }
 .nav-item:hover { background: #f0f0f0; }
-.nav-item.active { background: #e8f7f0; color: #42b983; font-weight: 600; }
+.nav-item.active { background: #e8f7f0; color: var(--accent, #42b983); font-weight: 600; }
 
 .dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
-.public-dot { background: #42b983; }
+.public-dot { background: var(--accent, #42b983); }
 .friend-dot { background: #5a9ed6; }
 .group-dot { background: #c98ad6; }
 
@@ -715,8 +754,8 @@ onBeforeUnmount(() => {
   background: #f0f0f0; border: 1px solid #ddd; border-radius: 5px; padding: 2px 8px; font-size: 12px; cursor: pointer;
   color: #666;
 }
-.mini-btn.ok { background: #e8f7f0; border-color: #42b983; color: #42b983; }
-.mini-btn.ok:hover { background: #42b983; color: #fff; }
+.mini-btn.ok { background: #e8f7f0; border-color: var(--accent, #42b983); color: var(--accent, #42b983); }
+.mini-btn.ok:hover { background: var(--accent, #42b983); color: #fff; }
 .mini-btn.no:hover { background: #e05555; color: #fff; border-color: #e05555; }
 
 .empty-mini { padding: 4px 14px; font-size: 12px; color: #bbb; margin: 0; }
@@ -737,7 +776,7 @@ onBeforeUnmount(() => {
 .bubble {
   max-width: 72%; background: #f4f6f5; border-radius: 10px; padding: 8px 12px; position: relative;
 }
-.msg-row.mine .bubble { background: #42b983; }
+.msg-row.mine .bubble { background: var(--accent, #42b983); }
 .bubble.has-image { padding: 6px; }
 .bubble-actions {
   position: absolute; top: -30px; right: 0; display: flex; gap: 4px; opacity: 0; transition: opacity 0.15s;
@@ -748,10 +787,10 @@ onBeforeUnmount(() => {
   background: #fff; border: 1px solid #eee; border-radius: 6px; padding: 3px; color: #888; cursor: pointer;
   display: inline-flex; box-shadow: 0 1px 4px rgba(0, 0, 0, 0.08); transition: all 0.15s;
 }
-.act-btn:hover { color: #42b983; border-color: #42b983; }
+.act-btn:hover { color: var(--accent, #42b983); border-color: var(--accent, #42b983); }
 
 .meta { margin: 0 0 2px; font-size: 12px; color: #999; display: flex; gap: 8px; }
-.name { font-weight: 600; color: #42b983; }
+.name { font-weight: 600; color: var(--accent, #42b983); }
 .msg-row.mine .meta { color: rgba(255, 255, 255, 0.75); }
 .msg-row.mine .name { color: rgba(255, 255, 255, 0.9); }
 .content { margin: 0; font-size: 14px; line-height: 1.6; color: #2c3e50; word-break: break-word; white-space: pre-wrap; }
@@ -763,9 +802,9 @@ onBeforeUnmount(() => {
   flex: 1; border: 1px solid #ddd; border-radius: 8px; padding: 9px 12px; font-size: 14px; color: #2c3e50;
   background: #fafafa; outline: none; transition: border-color 0.2s, box-shadow 0.2s;
 }
-.msg-input:focus { border-color: #42b983; box-shadow: 0 0 0 3px rgba(66, 185, 131, 0.15); }
+.msg-input:focus { border-color: var(--accent, #42b983); box-shadow: 0 0 0 3px rgba(var(--accent-rgb, 66, 185, 131), 0.15); }
 .send-btn {
-  background: #42b983; color: #fff; border: none; border-radius: 8px; padding: 9px 20px; font-size: 14px; cursor: pointer;
+  background: var(--accent, #42b983); color: #fff; border: none; border-radius: 8px; padding: 9px 20px; font-size: 14px; cursor: pointer;
   transition: background 0.2s, transform 0.15s;
 }
 .send-btn:hover:not(:disabled) { background: #3aa876; transform: translateY(-1px); }
@@ -774,7 +813,7 @@ onBeforeUnmount(() => {
   background: none; border: 1px solid #ddd; border-radius: 8px; padding: 5px; color: #888; cursor: pointer;
   display: inline-flex; transition: all 0.2s;
 }
-.icon-btn:hover, .icon-btn.active { border-color: #42b983; color: #42b983; background: #f0f9f4; }
+.icon-btn:hover, .icon-btn.active { border-color: var(--accent, #42b983); color: var(--accent, #42b983); background: #f0f9f4; }
 .hidden-file { display: none; }
 .menu-btn { display: none; }
 .sidebar-mask { display: none; }
@@ -794,7 +833,7 @@ onBeforeUnmount(() => {
 }
 .modal-card h3 { margin: 0; }
 .modal-card input { border: 1px solid #ddd; border-radius: 8px; padding: 9px 12px; font-size: 14px; outline: none; }
-.modal-card input:focus { border-color: #42b983; }
+.modal-card input:focus { border-color: var(--accent, #42b983); }
 .modal-label { margin: 0; font-size: 13px; color: #888; }
 .member-list { overflow-y: auto; display: flex; flex-direction: column; gap: 8px; }
 .member-item { display: flex; align-items: center; gap: 8px; font-size: 14px; cursor: pointer; }
@@ -829,17 +868,17 @@ html.dark .profile-bar { border-color: #2d2d44; }
 html.dark .search-row { border-color: #2d2d44; }
 html.dark .search-row input { background: #1a1a2e; border-color: #2d2d44; color: #e0e0e0; }
 html.dark .nav-item:hover { background: #1f1f38; }
-html.dark .nav-item.active { background: rgba(66, 185, 131, 0.15); color: #42b983; }
+html.dark .nav-item.active { background: rgba(var(--accent-rgb, 66, 185, 131), 0.15); color: var(--accent, #42b983); }
 html.dark .main-head { border-color: #2d2d44; }
 html.dark .main-head h2 { color: #f0f0f0; }
 html.dark .bubble { background: #252540; }
 html.dark .meta { color: #777; }
-html.dark .name { color: #42b983; }
+html.dark .name { color: var(--accent, #42b983); }
 html.dark .content { color: #ddd; }
 html.dark .input-row { border-color: #2d2d44; }
 html.dark .msg-input { background: #14142a; border-color: #2d2d44; color: #e0e0e0; }
 html.dark .icon-btn { border-color: #2d2d44; color: #aaa; }
-html.dark .icon-btn:hover, html.dark .icon-btn.active { border-color: #42b983; color: #42b983; background: rgba(66,185,131,0.15); }
+html.dark .icon-btn:hover, html.dark .icon-btn.active { border-color: var(--accent, #42b983); color: var(--accent, #42b983); background: rgba(var(--accent-rgb, 66, 185, 131),0.15); }
 html.dark .act-btn { background: #252540; border-color: #2d2d44; }
 html.dark .emoji-panel { background: #1a1a2e; border-color: #2d2d44; }
 html.dark .emoji:hover { background: #252540; }

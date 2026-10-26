@@ -34,7 +34,12 @@ import { onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { isLeaving } from '../router'
 import { t } from '../utils/i18n'
+import { createLogger } from '../utils/logger'
 import AppIcon from '../components/AppIcon.vue'
+
+const log = createLogger('About')
+// 模块初始化：关于页展示技能、爱好与联系方式
+log.info('关于页模块已初始化：展示技能、爱好与联系方式')
 
 const router = useRouter()
 
@@ -42,10 +47,12 @@ const skills = ['Vue 3', 'JavaScript', 'TypeScript', 'CSS', 'Vite', 'Node.js', '
 const hobbies = ['about.hobby1', 'about.hobby2', 'about.hobby3']
 
 const goBack = () => {
+  log.info('返回首页')
   router.push('/')
 }
 
 onMounted(() => {
+  log.info('About 页面已加载', { skills: skills.length, hobbies: hobbies.length })
 })
 </script>
 
@@ -89,7 +96,7 @@ onMounted(() => {
 .back-btn {
   background: none;
   border: none;
-  color: #42b983;
+  color: var(--accent, #42b983);
   cursor: pointer;
   font-size: 14px;
   padding: 0;
@@ -122,12 +129,12 @@ h1 {
   color: #2c3e50;
   margin-bottom: 16px;
   padding-bottom: 8px;
-  border-bottom: 2px solid #42b983;
+  border-bottom: 2px solid var(--accent, #42b983);
 }
 
 /* 图标固定用主色，避免在深色模式下跟着标题变成近白色 */
 .section h2 .app-icon {
-  color: #42b983;
+  color: var(--accent, #42b983);
 }
 
 .skills {
@@ -139,7 +146,7 @@ h1 {
 .skill {
   padding: 6px 16px;
   background: #f0f9f4;
-  color: #42b983;
+  color: var(--accent, #42b983);
   border-radius: 4px;
   font-size: 14px;
 }

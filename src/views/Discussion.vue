@@ -261,13 +261,18 @@
 </template>
 
 <script setup>
-import { computed, onMounted, reactive, ref, watch } from 'vue'
+import { computed, onMounted, onUnmounted, reactive, ref, watch } from 'vue'
 import { useRouter } from 'vue-router'
 import { isLeaving } from '../router'
 import { t, locale } from '../utils/i18n'
 import { supabase } from '../utils/supabase'
 import { loadSession, currentUser, currentProfile } from '../utils/auth'
 import { showError, showSuccess, showConfirm } from '../utils/modal'
+import { createLogger } from '../utils/logger'
+
+const log = createLogger('Discussion')
+
+log.info('讨论区模块初始化：负责任务包括文章列表/详情/发布/编辑/删除/置顶/标签/封面、评论与楼中楼、点赞、搜索与分页、图片上传、富文本渲染')
 
 const router = useRouter()
 const PAGE_SIZE = 6
@@ -369,7 +374,13 @@ const authorNames = ref({})
 const loadNames = async (ids) => {
   const missing = [...new Set(ids.filter(Boolean))].filter((id) => !(id in authorNames.value))
   if (!missing.length) return
-  const { data } = await supabase.from('profiles').select('id,username').in('id', missing)
+  log.debug('开始批量查询作者名', { 待查条数: missing.length })
+  const { data, error } = await supabase.from('profiles').select('id,username').in('id', missing)
+  if (error) {
+    log.warn('作者名批量查询失败', { 待查条数: missing.length, 原始错误: error.message, 错误码: error.code })
+  } else {
+    log.info('作者名批量查询完成', { 返回条数: (data || []).length })
+  }
   const next = { ...authorNames.value }
   for (const p of data || []) next[p.id] = p.username
   authorNames.value = next
@@ -380,16 +391,32 @@ const fetchPosts = async () => {
   const from = (page.value - 1) * PAGE_SIZE
   const to = from + PAGE_SIZE - 1
 
+  log.debug('开始加载文章列表', {
+    页码: page.value,
+    搜索词长度: search.value.length,
+    每页条数: PAGE_SIZE
+  })
+
   let { data, error, count } = await buildPostsQuery(POST_FIELDS_FULL, true).range(from, to)
 
   // 兼容尚未执行迁移的数据库：去掉新列后用基础字段再查一次
   if (error && isMissingColumn(error)) {
+    log.warn('文章列表查询因字段缺失降级重试', {
+      移除字段: ['details', 'tags', 'pinned', 'cover_url'],
+      原始错误: error.message,
+      错误码: error.code
+    })
     ;({ data, error, count } = await buildPostsQuery(POST_FIELDS_BASE, false).range(from, to))
   }
 
   if (error) {
     loading.value = false
-    console.error('[discussion] 加载文章失败：', error)
+    log.error('加载文章列表失败', {
+      页码: page.value,
+      搜索词长度: search.value.length,
+      原始错误: error.message,
+      错误码: error.code
+    })
     showError(`${t('discussion.loadError')}\n${error.message || ''}`.trim())
     return
   }
@@ -397,10 +424,23 @@ const fetchPosts = async () => {
   posts.value = data || []
   total.value = count || 0
 
+  log.info('文章列表加载成功', {
+    条数: posts.value.length,
+    总数: total.value,
+    页码: page.value
+  })
+
   const ids = posts.value.map((p) => p.id)
   if (ids.length) {
     await loadNames(posts.value.map((p) => p.author_id))
-    const { data: rows } = await supabase.from('post_comments').select('post_id').in('post_id', ids)
+    const { data: rows, error: countError } = await supabase.from('post_comments').select('post_id').in('post_id', ids)
+    if (countError) {
+      log.warn('评论数统计查询失败，卡片评论数将显示为 0', {
+        文章数: ids.length,
+        原始错误: countError.message,
+        错误码: countError.code
+      })
+    }
     const map = {}
     for (const row of rows || []) map[row.post_id] = (map[row.post_id] || 0) + 1
     commentCounts.value = map
@@ -416,11 +456,13 @@ watch(searchInput, (value) => {
   searchTimer = setTimeout(() => {
     search.value = value.trim()
     page.value = 1
+    log.debug('搜索词变更，重新加载第一页', { 搜索词长度: search.value.length, 页码: page.value })
     fetchPosts()
   }, 300)
 })
 
 const clearSearch = () => {
+  log.debug('清空搜索条件')
   searchInput.value = ''
   search.value = ''
   page.value = 1
@@ -430,6 +472,7 @@ const clearSearch = () => {
 const setPage = (next) => {
   if (next < 1 || next > pageCount.value || next === page.value) return
   page.value = next
+  log.debug('切换分页', { 页码: page.value, 总页数: pageCount.value })
   fetchPosts()
   window.scrollTo({ top: 0, behavior: 'smooth' })
 }
@@ -438,6 +481,7 @@ const setPage = (next) => {
 const loadComments = async () => {
   if (!activePost.value) return
   commentsLoading.value = true
+  log.debug('开始加载评论', { 文章id: activePost.value.id })
   let { data, error } = await supabase
     .from('post_comments')
     .select('id,content,created_at,user_id,parent_id,image_url')
@@ -445,6 +489,12 @@ const loadComments = async () => {
     .order('created_at', { ascending: true })
 
   if (error && isMissingColumn(error)) {
+    log.warn('评论查询因字段缺失降级重试', {
+      文章id: activePost.value.id,
+      移除字段: ['parent_id', 'image_url'],
+      原始错误: error.message,
+      错误码: error.code
+    })
     ;({ data, error } = await supabase
       .from('post_comments')
       .select('id,content,created_at,user_id')
@@ -454,7 +504,11 @@ const loadComments = async () => {
 
   if (error) {
     commentsLoading.value = false
-    console.error('[discussion] 加载评论失败：', error)
+    log.error('加载评论失败', {
+      文章id: activePost.value.id,
+      原始错误: error.message,
+      错误码: error.code
+    })
     showError(`${t('discussion.loadError')}\n${error.message || ''}`.trim())
     return
   }
@@ -463,13 +517,22 @@ const loadComments = async () => {
   likes.value = {}
   myLikes.value = {}
 
+  log.info('评论加载成功', { 文章id: activePost.value.id, 条数: comments.value.length })
+
   if (comments.value.length) {
     await loadNames(comments.value.map((c) => c.user_id))
     const ids = comments.value.map((c) => c.id)
-    const { data: rows } = await supabase
+    const { data: rows, error: likesError } = await supabase
       .from('post_comment_likes')
       .select('comment_id,user_id')
       .in('comment_id', ids)
+    if (likesError) {
+      log.warn('点赞数据查询失败，点赞数与已赞状态将显示为空', {
+        评论数: ids.length,
+        原始错误: likesError.message,
+        错误码: likesError.code
+      })
+    }
     const counts = {}
     const mine = {}
     for (const row of rows || []) {
@@ -494,6 +557,11 @@ const flatComments = computed(() => {
 })
 
 const openPost = async (post) => {
+  log.info('打开文章详情', {
+    文章id: post.id,
+    标题长度: (post.title || '').length,
+    评论数: commentCounts.value[post.id] || 0
+  })
   activePost.value = post
   comments.value = []
   commentText.value = ''
@@ -504,6 +572,7 @@ const openPost = async (post) => {
 }
 
 const closePost = () => {
+  log.debug('关闭文章详情', { 文章id: activePost.value?.id })
   activePost.value = null
   comments.value = []
   replyTo.value = null
@@ -528,6 +597,12 @@ const submitComment = async () => {
   if (!text && !commentImageUrl.value) return
   if (!currentUser.value) return showError(t('discussion.loginToComment'))
   sending.value = true
+  log.debug('开始发布评论', {
+    文章id: activePost.value.id,
+    内容长度: text.length,
+    是否有图片: !!commentImageUrl.value,
+    父评论id: replyTo.value?.id || null
+  })
   try {
     const { error } = await supabase.from('post_comments').insert({
       post_id: activePost.value.id,
@@ -536,7 +611,20 @@ const submitComment = async () => {
       content: text,
       image_url: commentImageUrl.value || null
     })
-    if (error) return showError(error.message)
+    if (error) {
+      log.error('评论发布失败', {
+        文章id: activePost.value.id,
+        原始错误: error.message,
+        错误码: error.code
+      })
+      return showError(error.message)
+    }
+    log.info('评论发布成功', {
+      文章id: activePost.value.id,
+      内容长度: text.length,
+      是否回复: !!replyTo.value,
+      是否有图片: !!commentImageUrl.value
+    })
     commentText.value = ''
     commentImageUrl.value = ''
     replyTo.value = null
@@ -555,14 +643,30 @@ const toggleLike = async (comment) => {
       .delete()
       .eq('comment_id', comment.id)
       .eq('user_id', uid)
-    if (error) return showError(error.message)
+    if (error) {
+      log.error('取消点赞失败', {
+        评论id: comment.id,
+        原始错误: error.message,
+        错误码: error.code
+      })
+      return showError(error.message)
+    }
+    log.info('取消点赞成功', { 评论id: comment.id })
     myLikes.value[comment.id] = false
     likes.value[comment.id] = Math.max(0, (likes.value[comment.id] || 1) - 1)
   } else {
     const { error } = await supabase
       .from('post_comment_likes')
       .insert({ comment_id: comment.id, user_id: uid })
-    if (error) return showError(error.message)
+    if (error) {
+      log.error('点赞失败', {
+        评论id: comment.id,
+        原始错误: error.message,
+        错误码: error.code
+      })
+      return showError(error.message)
+    }
+    log.info('点赞成功', { 评论id: comment.id })
     myLikes.value[comment.id] = true
     likes.value[comment.id] = (likes.value[comment.id] || 0) + 1
   }
@@ -570,11 +674,21 @@ const toggleLike = async (comment) => {
 
 /* ---------- 图片上传 ---------- */
 const uploadImage = async (file) => {
+  log.debug('开始上传图片', {
+    文件名: file.name,
+    大小MB: Number((file.size / (1024 * 1024)).toFixed(2)),
+    类型: file.type
+  })
   if (!file.type.startsWith('image/')) {
+    log.warn('图片上传被跳过：文件类型不支持', { 类型: file.type || '未知' })
     showError(t('discussion.imageTypeError'))
     return null
   }
   if (file.size > 5 * 1024 * 1024) {
+    log.warn('图片上传被跳过：文件超过 5MB 限制', {
+      文件名: file.name,
+      大小MB: Number((file.size / (1024 * 1024)).toFixed(2))
+    })
     showError(t('discussion.imageSizeError'))
     return null
   }
@@ -584,8 +698,17 @@ const uploadImage = async (file) => {
     const { error } = await supabase.storage.from('chat-images').upload(path, file, { cacheControl: '31536000' })
     if (error) throw error
     const { data } = supabase.storage.from('chat-images').getPublicUrl(path)
+    log.info('图片上传成功', {
+      文件名: file.name,
+      大小MB: Number((file.size / (1024 * 1024)).toFixed(2))
+    })
     return data.publicUrl
-  } catch {
+  } catch (error) {
+    log.error('图片上传失败', {
+      文件名: file.name,
+      大小MB: Number((file.size / (1024 * 1024)).toFixed(2)),
+      原始错误: error?.message || String(error)
+    })
     showError(t('discussion.uploadError'))
     return null
   }
@@ -634,6 +757,7 @@ const openEditor = () => {
 }
 
 const startEdit = (post) => {
+  log.debug('进入文章编辑模式', { 文章id: post.id, 标题长度: (post.title || '').length })
   editingId.value = post.id
   draft.title = post.title
   draft.content = post.content
@@ -656,6 +780,14 @@ const savePost = async () => {
   if (uploading.value) return showError(t('discussion.uploading'))
 
   publishing.value = true
+  log.debug('开始提交文章', {
+    模式: editingId.value ? '编辑' : '新建',
+    文章id: editingId.value || null,
+    标题长度: draft.title.trim().length,
+    标签数: draft.tags.split(/[,，\s]+/).filter(Boolean).length,
+    是否有封面: !!draft.cover_url,
+    是否有图片: draft.content.includes('![')
+  })
   try {
     const payload = {
       title: draft.title.trim(),
@@ -671,8 +803,22 @@ const savePost = async () => {
     } else {
       ;({ error } = await supabase.from('posts').insert({ ...payload, author_id: currentUser.value.id }))
     }
-    if (error) return showError(error.message)
+    if (error) {
+      log.error('文章保存失败', {
+        模式: editingId.value ? '编辑' : '新建',
+        文章id: editingId.value || null,
+        原始错误: error.message,
+        错误码: error.code
+      })
+      return showError(error.message)
+    }
 
+    log.info('文章保存成功', {
+      模式: editingId.value ? '编辑' : '新建',
+      文章id: editingId.value || null,
+      标题长度: payload.title.length,
+      标签数: payload.tags.length
+    })
     showSuccess(editingId.value ? t('discussion.saved') : t('discussion.published'))
     editingId.value = null
     draft.title = ''
@@ -692,8 +838,17 @@ const togglePin = async (post) => {
     .from('posts')
     .update({ pinned: !post.pinned })
     .eq('id', post.id)
-  if (error) return showError(error.message)
+  if (error) {
+    log.error('置顶状态更新失败', {
+      文章id: post.id,
+      目标状态: !post.pinned,
+      原始错误: error.message,
+      错误码: error.code
+    })
+    return showError(error.message)
+  }
   post.pinned = !post.pinned
+  log.info('置顶状态已更新', { 文章id: post.id, 置顶: post.pinned })
   await fetchPosts()
 }
 
@@ -711,7 +866,15 @@ const removeComment = (comment) => {
         .delete()
         .eq('id', comment.id)
         .select('id')
-      if (error || !data?.length) return showError(t('discussion.deleteDenied'))
+      if (error || !data?.length) {
+        log.warn('删除评论未生效，可能权限不足', {
+          评论id: comment.id,
+          原始错误: error?.message || null,
+          返回行数: data?.length || 0
+        })
+        return showError(t('discussion.deleteDenied'))
+      }
+      log.info('评论已删除', { 评论id: comment.id })
       await loadComments()
     }
   })
@@ -727,7 +890,15 @@ const closeDeleteConfirm = () => {
 const doRemovePost = async (post) => {
   const { data, error } = await supabase.from('posts').delete().eq('id', post.id).select('id')
   closeDeleteConfirm()
-  if (error || !data?.length) return showError(t('discussion.deleteDenied'))
+  if (error || !data?.length) {
+    log.warn('删除文章未生效，可能权限不足', {
+      文章id: post.id,
+      原始错误: error?.message || null,
+      返回行数: data?.length || 0
+    })
+    return showError(t('discussion.deleteDenied'))
+  }
+  log.info('文章已删除', { 文章id: post.id })
   activePost.value = null
   await fetchPosts()
 }
@@ -741,8 +912,13 @@ const goBack = () => {
 }
 
 onMounted(async () => {
+  log.info('讨论区页面已加载')
   await loadSession()
   await fetchPosts()
+})
+
+onUnmounted(() => {
+  log.debug('讨论区页面已卸载')
 })
 </script>
 
@@ -795,7 +971,7 @@ onMounted(async () => {
   top: 30px;
   background: none;
   border: none;
-  color: #42b983;
+  color: var(--accent, #42b983);
   cursor: pointer;
   font-size: 14px;
   padding: 0;
@@ -833,7 +1009,7 @@ onMounted(async () => {
 .editing-tip {
   margin: 0;
   font-size: 13px;
-  color: #42b983;
+  color: var(--accent, #42b983);
 }
 
 .editor-form input,
@@ -857,8 +1033,8 @@ onMounted(async () => {
 .editor-form textarea:focus,
 .comment-form textarea:focus,
 .search-bar input:focus {
-  border-color: #42b983;
-  box-shadow: 0 0 0 3px rgba(66, 185, 131, 0.15);
+  border-color: var(--accent, #42b983);
+  box-shadow: 0 0 0 3px rgba(var(--accent-rgb, 66, 185, 131), 0.15);
 }
 
 .upload-row,
@@ -890,7 +1066,7 @@ onMounted(async () => {
 }
 
 .primary-btn {
-  background: #42b983;
+  background: var(--accent, #42b983);
   color: #fff;
   border: none;
   border-radius: 8px;
@@ -935,7 +1111,7 @@ onMounted(async () => {
 .link-btn {
   background: none;
   border: none;
-  color: #42b983;
+  color: var(--accent, #42b983);
   font-size: 14px;
   padding: 0;
   margin-bottom: 18px;
@@ -971,8 +1147,8 @@ onMounted(async () => {
 
 .post-card:hover {
   transform: translateY(-2px);
-  border-color: #42b983;
-  box-shadow: 0 4px 16px rgba(66, 185, 131, 0.12);
+  border-color: var(--accent, #42b983);
+  box-shadow: 0 4px 16px rgba(var(--accent-rgb, 66, 185, 131), 0.12);
 }
 
 .post-card h3 {
@@ -988,8 +1164,8 @@ onMounted(async () => {
   display: inline-block;
   padding: 2px 7px;
   border-radius: 4px;
-  background: rgba(66, 185, 131, 0.14);
-  color: #42b983;
+  background: rgba(var(--accent-rgb, 66, 185, 131), 0.14);
+  color: var(--accent, #42b983);
   font-size: 11px;
   font-weight: 600;
   letter-spacing: 0.04em;
@@ -1018,7 +1194,7 @@ onMounted(async () => {
 
 .meta .tag,
 .tag {
-  color: #42b983;
+  color: var(--accent, #42b983);
   font-size: 12px;
 }
 
@@ -1181,21 +1357,21 @@ onMounted(async () => {
 }
 
 .rich :deep(a) {
-  color: #42b983;
+  color: var(--accent, #42b983);
   text-decoration: underline;
 }
 
 .rich :deep(code) {
   padding: 1px 5px;
   border-radius: 4px;
-  background: rgba(66, 185, 131, 0.12);
+  background: rgba(var(--accent-rgb, 66, 185, 131), 0.12);
   font-size: 0.92em;
 }
 
 .details-block {
   margin-top: 22px;
   padding: 14px 16px;
-  border-left: 3px solid #42b983;
+  border-left: 3px solid var(--accent, #42b983);
   border-radius: 0 8px 8px 0;
   background: #f6fbf8;
 }
@@ -1205,7 +1381,7 @@ onMounted(async () => {
   font-size: 11px;
   letter-spacing: 0.16em;
   text-transform: uppercase;
-  color: #42b983;
+  color: var(--accent, #42b983);
 }
 
 .details {
@@ -1227,7 +1403,7 @@ onMounted(async () => {
 }
 
 .comments .count {
-  color: #42b983;
+  color: var(--accent, #42b983);
   font-weight: 400;
   font-size: 15px;
 }
@@ -1240,8 +1416,8 @@ onMounted(async () => {
   margin: 0;
   padding: 6px 10px;
   border-radius: 6px;
-  background: rgba(66, 185, 131, 0.1);
-  color: #42b983;
+  background: rgba(var(--accent-rgb, 66, 185, 131), 0.1);
+  color: var(--accent, #42b983);
   font-size: 13px;
 }
 
@@ -1299,7 +1475,7 @@ onMounted(async () => {
   width: 24px;
   height: 24px;
   border-radius: 50%;
-  background: #42b983;
+  background: var(--accent, #42b983);
   color: #fff;
   font-size: 12px;
   font-weight: 600;
@@ -1409,8 +1585,8 @@ onMounted(async () => {
 }
 
 .page-btn:hover:not(:disabled) {
-  border-color: #42b983;
-  color: #42b983;
+  border-color: var(--accent, #42b983);
+  color: var(--accent, #42b983);
 }
 
 .page-btn:disabled {
@@ -1419,8 +1595,8 @@ onMounted(async () => {
 }
 
 .page-btn.active {
-  background: #42b983;
-  border-color: #42b983;
+  background: var(--accent, #42b983);
+  border-color: var(--accent, #42b983);
   color: #fff;
 }
 

@@ -1,16 +1,27 @@
 import { ref, watch } from 'vue'
+import { createLogger } from './logger'
+
+const log = createLogger('i18n')
 
 const LOCALE_KEY = 'locale'
 const _locale = ref(localStorage.getItem(LOCALE_KEY) || 'zh')
+let lastAppliedLocale = null
 
 const applyLocale = (val) => {
   localStorage.setItem(LOCALE_KEY, val)
   document.documentElement.setAttribute('lang', val)
+  if (lastAppliedLocale !== null && lastAppliedLocale !== val) {
+    log.info(`语言已应用：${lastAppliedLocale} → ${val}`)
+  }
+  lastAppliedLocale = val
 }
 
 applyLocale(_locale.value)
 
+log.info('i18n 模块加载', { locale: _locale.value })
+
 watch(_locale, (val) => {
+  log.debug('locale 状态变更', { locale: val })
   applyLocale(val)
 })
 
@@ -45,7 +56,29 @@ const messages = {
     idCopied: { zh: '用户 ID 已复制', en: 'User ID copied' },
     copyFailed: { zh: '复制失败，请手动选择复制', en: 'Copy failed, please copy manually' },
     login: { zh: '登录', en: 'Login' },
-    logout: { zh: '退出登录', en: 'Logout' }
+    logout: { zh: '退出登录', en: 'Logout' },
+    settings: { zh: '设置', en: 'Settings' },
+    close: { zh: '关闭', en: 'Close' },
+    uploadLogs: { zh: '提交日志到数据库', en: 'Upload logs to database' },
+    uploadLogsDesc: { zh: '开启后批量写入 Supabase，仅保留 2 天', en: 'Batch write to Supabase, kept for 2 days' },
+    uploadLogsNote: { zh: '默认关闭。开启后不频繁上传：攒满 100 条或离开页面时合并写一次，仅保存 2 天；关闭后不再发起任何请求。', en: 'Off by default. Logs are written once per visit (on 100 buffered entries or page exit), kept 2 days; when off, no requests are made.' },
+    uploadLogsOn: { zh: '日志上传已开启', en: 'Log upload enabled' },
+    uploadLogsOff: { zh: '日志上传已关闭', en: 'Log upload disabled' },
+    appearance: { zh: '外观', en: 'Appearance' },
+    accentColor: { zh: '主题色', en: 'Accent color' },
+    customColor: { zh: '自定义颜色', en: 'Custom color' },
+    bgLight: { zh: '浅色背景', en: 'Light background' },
+    bgDark: { zh: '深色背景', en: 'Dark background' },
+    glassNav: { zh: '液态玻璃', en: 'Liquid glass' },
+    glassNavDesc: { zh: 'WebGL 液态背景缓慢流动，面板磨砂透出（Demo BUG很多，需要WebGL）', en: 'Live WebGL liquid backdrop with frosted glass panels.(The WebGL demo has many bugs and requires WebGL support.)' },
+    glassBlur: { zh: '磨砂模糊', en: 'Frost blur' },
+    glassThickness: { zh: '折射厚度', en: 'Refraction thickness' },
+    glassIor: { zh: '折射率', en: 'IOR' },
+    glassNormalStrength: { zh: '法线强度', en: 'Normal strength' },
+    reduceMotion: { zh: '减少动画', en: 'Reduce motion' },
+    reduceMotionDesc: { zh: '关闭页面切换与悬停动效', en: 'Disable page and hover animations' },
+    resetAppearance: { zh: '恢复默认外观', en: 'Reset appearance' },
+    appearanceReset: { zh: '外观已恢复默认', en: 'Appearance reset' }
   },
   home: {
     welcome: { zh: '你好，欢迎来到我的网站 👋', en: 'Hi, welcome to my website 👋' },
@@ -404,10 +437,16 @@ function t(key, params = {}) {
     if (msg && msg[k] !== undefined) {
       msg = msg[k]
     } else {
+      log.once(`miss:${key}`, 'warn', `缺少翻译 key：${key}`)
       return key
     }
   }
-  const result = msg && msg[_locale.value] !== undefined ? msg[_locale.value] : key
+  let result = key
+  if (msg && msg[_locale.value] !== undefined) {
+    result = msg[_locale.value]
+  } else {
+    log.debug(`翻译缺失，回退 key：${key}`, { locale: _locale.value })
+  }
   if (typeof result === 'string' && Object.keys(params).length > 0) {
     return result.replace(/\{(\w+)\}/g, (_, k) => params[k] ?? `{${k}}`)
   }
@@ -415,11 +454,17 @@ function t(key, params = {}) {
 }
 
 function setLocale(loc) {
+  if (loc !== 'zh' && loc !== 'en') {
+    log.warn(`未知语言：${loc}`)
+  }
+  log.info(`切换语言：${_locale.value} → ${loc}`)
   _locale.value = loc
 }
 
 function toggleLocale() {
-  _locale.value = _locale.value === 'zh' ? 'en' : 'zh'
+  const next = _locale.value === 'zh' ? 'en' : 'zh'
+  log.info(`切换语言：${_locale.value} → ${next}`)
+  _locale.value = next
 }
 
 export { _locale as locale, t, setLocale, toggleLocale }

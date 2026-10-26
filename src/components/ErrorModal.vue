@@ -62,9 +62,14 @@
 </template>
 
 <script setup>
-import { computed } from 'vue'
+import { computed, watch } from 'vue'
 import { t } from '../utils/i18n'
+import { createLogger } from '../utils/logger'
 import AppIcon from './AppIcon.vue'
+
+const log = createLogger('ErrorModal')
+
+log.info('通用对话框组件已初始化（按类型渲染图标与按钮）')
 
 const props = defineProps({
   visible: {
@@ -150,26 +155,41 @@ const closeModal = () => {
 }
 
 const handleClose = () => {
+  log.debug('点击关闭按钮')
   emit('close')
   closeModal()
 }
 
 const handleConfirm = () => {
+  log.info('用户确认', { type: props.type, titleLength: String(resolvedTitle.value).length })
   emit('confirm')
   closeModal()
 }
 
 const handleCancel = () => {
+  log.info('用户取消', { type: props.type })
   emit('cancel')
   closeModal()
 }
 
 const handleOverlayClick = () => {
   if (props.closeOnOverlay) {
+    log.debug('点击遮罩关闭', { type: props.type })
     emit('close')
     closeModal()
   }
 }
+
+watch(
+  () => props.visible,
+  (val) => {
+    log.debug(val ? '弹窗显示' : '弹窗关闭', {
+      type: props.type,
+      size: props.size,
+      titleLength: String(resolvedTitle.value).length
+    })
+  }
+)
 </script>
 
 <style scoped>
@@ -300,8 +320,8 @@ const handleOverlayClick = () => {
 }
 
 .icon-info {
-  background: rgba(66, 185, 131, 0.12);
-  color: #42b983;
+  background: rgba(var(--accent-rgb, 66, 185, 131), 0.12);
+  color: var(--accent, #42b983);
 }
 
 .icon-success {
@@ -423,11 +443,11 @@ const handleOverlayClick = () => {
 }
 
 .btn-info {
-  background: linear-gradient(135deg, #42b983 0%, #2c7a52 100%);
+  background: linear-gradient(135deg, var(--accent, #42b983) 0%, #2c7a52 100%);
 }
 
 .btn-info:hover {
-  background: linear-gradient(135deg, #4FC08D 0%, #42b983 100%);
+  background: linear-gradient(135deg, #4FC08D 0%, var(--accent, #42b983) 100%);
 }
 
 .btn-success {
@@ -483,7 +503,7 @@ html.dark .icon-warning {
 }
 
 html.dark .icon-info {
-  background: rgba(66, 185, 131, 0.18);
+  background: rgba(var(--accent-rgb, 66, 185, 131), 0.18);
 }
 
 html.dark .icon-success {

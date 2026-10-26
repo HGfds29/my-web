@@ -59,9 +59,20 @@
 </template>
 
 <script setup>
-import { computed, getCurrentInstance } from 'vue'
+import { computed, getCurrentInstance, onMounted, onUnmounted } from 'vue'
 import { t } from '../utils/i18n'
-import { toasts, dismiss, pauseTimer, resumeTimer, position as _position } from '../utils/toast'
+import { createLogger } from '../utils/logger'
+import {
+  toasts,
+  dismiss as dismissToast,
+  pauseTimer as pauseToastTimer,
+  resumeTimer as resumeToastTimer,
+  position as _position
+} from '../utils/toast'
+
+const log = createLogger('ToastContainer')
+
+log.info('Toast 容器组件已初始化（固定定位 + 列表过渡）')
 
 const position = computed(() => _position.value)
 
@@ -78,15 +89,40 @@ const positionClass = computed(() => {
   return map[position.value] || 'pos-top-right'
 })
 
+// 在组件侧补一层交互日志，模板保持原样
+const dismiss = (id) => {
+  log.debug('点击关闭 Toast', { id })
+  dismissToast(id)
+}
+
+const pauseTimer = (id) => {
+  log.debug('鼠标移入，暂停 Toast 计时', { id })
+  pauseToastTimer(id)
+}
+
+const resumeTimer = (id) => {
+  log.debug('鼠标移出，恢复 Toast 计时', { id })
+  resumeToastTimer(id)
+}
+
 const handleClick = (item) => {
+  log.debug('点击 Toast 内容', { id: item.id, type: item.type, clickable: typeof item.onClick === 'function' })
   if (typeof item.onClick === 'function') {
     try {
       item.onClick()
     } catch (e) {
-      console.error('[ToastContainer/handleClick] 点击回调出错:', e)
+      log.error('Toast 点击回调出错', e)
     }
   }
 }
+
+onMounted(() => {
+  log.debug('Toast 容器已挂载', { position: position.value })
+})
+
+onUnmounted(() => {
+  log.debug('Toast 容器已卸载')
+})
 </script>
 
 <style scoped>

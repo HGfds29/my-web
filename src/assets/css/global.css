@@ -68,24 +68,24 @@ html.dark .post-item:hover {
 
 html.dark .section-title,
 html.dark .section h2 {
-  border-bottom-color: #42b983 !important;
+  border-bottom-color: var(--accent, #42b983) !important;
   color: #f0f0f0 !important;
 }
 
 html.dark .tag,
 html.dark .skill {
   background: #1e2d3a !important;
-  color: #42b983 !important;
+  color: var(--accent, #42b983) !important;
 }
 
 html.dark .view-all,
 html.dark .read-more {
-  color: #42b983 !important;
+  color: var(--accent, #42b983) !important;
 }
 
 html.dark .btn-ghost {
-  color: #42b983 !important;
-  border-color: #42b983 !important;
+  color: var(--accent, #42b983) !important;
+  border-color: var(--accent, #42b983) !important;
 }
 
 html.dark .btn-ghost:hover {
@@ -93,7 +93,7 @@ html.dark .btn-ghost:hover {
 }
 
 html.dark .back-btn {
-  color: #42b983 !important;
+  color: var(--accent, #42b983) !important;
 }
 
 html.dark .hobbies {
@@ -122,7 +122,7 @@ html.dark .navbar .nav-link {
 }
 
 html.dark .navbar .nav-link.active {
-  color: #42b983 !important;
+  color: var(--accent, #42b983) !important;
 }
 
 html.dark .navbar .theme-toggle {
@@ -131,7 +131,7 @@ html.dark .navbar .theme-toggle {
 
 html.dark .navbar .theme-toggle:hover {
   background: #2d2d44 !important;
-  color: #42b983 !important;
+  color: var(--accent, #42b983) !important;
 }
 
 /* Renkt Shell 页面深色模式 */
@@ -161,7 +161,7 @@ html.dark .renkt-page .feature-list li {
 
 html.dark .renkt-page .feature-list li:hover {
   background: #252540 !important;
-  border-color: #42b983 !important;
+  border-color: var(--accent, #42b983) !important;
 }
 
 /* 卡片 */
@@ -171,8 +171,8 @@ html.dark .renkt-page .card {
 }
 
 html.dark .renkt-page .card:hover {
-  border-color: #42b983 !important;
-  box-shadow: 0 4px 16px rgba(66, 185, 131, 0.2) !important;
+  border-color: var(--accent, #42b983) !important;
+  box-shadow: 0 4px 16px rgba(var(--accent-rgb, 66, 185, 131), 0.2) !important;
 }
 
 /* 命令表格 */
@@ -193,14 +193,14 @@ html.dark .renkt-page .cmd-table tbody tr:hover {
 html.dark .renkt-page .cmd-table td code,
 html.dark .renkt-page .cmd-table th code,
 html.dark .renkt-page code {
-  background: rgba(66, 185, 131, 0.15) !important;
+  background: rgba(var(--accent-rgb, 66, 185, 131), 0.15) !important;
   color: #4ade80 !important;
 }
 
 /* 代码块在深色模式下用更深的背景 */
 html.dark .renkt-page .code-block {
   background: #14141f !important;
-  border-left: 3px solid #42b983 !important;
+  border-left: 3px solid var(--accent, #42b983) !important;
 }
 
 /* 版本下载卡片 */
@@ -216,12 +216,12 @@ html.dark .renkt-page .version-date {
 /* 历史版本 - 深色模式 */
 html.dark .renkt-page .history-btn {
   background: transparent !important;
-  color: #42b983 !important;
-  border-color: #42b983 !important;
+  color: var(--accent, #42b983) !important;
+  border-color: var(--accent, #42b983) !important;
 }
 
 html.dark .renkt-page .history-btn:hover {
-  background: rgba(66, 185, 131, 0.15) !important;
+  background: rgba(var(--accent-rgb, 66, 185, 131), 0.15) !important;
 }
 
 html.dark .renkt-page .history-item {
@@ -231,7 +231,7 @@ html.dark .renkt-page .history-item {
 
 html.dark .renkt-page .history-item:hover {
   background: rgba(37, 37, 64, 0.9) !important;
-  border-color: #42b983 !important;
+  border-color: var(--accent, #42b983) !important;
 }
 
 html.dark .renkt-page .history-status {
@@ -239,7 +239,7 @@ html.dark .renkt-page .history-status {
 }
 
 html.dark .renkt-page .history-download {
-  background: #42b983 !important;
+  background: var(--accent, #42b983) !important;
 }
 
 html.dark .renkt-page .history-download:hover {
@@ -253,8 +253,8 @@ html.dark .renkt-page .plugin-card {
 }
 
 html.dark .renkt-page .plugin-card:hover {
-  border-color: #42b983 !important;
-  box-shadow: 0 8px 24px rgba(66, 185, 131, 0.2) !important;
+  border-color: var(--accent, #42b983) !important;
+  box-shadow: 0 8px 24px rgba(var(--accent-rgb, 66, 185, 131), 0.2) !important;
 }
 
 html.dark .renkt-page .plugin-info h3 {
@@ -270,11 +270,11 @@ html.dark .renkt-page .plugin-desc {
 }
 
 html.dark .renkt-page .plugin-icon {
-  background: rgba(66, 185, 131, 0.15) !important;
+  background: rgba(var(--accent-rgb, 66, 185, 131), 0.15) !important;
 }
 
 html.dark .renkt-page .plugin-download {
-  background: #42b983 !important;
+  background: var(--accent, #42b983) !important;
 }
 
 html.dark .renkt-page .plugin-download:hover {
@@ -337,8 +337,8 @@ html.dark .plugins-page .filter-btn:hover {
 
 html.dark .plugins-page .filter-btn.active {
   background: #1a1a2e !important;
-  border-color: #42b983 !important;
-  color: #42b983 !important;
+  border-color: var(--accent, #42b983) !important;
+  color: var(--accent, #42b983) !important;
 }
 
 html.dark .plugins-page .filter-count {
@@ -352,7 +352,7 @@ html.dark .plugins-page .plugin-card {
 }
 
 html.dark .plugins-page .plugin-card:hover {
-  border-color: #42b983 !important;
+  border-color: var(--accent, #42b983) !important;
   box-shadow: 0 12px 32px rgba(0, 0, 0, 0.4) !important;
 }
 
@@ -375,7 +375,7 @@ html.dark .plugins-page .tag {
 
 html.dark .plugins-page .tag-version {
   background: #1e2d3a !important;
-  color: #42b983 !important;
+  color: var(--accent, #42b983) !important;
 }
 
 html.dark .plugins-page .plugin-features {
@@ -395,7 +395,7 @@ html.dark .plugins-page .plugin-author {
 }
 
 html.dark .plugins-page .section h2 {
-  border-bottom-color: #42b983 !important;
+  border-bottom-color: var(--accent, #42b983) !important;
   color: #f0f0f0 !important;
 }
 
@@ -409,13 +409,13 @@ html.dark .plugins-page .step-item {
 }
 
 html.dark .plugins-page .step-item:hover {
-  border-color: #42b983 !important;
+  border-color: var(--accent, #42b983) !important;
   background: #16162f !important;
 }
 
 html.dark .plugins-page .step-num {
   background: #1e2d3a !important;
-  color: #42b983 !important;
+  color: var(--accent, #42b983) !important;
   border-color: #2d5744 !important;
 }
 
@@ -438,7 +438,7 @@ html.dark .plugins-page .dev-card h3 {
 
 html.dark .plugins-page .code-block {
   background: #0d0d1a !important;
-  border-left-color: #42b983 !important;
+  border-left-color: var(--accent, #42b983) !important;
 }
 
 html.dark .plugins-page .code-keyword {
@@ -519,8 +519,8 @@ html.dark .games-page .meta {
 }
 
 html.dark .games-page .platform {
-  background: rgba(66, 185, 131, 0.2) !important;
-  color: #42b983 !important;
+  background: rgba(var(--accent-rgb, 66, 185, 131), 0.2) !important;
+  color: var(--accent, #42b983) !important;
 }
 
 /* 分页按钮（博客列表、游戏列表共用） */
@@ -531,13 +531,13 @@ html.dark .page-btn {
 }
 
 html.dark .page-btn:hover:not(:disabled) {
-  border-color: #42b983 !important;
-  color: #42b983 !important;
+  border-color: var(--accent, #42b983) !important;
+  color: var(--accent, #42b983) !important;
 }
 
 html.dark .page-btn.active {
-  background: #42b983 !important;
-  border-color: #42b983 !important;
+  background: var(--accent, #42b983) !important;
+  border-color: var(--accent, #42b983) !important;
   color: #fff !important;
 }
 
@@ -572,8 +572,8 @@ html.dark .demo-page .demo-btn {
 }
 
 html.dark .demo-page .demo-btn:hover {
-  border-color: #42b983 !important;
-  color: #42b983 !important;
+  border-color: var(--accent, #42b983) !important;
+  color: var(--accent, #42b983) !important;
 }
 
 html.dark .demo-page .demo-btn.danger {
@@ -610,7 +610,7 @@ html.dark .discussion-page .login-hint {
 }
 
 html.dark .discussion-page .post-card:hover {
-  border-color: #42b983 !important;
+  border-color: var(--accent, #42b983) !important;
   box-shadow: 0 4px 16px rgba(0, 0, 0, 0.35) !important;
 }
 
@@ -649,7 +649,7 @@ html.dark .discussion-page .comment-form textarea {
 
 html.dark .discussion-page .details-block {
   background: #142a20 !important;
-  border-left-color: #42b983 !important;
+  border-left-color: var(--accent, #42b983) !important;
 }
 
 html.dark .discussion-page .details {
@@ -664,22 +664,22 @@ html.dark .discussion-page .page-btn {
 }
 
 html.dark .discussion-page .page-btn:hover:not(:disabled) {
-  border-color: #42b983 !important;
-  color: #42b983 !important;
+  border-color: var(--accent, #42b983) !important;
+  color: var(--accent, #42b983) !important;
 }
 
 html.dark .discussion-page .page-btn.active {
-  background: #42b983 !important;
-  border-color: #42b983 !important;
+  background: var(--accent, #42b983) !important;
+  border-color: var(--accent, #42b983) !important;
   color: #fff !important;
 }
 
 html.dark .discussion-page .tag {
-  color: #42b983 !important;
+  color: var(--accent, #42b983) !important;
 }
 
 html.dark .discussion-page .reply-banner {
-  background: rgba(66, 185, 131, 0.12) !important;
+  background: rgba(var(--accent-rgb, 66, 185, 131), 0.12) !important;
 }
 
 html.dark .discussion-page .comment-item.reply-item {

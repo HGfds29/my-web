@@ -11,6 +11,9 @@
 
 <script setup>
 import { computed } from 'vue'
+import { createLogger } from '../utils/logger'
+
+const log = createLogger('AppIcon')
 
 const props = defineProps({
   /** public/svg 下的文件名（不含 .svg），例如 游戏手柄_game-handle */
@@ -22,6 +25,22 @@ const props = defineProps({
   /** 无障碍名称；留空则视为纯装饰 */
   label: { type: String, default: '' }
 })
+
+// 图标名可疑时只提示一次，正常图标不产生任何日志
+const isValidIconName = (name) => (
+  typeof name === 'string' &&
+  name.trim() !== '' &&
+  !name.includes('.svg') &&
+  !/[\\/]/.test(name)
+)
+
+if (!isValidIconName(props.name)) {
+  log.once(
+    `unknown-icon:${props.name}`,
+    'warn',
+    `图标名可能无效：${props.name}（应为 public/svg 下不含 .svg 的文件名）`
+  )
+}
 
 /**
  * 用 mask 而不是 <img>：SVG 只作为形状遮罩，颜色交给 CSS 的 currentColor，

@@ -29,25 +29,39 @@ import { computed, onMounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { isLeaving } from '../router'
 import { t } from '../utils/i18n'
+import { createLogger } from '../utils/logger'
 import blogList from '../data/blog.json'
+
+const log = createLogger('BlogDetail')
+// 模块初始化：按路由 id 展示博客正文与图片预览
+log.info('博客详情模块已初始化：按路由 id 展示文章正文与图片预览')
 
 const route = useRoute()
 const router = useRouter()
 
 const blog = computed(() => {
   const id = Number(route.params.id)
-  return blogList.find(item => item.id === id)
+  const found = blogList.find(item => item.id === id)
+  if (found) {
+    log.info('博客数据已加载', { id, titleLength: found.title.length })
+  } else {
+    log.once(`not-found-${id}`, 'warn', '博客数据未找到', { id, source: 'src/data/blog.json' })
+  }
+  return found
 })
 
 const goBack = () => {
+  log.info('返回上一页')
   router.back()
 }
 
 const previewImage = (src) => {
+  log.debug('预览文章图片', { url: src })
   window.open(src, '_blank')
 }
 
 onMounted(() => {
+  log.info('BlogDetail 页面已加载', { id: route.params.id })
 })
 </script>
 
@@ -91,7 +105,7 @@ onMounted(() => {
 .back-btn {
   background: none;
   border: none;
-  color: #42b983;
+  color: var(--accent, #42b983);
   cursor: pointer;
   font-size: 14px;
   padding: 0;

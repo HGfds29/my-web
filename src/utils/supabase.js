@@ -1,4 +1,7 @@
 import { createClient } from '@supabase/supabase-js'
+import { createLogger } from './logger'
+
+const log = createLogger('supabase')
 
 /**
  * Supabase 聊天室配置（publishable key 可安全暴露在前端）。
@@ -209,6 +212,10 @@ import { createClient } from '@supabase/supabase-js'
 const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL
 const SUPABASE_PUBLISHABLE_KEY = import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY
 
+if (!SUPABASE_URL) log.error('缺少 VITE_SUPABASE_URL，聊天/讨论区将无法工作（检查 .env.local）')
+if (!SUPABASE_PUBLISHABLE_KEY) log.error('缺少 VITE_SUPABASE_PUBLISHABLE_KEY（检查 .env.local）')
+if (SUPABASE_URL) log.debug('Supabase 地址', SUPABASE_URL)
+
 const CLIENT_ID_KEY = 'chat_client_id'
 let clientId = localStorage.getItem(CLIENT_ID_KEY)
 if (!clientId) {
@@ -220,6 +227,9 @@ if (!clientId) {
       return v.toString(16)
     })
   localStorage.setItem(CLIENT_ID_KEY, clientId)
+  log.info('已生成浏览器匿名标识 client_id', clientId)
+} else {
+  log.debug('复用已有 client_id', clientId)
 }
 
 export const supabase = createClient(SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY, {
@@ -228,5 +238,7 @@ export const supabase = createClient(SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY, {
   // 因此关闭自动解析，由 main.js 显式处理。
   auth: { detectSessionInUrl: false }
 })
+
+log.info('Supabase 客户端已初始化')
 
 export const chatClientId = clientId

@@ -57,7 +57,7 @@
 </template>
 
 <script setup>
-import { computed, onMounted, ref } from 'vue'
+import { computed, onMounted, ref, watch } from 'vue'
 import { useRoute } from 'vue-router'
 import NavBar from './components/NavBar.vue'
 import FlagEasterEgg from './components/FlagEasterEgg.vue'
@@ -65,6 +65,7 @@ import ErrorModal from './components/ErrorModal.vue'
 import PromptModal from './components/PromptModal.vue'
 import LoadingModal from './components/LoadingModal.vue'
 import ToastContainer from './components/ToastContainer.vue'
+import { createLogger } from './utils/logger'
 import {
   visible as modalVisible,
   config as modalConfig,
@@ -84,13 +85,20 @@ import {
 const route = useRoute()
 const hideNav = computed(() => !!route.meta.hideNav)
 const isLogin = computed(() => route.name === 'Login')
+const log = createLogger('App')
 
 // 首屏直接进入登录页时，让顶栏先完成一帧绘制再向上滑出，保证动画可见
 const navReady = ref(false)
 onMounted(() => {
+  log.info('根组件已挂载', { hideNav: hideNav.value, isLogin: isLogin.value })
   requestAnimationFrame(() => {
     requestAnimationFrame(() => { navReady.value = true })
   })
+})
+
+// 路由 meta 变化导致顶栏显隐切换
+watch(hideNav, (val) => {
+  log.debug(`顶栏${val ? '隐藏' : '显示'}（路由 meta.hideNav=${val}）`)
 })
 </script>
 

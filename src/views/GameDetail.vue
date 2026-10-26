@@ -31,33 +31,39 @@
 import { computed, onMounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { isLeaving } from '../router'
+import { createLogger } from '../utils/logger'
 import gameList from '../data/games.json'
 
-console.log('[GameDetail.vue] 组件初始化')
+const log = createLogger('GameDetail')
+// 模块初始化：按路由 id 展示游戏介绍与图片预览
+log.info('游戏详情模块已初始化：按路由 id 展示游戏介绍与图片预览')
 
 const route = useRoute()
 const router = useRouter()
 
 const game = computed(() => {
   const id = Number(route.params.id)
-  console.log('[GameDetail/game] 查找游戏 ID:', id)
   const found = gameList.find(item => item.id === id)
-  console.log('[GameDetail/game] 找到游戏:', found ? found.title : '未找到')
+  if (found) {
+    log.info('游戏数据已加载', { id, titleLength: found.title.length })
+  } else {
+    log.once(`not-found-${id}`, 'warn', '游戏数据未找到', { id, source: 'src/data/games.json' })
+  }
   return found
 })
 
 const goBack = () => {
-  console.log('[GameDetail/goBack] 返回游戏列表')
+  log.info('返回游戏列表')
   router.back()
 }
 
 const previewImage = (src) => {
-  console.log('[GameDetail/previewImage] 预览图片:', src)
+  log.debug('预览游戏图片', { url: src })
   window.open(src, '_blank')
 }
 
 onMounted(() => {
-  console.log('[GameDetail/onMounted] 游戏详情页已加载，游戏ID:', route.params.id)
+  log.info('GameDetail 页面已加载', { id: route.params.id })
 })
 </script>
 
@@ -101,7 +107,7 @@ onMounted(() => {
 .back-btn {
   background: none;
   border: none;
-  color: #42b983;
+  color: var(--accent, #42b983);
   cursor: pointer;
   font-size: 14px;
   padding: 0;
@@ -129,7 +135,7 @@ h1 {
 
 .platform {
   background: #f0f9f4;
-  color: #42b983;
+  color: var(--accent, #42b983);
   padding: 2px 8px;
   border-radius: 4px;
   font-size: 12px;
@@ -185,8 +191,8 @@ h1 {
 }
 
 :global(.dark) .platform {
-  background: rgba(66, 185, 131, 0.2);
-  color: #42b983;
+  background: rgba(var(--accent-rgb, 66, 185, 131), 0.2);
+  color: var(--accent, #42b983);
 }
 
 :global(.dark) .article-image:hover {

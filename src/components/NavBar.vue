@@ -120,9 +120,195 @@
             <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/>
           </svg>
         </button>
+        <button
+          class="settings-toggle"
+          :class="{ active: settingsOpen }"
+          :title="t('nav.settings')"
+          :aria-label="t('nav.settings')"
+          @click="openSettings"
+        >
+          <AppIcon name="设置配置_setting-config" :size="18" />
+        </button>
       </div>
     </div>
   </nav>
+
+  <Teleport to="body">
+    <div class="settings-layer" :class="{ open: settingsOpen }" :aria-hidden="!settingsOpen">
+      <div class="settings-overlay" @click="closeSettings"></div>
+      <aside
+        class="settings-drawer"
+        role="dialog"
+        aria-modal="true"
+        :aria-label="t('nav.settings')"
+      >
+        <div class="settings-head">
+          <span class="settings-title">{{ t('nav.settings') }}</span>
+          <button class="settings-close" :aria-label="t('nav.close')" @click="closeSettings">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+              <line x1="6" y1="6" x2="18" y2="18" />
+              <line x1="18" y1="6" x2="6" y2="18" />
+            </svg>
+          </button>
+        </div>
+        <div class="settings-body">
+          <div class="setting-item">
+            <div class="setting-text">
+              <span class="setting-label">{{ t('nav.uploadLogs') }}</span>
+              <span class="setting-desc">{{ t('nav.uploadLogsDesc') }}</span>
+            </div>
+            <button
+              class="setting-switch"
+              :class="{ on: uploadEnabled }"
+              role="switch"
+              :aria-checked="uploadEnabled"
+              :aria-label="t('nav.uploadLogs')"
+              @click="toggleUpload"
+            >
+              <span class="switch-knob"></span>
+            </button>
+          </div>
+          <p class="settings-note">{{ t('nav.uploadLogsNote') }}</p>
+
+          <div class="settings-divider"></div>
+          <div class="settings-section">
+            <p class="section-label">{{ t('nav.appearance') }}</p>
+
+            <div class="appearance-row">
+              <span class="appearance-label">{{ t('nav.accentColor') }}</span>
+              <div class="swatch-list">
+                <button
+                  v-for="color in accentPresets"
+                  :key="color"
+                  class="swatch"
+                  :class="{ active: appearance.accent === color }"
+                  :style="{ background: color }"
+                  :aria-label="color"
+                  @click="setAccent(color)"
+                ></button>
+                <label class="color-pick" :title="t('nav.customColor')">
+                  <input type="color" :value="appearance.accent" @input="onAccentInput" />
+                </label>
+              </div>
+            </div>
+
+            <div class="appearance-row">
+              <span class="appearance-label">{{ t('nav.bgLight') }}</span>
+              <input
+                class="color-input"
+                type="color"
+                :value="appearance.lightBg"
+                @input="onLightBgInput"
+              />
+            </div>
+
+            <div class="appearance-row">
+              <span class="appearance-label">{{ t('nav.bgDark') }}</span>
+              <input
+                class="color-input"
+                type="color"
+                :value="appearance.darkBg"
+                @input="onDarkBgInput"
+              />
+            </div>
+
+            <div class="setting-item">
+              <div class="setting-text">
+                <span class="setting-label">{{ t('nav.glassNav') }}</span>
+                <span class="setting-desc">{{ t('nav.glassNavDesc') }}</span>
+              </div>
+              <button
+                class="setting-switch"
+                :class="{ on: appearance.glass }"
+                role="switch"
+                :aria-checked="appearance.glass"
+                :aria-label="t('nav.glassNav')"
+                @click="toggleGlass"
+              >
+                <span class="switch-knob"></span>
+              </button>
+            </div>
+
+            <div v-if="appearance.glass" class="glass-params">
+              <div class="param-row">
+                <span class="param-label">{{ t('nav.glassBlur') }}</span>
+                <input
+                  class="param-range"
+                  type="range"
+                  min="0"
+                  max="5"
+                  step="0.1"
+                  :value="appearance.glassBlur"
+                  @input="onGlassParam('glassBlur', $event)"
+                />
+                <span class="param-value">{{ appearance.glassBlur.toFixed(1) }}</span>
+              </div>
+              <div class="param-row">
+                <span class="param-label">{{ t('nav.glassThickness') }}</span>
+                <input
+                  class="param-range"
+                  type="range"
+                  min="0"
+                  max="50"
+                  step="1"
+                  :value="appearance.glassThickness"
+                  @input="onGlassParam('glassThickness', $event)"
+                />
+                <span class="param-value">{{ Math.round(appearance.glassThickness) }}</span>
+              </div>
+              <div class="param-row">
+                <span class="param-label">{{ t('nav.glassIor') }}</span>
+                <input
+                  class="param-range"
+                  type="range"
+                  min="0.8"
+                  max="1.5"
+                  step="0.01"
+                  :value="appearance.glassIor"
+                  @input="onGlassParam('glassIor', $event)"
+                />
+                <span class="param-value">{{ appearance.glassIor.toFixed(2) }}</span>
+              </div>
+              <div class="param-row">
+                <span class="param-label">{{ t('nav.glassNormalStrength') }}</span>
+                <input
+                  class="param-range"
+                  type="range"
+                  min="0.1"
+                  max="10"
+                  step="0.1"
+                  :value="appearance.glassNormalStrength"
+                  @input="onGlassParam('glassNormalStrength', $event)"
+                />
+                <span class="param-value">{{ appearance.glassNormalStrength.toFixed(1) }}</span>
+              </div>
+            </div>
+
+            <div class="setting-item">
+              <div class="setting-text">
+                <span class="setting-label">{{ t('nav.reduceMotion') }}</span>
+                <span class="setting-desc">{{ t('nav.reduceMotionDesc') }}</span>
+              </div>
+              <button
+                class="setting-switch"
+                :class="{ on: appearance.reduceMotion }"
+                role="switch"
+                :aria-checked="appearance.reduceMotion"
+                :aria-label="t('nav.reduceMotion')"
+                @click="toggleMotion"
+              >
+                <span class="switch-knob"></span>
+              </button>
+            </div>
+
+            <button class="appearance-reset" @click="onResetAppearance">
+              {{ t('nav.resetAppearance') }}
+            </button>
+          </div>
+        </div>
+      </aside>
+    </div>
+  </Teleport>
 </template>
 
 <script setup>
@@ -133,6 +319,13 @@ import AppIcon from './AppIcon.vue'
 import { currentUser, currentProfile, loadSession, watchAuth, signOut } from '../utils/auth'
 import { supabase } from '../utils/supabase'
 import { showPrompt, showError, showSuccess } from '../utils/modal'
+import { isLogUploadEnabled, enableLogUpload, disableLogUpload } from '../utils/logUploader'
+import { appearance, updateAppearance, resetAppearance, ACCENT_PRESETS } from '../utils/appearance'
+import { createLogger } from '../utils/logger'
+
+const log = createLogger('NavBar')
+
+log.info('顶部导航栏已初始化（导航菜单 / 用户卡片 / 主题 / 语言）')
 
 const router = useRouter()
 const isDark = ref(false)
@@ -150,12 +343,66 @@ const closeUserMenu = (event) => {
 }
 
 const onKeydown = (event) => {
-  if (event.key === 'Escape') userOpen.value = false
+  if (event.key !== 'Escape') return
+  userOpen.value = false
+  closeSettings()
+}
+
+/* 设置抽屉：仅承载「提交日志到数据库」开关 */
+const settingsOpen = ref(false)
+const uploadEnabled = ref(false)
+
+const openSettings = () => {
+  settingsOpen.value = true
+  uploadEnabled.value = isLogUploadEnabled()
+  log.info('打开设置抽屉', { uploadEnabled: uploadEnabled.value })
+}
+
+const closeSettings = () => {
+  if (!settingsOpen.value) return
+  settingsOpen.value = false
+  log.debug('关闭设置抽屉')
+}
+
+const toggleUpload = () => {
+  if (uploadEnabled.value) {
+    disableLogUpload()
+    showSuccess(t('nav.uploadLogsOff'))
+  } else {
+    enableLogUpload()
+    showSuccess(t('nav.uploadLogsOn'))
+  }
+  uploadEnabled.value = isLogUploadEnabled()
+  log.info('日志上传开关切换', { enabled: uploadEnabled.value })
+}
+
+/* 外观自定义 */
+const accentPresets = ACCENT_PRESETS
+
+const setAccent = (color) => {
+  updateAppearance({ accent: color })
+  log.debug('强调色已修改', color)
+}
+
+const onAccentInput = (event) => updateAppearance({ accent: event.target.value })
+const onLightBgInput = (event) => updateAppearance({ lightBg: event.target.value })
+const onDarkBgInput = (event) => updateAppearance({ darkBg: event.target.value })
+const toggleGlass = () => updateAppearance({ glass: !appearance.value.glass })
+const toggleMotion = () => updateAppearance({ reduceMotion: !appearance.value.reduceMotion })
+
+const onGlassParam = (key, event) => {
+  updateAppearance({ [key]: Number(event.target.value) })
+}
+
+const onResetAppearance = () => {
+  resetAppearance()
+  showSuccess(t('nav.appearanceReset'))
 }
 
 const doLogout = async () => {
-  await signOut()
   userOpen.value = false
+  log.info('用户触发退出登录')
+  await signOut()
   router.push('/home')
 }
 
@@ -164,6 +411,7 @@ const PASSWORD_RE = /^(?=.*[A-Z])(?=.*[a-z])(?=.*\d).{6,}$/
 
 const changePassword = () => {
   userOpen.value = false
+  log.info('打开修改密码弹窗')
   showPrompt({
     title: t('nav.changePassword'),
     message: t('nav.passwordRule'),
@@ -174,8 +422,13 @@ const changePassword = () => {
     confirmText: t('nav.save'),
     cancelText: t('nav.cancel'),
     onConfirm: async (value) => {
+      log.debug('提交新密码', { length: value ? String(value).length : 0 })
       const { error } = await supabase.auth.updateUser({ password: value })
-      if (error) return showError(error.message)
+      if (error) {
+        log.error('修改密码失败', error.message)
+        return showError(error.message)
+      }
+      log.info('修改密码成功')
       showSuccess(t('nav.passwordChanged'))
     }
   })
@@ -184,16 +437,25 @@ const changePassword = () => {
 const copyUserId = async () => {
   userOpen.value = false
   const id = currentUser.value?.id
-  if (!id) return
+  if (!id) {
+    log.warn('复制用户 ID 跳过：当前未登录')
+    return
+  }
   try {
     await navigator.clipboard.writeText(id)
+    log.info('复制用户 ID 成功')
     showSuccess(t('nav.idCopied'))
-  } catch {
+  } catch (e) {
+    log.error('复制用户 ID 失败', e)
     showError(t('nav.copyFailed'))
   }
 }
 
 const toggleLanguage = () => {
+  log.debug('点击语言切换', {
+    from: locale.value,
+    to: locale.value === 'zh' ? 'en' : 'zh'
+  })
   isSwitching.value = true
   toggleLocale()
   setTimeout(() => {
@@ -215,7 +477,17 @@ const applyTheme = (dark) => {
 
 const toggleTheme = () => {
   isDark.value = !isDark.value
+  log.info(`主题切换为${isDark.value ? '深色' : '浅色'}模式`)
 }
+
+watch(userOpen, (val) => {
+  log.debug(val ? '用户卡片展开' : '用户卡片收起')
+})
+
+/* 抽屉打开时锁定页面滚动 */
+watch(settingsOpen, (val) => {
+  document.body.style.overflow = val ? 'hidden' : ''
+})
 
 onMounted(() => {
   loadSession()
@@ -234,6 +506,8 @@ onMounted(() => {
 onUnmounted(() => {
   document.removeEventListener('click', closeUserMenu)
   document.removeEventListener('keydown', onKeydown)
+  document.body.style.overflow = ''
+  log.debug('导航栏已卸载')
 })
 
 watch(isDark, (val) => {
@@ -289,7 +563,7 @@ watch(isDark, (val) => {
 }
 
 .nav-logo:hover {
-  color: #42b983;
+  color: var(--accent, #42b983);
 }
 
 .nav-right {
@@ -315,10 +589,10 @@ watch(isDark, (val) => {
 
 .lang-toggle:hover {
   background: #f0f9f4;
-  color: #42b983;
-  border-color: #42b983;
+  color: var(--accent, #42b983);
+  border-color: var(--accent, #42b983);
   transform: translateY(-1px);
-  box-shadow: 0 2px 8px rgba(66, 185, 131, 0.2);
+  box-shadow: 0 2px 8px rgba(var(--accent-rgb, 66, 185, 131), 0.2);
 }
 
 .lang-toggle:active {
@@ -382,10 +656,10 @@ watch(isDark, (val) => {
 }
 
 .dark .lang-toggle:hover {
-  background: rgba(66, 185, 131, 0.15);
-  color: #42b983;
-  border-color: #42b983;
-  box-shadow: 0 2px 8px rgba(66, 185, 131, 0.3);
+  background: rgba(var(--accent-rgb, 66, 185, 131), 0.15);
+  color: var(--accent, #42b983);
+  border-color: var(--accent, #42b983);
+  box-shadow: 0 2px 8px rgba(var(--accent-rgb, 66, 185, 131), 0.3);
 }
 
 .desk-pet-btn {
@@ -403,10 +677,10 @@ watch(isDark, (val) => {
 
 .desk-pet-btn:hover {
   background: #f0f9f4;
-  color: #42b983;
-  border-color: #42b983;
+  color: var(--accent, #42b983);
+  border-color: var(--accent, #42b983);
   transform: translateY(-2px) rotate(-10deg);
-  box-shadow: 0 4px 12px rgba(66, 185, 131, 0.25);
+  box-shadow: 0 4px 12px rgba(var(--accent-rgb, 66, 185, 131), 0.25);
 }
 
 .desk-pet-btn:active {
@@ -420,10 +694,10 @@ watch(isDark, (val) => {
 }
 
 .dark .desk-pet-btn:hover {
-  background: rgba(66, 185, 131, 0.15);
-  color: #42b983;
-  border-color: #42b983;
-  box-shadow: 0 4px 12px rgba(66, 185, 131, 0.3);
+  background: rgba(var(--accent-rgb, 66, 185, 131), 0.15);
+  color: var(--accent, #42b983);
+  border-color: var(--accent, #42b983);
+  box-shadow: 0 4px 12px rgba(var(--accent-rgb, 66, 185, 131), 0.3);
 }
 
 .desk-pet-btn .icon {
@@ -451,11 +725,11 @@ watch(isDark, (val) => {
 }
 
 .nav-link:hover {
-  color: #42b983;
+  color: var(--accent, #42b983);
 }
 
 .nav-link.active {
-  color: #42b983;
+  color: var(--accent, #42b983);
   font-weight: 500;
 }
 
@@ -478,12 +752,12 @@ watch(isDark, (val) => {
 
 .theme-toggle:hover {
   background: #f0f0f0;
-  color: #42b983;
+  color: var(--accent, #42b983);
 }
 
 .dark .theme-toggle:hover {
   background: #2d2d44;
-  color: #42b983;
+  color: var(--accent, #42b983);
 }
 
 .more-menu {
@@ -511,17 +785,17 @@ watch(isDark, (val) => {
 
 .user-login:hover {
   background: #f0f9f4;
-  color: #42b983;
-  border-color: #42b983;
+  color: var(--accent, #42b983);
+  border-color: var(--accent, #42b983);
   transform: translateY(-1px);
-  box-shadow: 0 2px 8px rgba(66, 185, 131, 0.2);
+  box-shadow: 0 2px 8px rgba(var(--accent-rgb, 66, 185, 131), 0.2);
 }
 
 .user-avatar {
   width: 22px;
   height: 22px;
   border-radius: 50%;
-  background: #42b983;
+  background: var(--accent, #42b983);
   color: #fff;
   display: inline-flex;
   align-items: center;
@@ -541,8 +815,8 @@ watch(isDark, (val) => {
 .user-menu:hover .user-btn,
 .user-menu.open .user-btn {
   background: #f0f9f4;
-  color: #42b983;
-  border-color: #42b983;
+  color: var(--accent, #42b983);
+  border-color: var(--accent, #42b983);
 }
 
 .dark .user-btn {
@@ -552,9 +826,9 @@ watch(isDark, (val) => {
 
 .dark .user-menu:hover .user-btn,
 .dark .user-menu.open .user-btn {
-  background: rgba(66, 185, 131, 0.15);
-  color: #42b983;
-  border-color: #42b983;
+  background: rgba(var(--accent-rgb, 66, 185, 131), 0.15);
+  color: var(--accent, #42b983);
+  border-color: var(--accent, #42b983);
 }
 
 .user-menu .more-arrow {
@@ -605,14 +879,14 @@ watch(isDark, (val) => {
   height: 42px;
   flex-shrink: 0;
   border-radius: 50%;
-  background: linear-gradient(135deg, #42b983, #2fa572);
+  background: linear-gradient(135deg, var(--accent, #42b983), #2fa572);
   color: #fff;
   display: inline-flex;
   align-items: center;
   justify-content: center;
   font-weight: 700;
   font-size: 17px;
-  box-shadow: 0 4px 12px rgba(66, 185, 131, 0.28);
+  box-shadow: 0 4px 12px rgba(var(--accent-rgb, 66, 185, 131), 0.28);
 }
 
 .user-card-info {
@@ -633,8 +907,8 @@ watch(isDark, (val) => {
 .role-badge {
   padding: 1px 6px;
   border-radius: 10px;
-  background: rgba(66, 185, 131, 0.15);
-  color: #42b983;
+  background: rgba(var(--accent-rgb, 66, 185, 131), 0.15);
+  color: var(--accent, #42b983);
   font-size: 10px;
   font-weight: 600;
 }
@@ -675,7 +949,7 @@ watch(isDark, (val) => {
 
 .user-card-item:hover {
   background: #f0f9f4;
-  color: #42b983;
+  color: var(--accent, #42b983);
 }
 
 .user-card-item.danger {
@@ -706,8 +980,8 @@ watch(isDark, (val) => {
 }
 
 .dark .user-card-item:hover {
-  background: rgba(66, 185, 131, 0.15);
-  color: #42b983;
+  background: rgba(var(--accent-rgb, 66, 185, 131), 0.15);
+  color: var(--accent, #42b983);
 }
 
 .dark .user-card-item.danger {
@@ -754,10 +1028,10 @@ watch(isDark, (val) => {
 .more-menu:focus-within .more-btn,
 .more-menu.open .more-btn {
   background: #f0f9f4;
-  color: #42b983;
-  border-color: #42b983;
+  color: var(--accent, #42b983);
+  border-color: var(--accent, #42b983);
   transform: translateY(-1px);
-  box-shadow: 0 2px 8px rgba(66, 185, 131, 0.2);
+  box-shadow: 0 2px 8px rgba(var(--accent-rgb, 66, 185, 131), 0.2);
 }
 
 .more-menu:hover .more-arrow,
@@ -774,10 +1048,10 @@ watch(isDark, (val) => {
 .dark .more-menu:hover .more-btn,
 .dark .more-menu:focus-within .more-btn,
 .dark .more-menu.open .more-btn {
-  background: rgba(66, 185, 131, 0.15);
-  color: #42b983;
-  border-color: #42b983;
-  box-shadow: 0 2px 8px rgba(66, 185, 131, 0.3);
+  background: rgba(var(--accent-rgb, 66, 185, 131), 0.15);
+  color: var(--accent, #42b983);
+  border-color: var(--accent, #42b983);
+  box-shadow: 0 2px 8px rgba(var(--accent-rgb, 66, 185, 131), 0.3);
 }
 
 .more-dropdown {
@@ -843,22 +1117,477 @@ watch(isDark, (val) => {
 
 .more-item:hover {
   background: #f0f9f4;
-  color: #42b983;
+  color: var(--accent, #42b983);
 }
 
 .dark .more-item:hover {
-  background: rgba(66, 185, 131, 0.15);
-  color: #42b983;
+  background: rgba(var(--accent-rgb, 66, 185, 131), 0.15);
+  color: var(--accent, #42b983);
 }
 
 .more-item.active {
-  color: #42b983;
+  color: var(--accent, #42b983);
   font-weight: 500;
 }
 
 .icon {
   width: 20px;
   height: 20px;
+}
+
+/* 顶栏最右侧：设置按钮 */
+.settings-toggle {
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 6px;
+  border-radius: 6px;
+  color: #666;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background 0.3s, color 0.3s, transform 0.3s;
+}
+
+.dark .settings-toggle {
+  color: #aaa;
+}
+
+.settings-toggle:hover,
+.settings-toggle.active {
+  background: #f0f0f0;
+  color: var(--accent, #42b983);
+}
+
+.dark .settings-toggle:hover,
+.dark .settings-toggle.active {
+  background: #2d2d44;
+  color: var(--accent, #42b983);
+}
+
+/* 宽屏：贴到顶栏最右侧边缘，与居中的导航内容分离 */
+@media (min-width: 980px) {
+  .settings-toggle {
+    position: absolute;
+    top: 50%;
+    right: 16px;
+    transform: translateY(-50%);
+  }
+}
+
+/* 设置抽屉 */
+.settings-layer {
+  position: fixed;
+  inset: 0;
+  z-index: 1400;
+  pointer-events: none;
+}
+
+.settings-layer.open {
+  pointer-events: auto;
+}
+
+.settings-overlay {
+  position: absolute;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.38);
+  opacity: 0;
+  transition: opacity 0.32s ease;
+}
+
+.settings-layer.open .settings-overlay {
+  opacity: 1;
+}
+
+.settings-drawer {
+  position: absolute;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  width: 320px;
+  max-width: 86vw;
+  display: flex;
+  flex-direction: column;
+  background: #fff;
+  border-left: 1px solid #eee;
+  box-shadow: -12px 0 36px rgba(0, 0, 0, 0.12);
+  transform: translateX(100%);
+  transition: transform 0.42s cubic-bezier(0.16, 1, 0.3, 1),
+    background 0.3s, border-color 0.3s;
+}
+
+.settings-layer.open .settings-drawer {
+  transform: translateX(0);
+}
+
+.dark .settings-drawer {
+  background: #12121f;
+  border-left-color: #252540;
+  box-shadow: -12px 0 36px rgba(0, 0, 0, 0.55);
+}
+
+.settings-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 16px 18px;
+  border-bottom: 1px solid #eee;
+}
+
+.dark .settings-head {
+  border-bottom-color: #252540;
+}
+
+.settings-title {
+  font-size: 15px;
+  font-weight: 600;
+  color: #2c3e50;
+  letter-spacing: 0.5px;
+}
+
+.dark .settings-title {
+  color: #e8e8e8;
+}
+
+.settings-close {
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 5px;
+  border-radius: 6px;
+  color: #999;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background 0.2s, color 0.2s;
+}
+
+.settings-close svg {
+  width: 16px;
+  height: 16px;
+}
+
+.settings-close:hover {
+  background: #f0f0f0;
+  color: var(--accent, #42b983);
+}
+
+.dark .settings-close:hover {
+  background: #2d2d44;
+  color: var(--accent, #42b983);
+}
+
+.settings-body {
+  flex: 1;
+  overflow-y: auto;
+  padding: 18px;
+}
+
+.setting-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+  padding: 14px;
+  border: 1px solid #eee;
+  border-radius: 12px;
+  background: #fafafa;
+}
+
+.dark .setting-item {
+  background: #1a1a2e;
+  border-color: #252540;
+}
+
+.setting-text {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 0;
+}
+
+.setting-label {
+  font-size: 13.5px;
+  font-weight: 500;
+  color: #2c3e50;
+}
+
+.dark .setting-label {
+  color: #e0e0e0;
+}
+
+.setting-desc {
+  font-size: 11.5px;
+  line-height: 1.5;
+  color: #999;
+}
+
+.dark .setting-desc {
+  color: #888;
+}
+
+.setting-switch {
+  flex: 0 0 auto;
+  position: relative;
+  width: 40px;
+  height: 22px;
+  padding: 0;
+  border: none;
+  border-radius: 11px;
+  background: #d8d8d8;
+  cursor: pointer;
+  transition: background 0.28s ease;
+}
+
+.setting-switch.on {
+  background: var(--accent, #42b983);
+}
+
+.dark .setting-switch {
+  background: #3a3a52;
+}
+
+.glass-params {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 12px 14px;
+  border: 1px solid #eee;
+  border-radius: 12px;
+  background: #fafafa;
+}
+
+.dark .glass-params {
+  background: #1a1a2e;
+  border-color: #252540;
+}
+
+.param-row {
+  display: grid;
+  grid-template-columns: 76px 1fr 34px;
+  align-items: center;
+  gap: 10px;
+}
+
+.param-label {
+  font-size: 12px;
+  color: #666;
+}
+
+.dark .param-label {
+  color: #aaa;
+}
+
+.param-value {
+  font-size: 11.5px;
+  color: #999;
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+
+.param-range {
+  width: 100%;
+  height: 18px;
+  accent-color: var(--accent, #42b983);
+  cursor: pointer;
+}
+
+.dark .setting-switch.on {
+  background: var(--accent, #42b983);
+}
+
+.switch-knob {
+  position: absolute;
+  top: 2px;
+  left: 2px;
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  background: #fff;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.25);
+  transition: transform 0.28s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.setting-switch.on .switch-knob {
+  transform: translateX(18px);
+}
+
+.settings-note {
+  margin: 12px 2px 0;
+  font-size: 11.5px;
+  line-height: 1.6;
+  color: #aaa;
+}
+
+.dark .settings-note {
+  color: #777;
+}
+
+/* 外观自定义 */
+.settings-divider {
+  height: 1px;
+  background: #eee;
+  margin: 18px -18px 16px;
+}
+
+.dark .settings-divider {
+  background: #252540;
+}
+
+.section-label {
+  margin-bottom: 12px;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: #aaa;
+}
+
+.dark .section-label {
+  color: #777;
+}
+
+.appearance-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 12px;
+}
+
+.appearance-label {
+  font-size: 13px;
+  color: #2c3e50;
+  white-space: nowrap;
+}
+
+.dark .appearance-label {
+  color: #e0e0e0;
+}
+
+.swatch-list {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 6px;
+}
+
+.swatch {
+  width: 18px;
+  height: 18px;
+  padding: 0;
+  border: 2px solid #fff;
+  border-radius: 50%;
+  cursor: pointer;
+  box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.1);
+  transition: transform 0.2s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.2s;
+}
+
+.dark .swatch {
+  border-color: #12121f;
+  box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.12);
+}
+
+.swatch:hover {
+  transform: scale(1.15);
+}
+
+.swatch.active {
+  border-color: #fff;
+  box-shadow: 0 0 0 2px var(--accent, #42b983);
+}
+
+.dark .swatch.active {
+  border-color: #12121f;
+}
+
+.color-pick {
+  position: relative;
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  cursor: pointer;
+  background: conic-gradient(#f87171, #fbbf24, #34d399, #60a5fa, #a78bfa, #f87171);
+  box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.1);
+  transition: transform 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.dark .color-pick {
+  box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.16);
+}
+
+.color-pick:hover {
+  transform: scale(1.15);
+}
+
+.color-pick input {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  padding: 0;
+  opacity: 0;
+  border: none;
+  cursor: pointer;
+}
+
+.color-input {
+  width: 40px;
+  height: 24px;
+  padding: 0;
+  border: 1px solid #ddd;
+  border-radius: 6px;
+  background: transparent;
+  cursor: pointer;
+}
+
+.dark .color-input {
+  border-color: #3a3a52;
+}
+
+.color-input::-webkit-color-swatch-wrapper {
+  padding: 2px;
+}
+
+.color-input::-webkit-color-swatch {
+  border: none;
+  border-radius: 4px;
+}
+
+.setting-item + .setting-item {
+  margin-top: 10px;
+}
+
+.appearance-reset {
+  width: 100%;
+  margin-top: 14px;
+  padding: 9px;
+  border: 1px solid #eee;
+  border-radius: 10px;
+  background: transparent;
+  color: #777;
+  font-size: 12.5px;
+  cursor: pointer;
+  transition: color 0.25s, border-color 0.25s, background 0.25s;
+}
+
+.dark .appearance-reset {
+  border-color: #252540;
+  color: #999;
+}
+
+.appearance-reset:hover {
+  color: var(--accent, #42b983);
+  border-color: var(--accent, #42b983);
+  background: rgba(var(--accent-rgb, 66, 185, 131), 0.08);
+}
+
+@media (max-width: 480px) {
+  .settings-drawer {
+    width: 100%;
+    max-width: 100%;
+  }
 }
 
 /* 窄屏隐藏导航图标，避免挤压换行 */

@@ -47,7 +47,7 @@
 
 ## 中文 <span id="zh"></span>
 
-> 个人网站 + 一个小型社区：博客、照片墙、游戏笔记由仓库里的 JSON 驱动；登录、实时聊天、好友与群组走 Supabase。没有自建后端。
+> 个人网站 + 一个小型社区：博客、照片墙、游戏笔记由仓库里的 JSON 驱动；登录、实时聊天、好友与群组、讨论区走 Supabase。没有自建后端。
 
 ### 目录
 
@@ -84,7 +84,7 @@
 | <img src="docs/screenshots/games-light.png" alt="游戏笔记" width="410" /> |
 
 > [!NOTE]
-> 截图由无头浏览器在构建产物上实拍（1200×780，浅色与深色各取一版），不是设计稿。聊天页需要登录，故未收录。
+> 截图由无头浏览器在构建产物上实拍（1200×780，浅色与深色各取一版），不是设计稿。聊天页需要登录、讨论区需要连上 Supabase 才有内容，故未收录。
 > 界面改动后一条命令即可重拍：`node plugins/screenshots.mjs`（自动构建 → 起临时静态服务 → 无头浏览器逐页截图）。
 
 ### 技术栈
@@ -97,7 +97,7 @@
 | 样式 | 原生 CSS + `html.dark` | 组件内 scoped；跨组件的深色规则集中在 `global.css` |
 | 国际化 | 自研轻量 i18n | 中/英双语，支持 `t('a.b.c')` 与 `{n}` 插值 |
 | 图标 | 59 个线性 SVG + `<AppIcon>` | 图标只当遮罩，颜色走 `currentColor` |
-| 后端 | Supabase | Auth 登录、Postgres（全部表开 RLS）、Realtime 实时订阅、Storage 存聊天图片 |
+| 后端 | Supabase | Auth 登录、Postgres（全部表开 RLS）、Realtime 实时订阅、Storage 存聊天与帖子图片 |
 | 内容数据 | 本地 JSON | `blog.json` / `games.json` / `photos.json`，改文件即改内容 |
 | 交互组件 | 自研弹窗与 Toast | 命令式调用，不依赖任何 UI 库 |
 
@@ -119,6 +119,15 @@
 - 🚫 封禁名单（`bans`）、聊天图片上传（Storage bucket）
 - 🔒 9 张表全部启用 RLS 策略，权限在数据库层收敛
 
+**🗣️ 讨论区（Supabase）**
+
+- 📝 发帖 / 编辑 / 删除，支持封面图、标签，管理员可置顶
+- 🖼️ 正文里可以插图，图片走 Storage（上传前校验类型与大小）
+- 💬 评论、楼中楼回复、评论点赞
+- 🔍 按标题或内容搜索，分页浏览
+- 👀 浏览不需要登录，发帖与评论需要（未登录会提示「去登录」）
+- 🔒 `posts` / `post_comments` / `post_comment_likes` 同样全部开 RLS
+
 **📚 内容**
 
 - 📝 博客：分页列表 + 详情页，支持图片
@@ -138,6 +147,7 @@
 **🌏 其他**
 
 - 🌐 中/英全站切换，同步 `<html lang>`
+- 🧭 导航栏「更多」下拉收起 功能演示 / 聊天室 / 讨论区；登录后右上角变成用户菜单（头像、用户名、管理员徽章、改密码、复制用户 ID、退出登录）
 - 🥚 右下角藏了个彩蛋：鼠标移到右下角会出现一面旗帜，点击进入英雄纪念页
 - 🛡️ 内置广告拦截（`MutationObserver` + 定时扫描），清理免费空间商注入的广告
 
@@ -155,6 +165,7 @@
 | 🧩 插件中心 | `#/plugins` | Renkt Shell 插件库与开发指南 |
 | 🔐 登录 | `#/login` | 邮箱注册 / 登录 |
 | 💬 聊天 | `#/chat` | **需登录**；公共聊天、好友私聊、群组 |
+| 🗣️ 讨论区 | `#/discussion` | 发帖 / 评论 / 点赞 / 置顶 / 搜索；浏览免登录，发言需登录 |
 | 🧪 弹窗测试 | `#/demo` | 逐个触发弹窗 / 输入框 / 加载 / Toast，检查动画与配色 |
 | 🖥️ Renkt Shell | `#/renkt` | 产品页，**本地专属**，文件不存在时自动不注册该路由 |
 | 🚩 英雄纪念 | `#/hero-memorial` | 隐藏导航栏，从彩蛋进入 |
@@ -170,6 +181,7 @@
 ├── index.html                 # HTML 入口（含 hash 兜底）
 ├── vite.config.js             # base: '/my-web/'
 ├── setup-chat.sql             # 聊天系统建表脚本（9 张表 + RLS + Realtime + Storage，幂等可重复运行）
+├── setup-discussion.sql       # 讨论区建表脚本（posts / post_comments / post_comment_likes + RLS）
 ├── .env.example               # Supabase 配置模板（复制为 .env.local）
 ├── docs/screenshots/          # README 用的实拍截图
 ├── plugins/
@@ -179,7 +191,7 @@
 │   ├── main.js                # 入口：初始化广告拦截 → 挂载应用
 │   ├── App.vue                # 根组件：导航栏 + 路由出口 + 全局弹窗 / Toast
 │   ├── router/index.js        # 路由表 + 登录守卫 + 离场过渡守卫
-│   ├── views/                 # 14 个页面组件
+│   ├── views/                 # 15 个页面组件
 │   ├── components/            # 7 个组件（AppIcon、导航栏、3 个弹窗、Toast 容器、彩蛋旗帜）
 │   ├── utils/
 │   │   ├── modal.js           # 命令式弹窗控制
@@ -241,12 +253,14 @@ npm run preview                # 本地预览构建结果
 ```
 
 > [!IMPORTANT]
-> **登录和聊天需要先配置 Supabase**，否则这两块功能不可用（博客、照片墙、游戏笔记等 JSON 驱动的部分不受影响，可以正常运行）。
+> **登录、聊天、讨论区需要先配置 Supabase**，否则这三块功能不可用（博客、照片墙、游戏笔记等 JSON 驱动的部分不受影响，可以正常运行）。
 
 配置三步：
 
 1. 在 [Supabase](https://supabase.com/) 建一个项目
-2. 打开 SQL Editor，整段执行根目录的 `setup-chat.sql`（幂等，重复跑也没事）
+2. 打开 SQL Editor，依次整段执行根目录的两个脚本（都是幂等的，重复跑也没事）：
+   - `setup-chat.sql` —— 聊天室 9 张表 + RLS + Realtime + 图片 bucket
+   - `setup-discussion.sql` —— 讨论区 `posts` / `post_comments` / `post_comment_likes` + RLS
 3. 把 Project URL 和 publishable key 填进 `.env.local`：
 
 ```dotenv
@@ -413,6 +427,20 @@ npm run build -- --sourcemap   # 或等价的 npm run build:map
 
 </details>
 
+<details>
+<summary><b>讨论区一直停在「加载中…」或提示加载失败？</b></summary>
+
+<br />
+
+说明前端没拿到数据，按这两种情况排查：
+
+- **提示加载失败**：多半是 `setup-discussion.sql` 没在**同一个** Supabase 项目里执行过，`posts` 等表不存在；
+- **一直停在「加载中…」**：请求发出去了但没回来 —— 检查 `.env.local` 里的 URL 是否指向真实项目、该域名是否被网络拦截。
+
+两种都能在浏览器控制台看到具体报错，定位最快。
+
+</details>
+
 ### 项目数据
 
 <p align="center">
@@ -464,7 +492,7 @@ MIT © 2026 [HGfds29](https://github.com/HGfds29)
 
 ## English <span id="en"></span>
 
-> A personal site plus a small community: blog, photo wall and game notes are driven by JSON in the repo; sign-in, realtime chat, friends and groups run on Supabase. No self-hosted backend.
+> A personal site plus a small community: blog, photo wall and game notes are driven by JSON in the repo; sign-in, realtime chat, friends and groups, and discussions run on Supabase. No self-hosted backend.
 
 ### Table of Contents
 
@@ -501,7 +529,7 @@ MIT © 2026 [HGfds29](https://github.com/HGfds29)
 | <img src="docs/screenshots/login-light.png" alt="Login page" width="410" /> | <img src="docs/screenshots/demo-modal-dark.png" alt="Dialog (dark)" width="410" /> |
 
 > [!NOTE]
-> Screenshots are real captures of the production build (1200×780, one per theme), not mockups. The chat page requires sign-in, so it is not included.
+> Screenshots are real captures of the production build (1200×780, one per theme), not mockups. The chat page requires sign-in and the discussion page needs a live Supabase to show content, so neither is included.
 > After UI changes, regenerate them all with one command: `node plugins/screenshots.mjs` (builds → serves → captures via a headless browser).
 
 ### Tech Stack
@@ -514,7 +542,7 @@ MIT © 2026 [HGfds29](https://github.com/HGfds29)
 | Styling | Plain CSS + `html.dark` | Scoped per component; cross-component dark rules live in `global.css` |
 | i18n | Hand-rolled, lightweight | Chinese / English, `t('a.b.c')` plus `{n}` interpolation |
 | Icons | 59 line SVGs + `<AppIcon>` | SVGs are used only as a mask; colour comes from `currentColor` |
-| Backend | Supabase | Auth, Postgres with RLS on every table, Realtime subscriptions, Storage for chat images |
+| Backend | Supabase | Auth, Postgres with RLS on every table, Realtime subscriptions, Storage for chat and post images |
 | Content data | Local JSON | `blog.json` / `games.json` / `photos.json` — edit the file, change the site |
 | UI widgets | Hand-rolled modals & toasts | Imperative API, zero UI-library dependencies |
 
@@ -536,6 +564,15 @@ MIT © 2026 [HGfds29](https://github.com/HGfds29)
 - 🚫 Ban list (`bans`) and chat image uploads (Storage bucket)
 - 🔒 Nine tables, all with row level security policies — authorisation lives in the database
 
+**🗣️ Discussions (Supabase)**
+
+- 📝 Create / edit / delete posts, with cover image, tags, and admin-only pinning
+- 🖼️ Inline images inside a post, uploaded to Storage (type and size validated first)
+- 💬 Comments, threaded replies, and comment likes
+- 🔍 Search by title or body, paginated browsing
+- 👀 Reading needs no account; posting and commenting do (guests are prompted to sign in)
+- 🔒 `posts` / `post_comments` / `post_comment_likes` carry RLS policies too
+
 **📚 Content**
 
 - 📝 Blog: paginated list + detail pages with images
@@ -555,6 +592,7 @@ MIT © 2026 [HGfds29](https://github.com/HGfds29)
 **🌏 Extras**
 
 - 🌐 Full ZH / EN switching that also syncs `<html lang>`
+- 🧭 A "More" dropdown in the nav groups Playground / Chat / Discussions; once signed in the corner becomes a user menu (avatar, username, admin badge, change password, copy user ID, sign out)
 - 🥚 A hidden easter egg in the bottom-right corner: hover to reveal a flag, click to enter the memorial page
 - 🛡️ Built-in ad blocker (`MutationObserver` + periodic scanning) that removes ads injected by free hosting
 
@@ -572,6 +610,7 @@ MIT © 2026 [HGfds29](https://github.com/HGfds29)
 | 🧩 Plugin hub | `#/plugins` | Renkt Shell plugin library and dev guide |
 | 🔐 Login | `#/login` | Email sign-up / sign-in |
 | 💬 Chat | `#/chat` | **Requires sign-in**; public room, DMs, groups |
+| 🗣️ Discussions | `#/discussion` | Posts / comments / likes / pinning / search; read freely, post after signing in |
 | 🧪 Playground | `#/demo` | Trigger every dialog / prompt / loader / toast to check motion and colour |
 | 🖥️ Renkt Shell | `#/renkt` | Product page, **local-only**; the route is skipped when the file is absent |
 | 🚩 Hero memorial | `#/hero-memorial` | Hides the nav bar; reached via the easter egg |
@@ -587,6 +626,7 @@ MIT © 2026 [HGfds29](https://github.com/HGfds29)
 ├── index.html                 # HTML shell (with a hash fallback)
 ├── vite.config.js             # base: '/my-web/'
 ├── setup-chat.sql             # Chat schema (9 tables + RLS + Realtime + Storage, idempotent)
+├── setup-discussion.sql       # Discussion schema (posts / post_comments / post_comment_likes + RLS)
 ├── .env.example               # Supabase config template (copy to .env.local)
 ├── docs/screenshots/          # Screenshots used by this README
 ├── plugins/
@@ -596,7 +636,7 @@ MIT © 2026 [HGfds29](https://github.com/HGfds29)
 │   ├── main.js                # Entry: init ad blocker → mount app
 │   ├── App.vue                # Root: nav bar + router outlet + global modals / toasts
 │   ├── router/index.js        # Route table + auth guard + leave-transition guard
-│   ├── views/                 # 14 page components
+│   ├── views/                 # 15 page components
 │   ├── components/            # 7 components (AppIcon, nav bar, 3 modals, toast container, flag egg)
 │   ├── utils/
 │   │   ├── modal.js           # Imperative dialog control
@@ -658,12 +698,14 @@ npm run preview                # preview the production build locally
 ```
 
 > [!IMPORTANT]
-> **Auth and chat need Supabase configured**, otherwise those two features are unavailable (everything JSON-driven — blog, photo wall, game notes — works without it).
+> **Auth, chat and discussions need Supabase configured**, otherwise those three features are unavailable (everything JSON-driven — blog, photo wall, game notes — works without it).
 
 Three steps:
 
 1. Create a project on [Supabase](https://supabase.com/)
-2. Open the SQL editor and run the whole `setup-chat.sql` from the repo root (idempotent, safe to re-run)
+2. Open the SQL editor and run both scripts from the repo root, one after the other (both are idempotent, safe to re-run):
+   - `setup-chat.sql` — 9 chat tables + RLS + Realtime + the image bucket
+   - `setup-discussion.sql` — `posts` / `post_comments` / `post_comment_likes` + RLS
 3. Put the project URL and publishable key into `.env.local`:
 
 ```dotenv
@@ -827,6 +869,20 @@ npm run build -- --sourcemap   # or the equivalent npm run build:map
 ```
 
 A default build emits no sourcemaps (~631 kB); with them it is ~2.9 MB, of which the `.map` file alone is 2.28 MB.
+
+</details>
+
+<details>
+<summary><b>The discussion page is stuck on "loading" or reports a load failure</b></summary>
+
+<br />
+
+The front end never got its data. Two cases:
+
+- **A load failure is shown**: `setup-discussion.sql` almost certainly has not been run against the **same** Supabase project, so tables such as `posts` do not exist;
+- **It sits on "loading" forever**: the request left but never came back — check that the URL in `.env.local` points at the real project, and that the domain is not blocked by the network.
+
+Either way the browser console shows the actual error, which is the fastest way to pin it down.
 
 </details>
 

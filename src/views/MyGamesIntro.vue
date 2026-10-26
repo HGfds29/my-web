@@ -71,10 +71,12 @@ import { ref, computed, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { isLeaving } from '../router'
 import { t } from '../utils/i18n'
+import { createLogger } from '../utils/logger'
 import gameList from '../data/games.json'
 
-console.log('[MyGamesIntro.vue] 组件初始化')
-console.log('[MyGamesIntro.vue] 游戏总数:', gameList.length)
+const log = createLogger('MyGamesIntro')
+// 模块初始化：游戏列表的分页浏览与详情跳转
+log.info('游戏列表模块已初始化：游戏分页浏览与详情跳转')
 
 const router = useRouter()
 const currentPage = ref(1)
@@ -83,7 +85,7 @@ const pageDirection = ref('forward')
 
 const totalPages = computed(() => {
   const pages = Math.ceil(gameList.length / pageSize)
-  console.log('[MyGamesIntro/totalPages] 总页数:', pages)
+  log.debug('计算游戏总页数', { pages })
   return pages
 })
 
@@ -91,7 +93,7 @@ const currentGames = computed(() => {
   const start = (currentPage.value - 1) * pageSize
   const end = start + pageSize
   const games = gameList.slice(start, end)
-  console.log('[MyGamesIntro/currentGames] 第', currentPage.value, '页游戏:', games.map(g => g.title))
+  log.debug('当前页游戏已就绪', { page: currentPage.value, count: games.length, ids: games.map(g => g.id) })
   return games
 })
 
@@ -104,41 +106,49 @@ const getEmoji = (platform) => {
 }
 
 const goToPage = (page) => {
-  if (page < 1 || page > totalPages.value) return
-  console.log('[MyGamesIntro/goToPage] 跳转到第', page, '页')
+  if (page < 1 || page > totalPages.value) {
+    log.warn('翻页被忽略：页码超出范围', { page, total: totalPages.value })
+    return
+  }
+  log.info('翻页', { from: currentPage.value, to: page })
   pageDirection.value = page > currentPage.value ? 'forward' : 'backward'
-  console.log('[MyGamesIntro/goToPage] 动画方向:', pageDirection.value)
   currentPage.value = page
 }
 
 const prevPage = () => {
   if (currentPage.value > 1) {
-    console.log('[MyGamesIntro/prevPage] 上一页')
+    log.info('上一页', { from: currentPage.value, to: currentPage.value - 1 })
     pageDirection.value = 'backward'
     currentPage.value--
+  } else {
+    log.debug('已在第一页，忽略上一页')
   }
 }
 
 const nextPage = () => {
   if (currentPage.value < totalPages.value) {
-    console.log('[MyGamesIntro/nextPage] 下一页')
+    log.info('下一页', { from: currentPage.value, to: currentPage.value + 1 })
     pageDirection.value = 'forward'
     currentPage.value++
+  } else {
+    log.debug('已在最后一页，忽略下一页')
   }
 }
 
 const goToDetail = (id) => {
-  console.log('[MyGamesIntro/goToDetail] 跳转到游戏详情 ID:', id)
+  log.info('打开游戏详情', { id, page: currentPage.value })
   router.push(`/games/${id}`)
 }
 
 const goBack = () => {
-  console.log('[MyGamesIntro/goBack] 返回首页')
+  log.info('返回首页')
   router.push('/')
 }
 
 onMounted(() => {
-  console.log('[MyGamesIntro/onMounted] 游戏列表页已加载，当前第', currentPage.value, '页')
+  log.debug('开始加载游戏列表', { source: 'src/data/games.json' })
+  log.info('游戏列表加载完成', { total: gameList.length, pages: totalPages.value })
+  log.info('MyGamesIntro 页面已加载', { page: currentPage.value })
 })
 </script>
 
@@ -190,7 +200,7 @@ onMounted(() => {
   top: 20px;
   background: none;
   border: none;
-  color: #42b983;
+  color: var(--accent, #42b983);
   cursor: pointer;
   font-size: 14px;
   padding: 0;
@@ -220,7 +230,7 @@ onMounted(() => {
   font-size: 22px;
   margin-bottom: 20px;
   padding-bottom: 8px;
-  border-bottom: 2px solid #42b983;
+  border-bottom: 2px solid var(--accent, #42b983);
   display: inline-block;
 }
 
@@ -311,7 +321,7 @@ onMounted(() => {
 
 .platform {
   background: #f0f9f4;
-  color: #42b983;
+  color: var(--accent, #42b983);
   padding: 2px 8px;
   border-radius: 4px;
   font-size: 12px;
@@ -324,7 +334,7 @@ onMounted(() => {
 }
 
 .read-more {
-  color: #42b983;
+  color: var(--accent, #42b983);
   font-size: 13px;
 }
 
@@ -353,8 +363,8 @@ onMounted(() => {
 }
 
 .page-btn:hover:not(:disabled) {
-  border-color: #42b983;
-  color: #42b983;
+  border-color: var(--accent, #42b983);
+  color: var(--accent, #42b983);
 }
 
 .page-btn:disabled {
@@ -363,9 +373,9 @@ onMounted(() => {
 }
 
 .page-btn.active {
-  background: #42b983;
+  background: var(--accent, #42b983);
   color: #fff;
-  border-color: #42b983;
+  border-color: var(--accent, #42b983);
 }
 
 .page-num {

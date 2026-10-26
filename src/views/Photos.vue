@@ -78,9 +78,12 @@ import { isLeaving } from '../router'
 import { t } from '../utils/i18n'
 import AppIcon from '../components/AppIcon.vue'
 import { showConfirm } from '../utils/modal'
+import { createLogger } from '../utils/logger'
 import photoConfig from '../data/photos.json'
 
-console.log('[Photos.vue] 组件初始化')
+const log = createLogger('Photos')
+// 模块初始化：照片墙的拖拽、钉住、软木板、重置与位置持久化
+log.info('照片墙模块已初始化：拖拽、钉住、软木板、重置与 Cookie 位置持久化')
 
 const router = useRouter()
 const boardRef = ref(null)
@@ -91,8 +94,7 @@ const photoModules = import.meta.glob('../assets/photos/*.{jpg,jpeg,png,gif,webp
   import: 'default'
 })
 
-console.log('[Photos.vue] 本地照片数量:', Object.keys(photoModules).length)
-console.log('[Photos.vue] 照片配置数量:', photoConfig.length)
+log.debug('开始加载照片资源与配置', { local: Object.keys(photoModules).length, configured: photoConfig.length })
 
 const samplePhotos = [
   'https://trae-api-cn.mchost.guru/api/ide/v1/text_to_image?prompt=beautiful%20sunset%20over%20the%20ocean%20beach%20with%20palm%20trees%20warm%20golden%20hour&image_size=square_hd',
@@ -115,9 +117,13 @@ let startLeft = 0
 let startTop = 0
 
 const setCookie = (name, value, days = 365) => {
-  console.log('[Photos/setCookie] 保存Cookie:', name, '天数:', days)
   const expires = new Date(Date.now() + days * 864e5).toUTCString()
-  document.cookie = `${name}=${encodeURIComponent(JSON.stringify(value))}; expires=${expires}; path=/`
+  try {
+    document.cookie = `${name}=${encodeURIComponent(JSON.stringify(value))}; expires=${expires}; path=/`
+    log.debug('照片位置已写入 Cookie', { count: Array.isArray(value?.photos) ? value.photos.length : 0, days })
+  } catch (e) {
+    log.error('照片位置写入 Cookie 失败', e?.message || e)
+  }
 }
 
 const getCookie = (name) => {
@@ -125,14 +131,13 @@ const getCookie = (name) => {
   if (match) {
     try {
       const val = JSON.parse(decodeURIComponent(match[2]))
-      console.log('[Photos/getCookie] 读取Cookie成功:', name)
+      log.debug('读取 Cookie 成功', { name, count: Array.isArray(val?.photos) ? val.photos.length : 0 })
       return val
-    } catch {
-      console.log('[Photos/getCookie] Cookie解析失败:', name)
+    } catch (e) {
+      log.warn('Cookie 数据解析失败，将使用默认布局', { name, message: e?.message || String(e) })
       return null
     }
   }
-  console.log('[Photos/getCookie] Cookie不存在:', name)
   return null
 }
 
@@ -141,11 +146,8 @@ const generateId = (src, index) => {
 }
 
 const initPhotos = () => {
-  console.log('[Photos/initPhotos] 初始化照片列表')
   const localPhotos = Object.values(photoModules)
   const sources = localPhotos.length > 0 ? localPhotos : samplePhotos
-  console.log('[Photos/initPhotos] 照片来源:', localPhotos.length > 0 ? '本地文件' : '示例图片')
-  console.log('[Photos/initPhotos] 照片数量:', sources.length)
   const configMap = new Map(photoConfig.map(c => [c.id, c]))
 
   return sources.map((src, i) => {
@@ -168,12 +170,10 @@ const initPhotos = () => {
 }
 
 const loadFromCookie = () => {
-  console.log('[Photos/loadFromCookie] 从Cookie加载照片位置')
   return getCookie(COOKIE_KEY)
 }
 
 const saveToCookie = () => {
-  console.log('[Photos/saveToCookie] 保存照片位置到Cookie')
   const data = {
     showBoard: showBoard.value,
     photos: photos.value.map(p => ({
@@ -190,12 +190,11 @@ const saveToCookie = () => {
 }
 
 const loadPhotos = () => {
-  console.log('[Photos/loadPhotos] 加载照片')
   const saved = loadFromCookie()
   const fresh = initPhotos()
 
   if (saved && saved.photos) {
-    console.log('[Photos/loadPhotos] 使用已保存的位置数据')
+    log.debug('应用已保存的照片位置', { count: saved.photos.length, board: saved.showBoard || false })
     showBoard.value = saved.showBoard || false
     const savedMap = new Map(saved.photos.map(p => [p.id, p]))
     return fresh.map(p => {
@@ -207,18 +206,15 @@ const loadPhotos = () => {
     })
   }
 
-  console.log('[Photos/loadPhotos] 使用默认位置')
   return fresh
 }
 
 onMounted(() => {
-  console.log('[Photos/onMounted] 照片集页面已挂载')
   photos.value = loadPhotos()
-  console.log('[Photos/onMounted] 照片加载完成，数量:', photos.value.length)
+  log.info('Photos 页面已加载', { count: photos.value.length })
 })
 
 watch(showBoard, (val) => {
-  console.log('[Photos/watch] showBoard 变化:', val)
   if (val) {
     nextTick(() => {
       photos.value.forEach((p, i) => {
@@ -231,17 +227,15 @@ watch(showBoard, (val) => {
 })
 
 const startDrag = (e, index) => {
-  console.log('[Photos/startDrag] 开始拖动照片索引:', index)
+  log.debug('开始拖动照片', { index, id: photos.value[index].id })
   if (pinMode.value) {
-    console.log('[Photos/startDrag] 钉子模式，切换钉住状态')
     photos.value[index].pinned = !photos.value[index].pinned
-    console.log('[Photos/startDrag] 钉住状态:', photos.value[index].pinned)
+    log.info(photos.value[index].pinned ? '钉住照片' : '取消钉住照片', { id: photos.value[index].id })
     saveToCookie()
     return
   }
 
   if (photos.value[index].pinned) {
-    console.log('[Photos/startDrag] 照片已钉住，不能拖动')
     return
   }
 
@@ -267,12 +261,11 @@ const onDrag = (e) => {
 
 const stopDrag = () => {
   if (dragIndex >= 0) {
-    console.log('[Photos/stopDrag] 停止拖动照片索引:', dragIndex)
     photos.value[dragIndex].dragging = false
     if (showBoard.value) {
       photos.value[dragIndex].onBoard = true
-      console.log('[Photos/stopDrag] 照片已放到板子上')
     }
+    log.debug('停止拖动并保存位置', { index: dragIndex, id: photos.value[dragIndex].id, onBoard: photos.value[dragIndex].onBoard })
     saveToCookie()
   }
   dragIndex = -1
@@ -282,34 +275,39 @@ const stopDrag = () => {
 
 const togglePinMode = () => {
   pinMode.value = !pinMode.value
-  console.log('[Photos/togglePinMode] 钉子模式:', pinMode.value ? '开启' : '关闭')
+  log.info('切换钉住模式', { pinMode: pinMode.value })
 }
 
 const toggleBoard = () => {
   showBoard.value = !showBoard.value
-  console.log('[Photos/toggleBoard] 软木板:', showBoard.value ? '显示' : '隐藏')
+  log.info('切换软木板显示', { showBoard: showBoard.value })
   saveToCookie()
 }
 
 const resetLayout = () => {
-  console.log('[Photos/resetLayout] 重置布局')
+  log.info('点击重置布局')
   // 用项目统一弹窗，避免原生 confirm 被浏览器扩展劫持后报错
   showConfirm(t('photos.confirmReset'), {
     title: t('photos.resetTitle'),
     confirmText: t('photos.reset'),
     cancelText: t('photos.cancel'),
     onConfirm: () => {
-      document.cookie = `${COOKIE_KEY}=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/`
+      try {
+        document.cookie = `${COOKIE_KEY}=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/`
+        log.debug('已清除照片位置 Cookie')
+      } catch (e) {
+        log.error('清除照片位置 Cookie 失败', e?.message || e)
+      }
       pinMode.value = false
       showBoard.value = false
       photos.value = initPhotos()
-      console.log('[Photos/resetLayout] 布局已重置')
+      log.info('布局已重置', { count: photos.value.length })
     }
   })
 }
 
 const goBack = () => {
-  console.log('[Photos/goBack] 返回上一页')
+  log.info('返回上一页')
   router.back()
 }
 </script>
@@ -364,7 +362,7 @@ const goBack = () => {
   top: 20px;
   background: none;
   border: none;
-  color: #42b983;
+  color: var(--accent, #42b983);
   cursor: pointer;
   font-size: 14px;
   padding: 0;
@@ -460,11 +458,11 @@ const goBack = () => {
 
 .tool:hover {
   background: #f0f9f4;
-  color: #42b983;
+  color: var(--accent, #42b983);
 }
 
 .tool.active {
-  background: #42b983;
+  background: var(--accent, #42b983);
   color: white;
 }
 
@@ -630,7 +628,7 @@ const goBack = () => {
 
 :global(.dark) .tool:hover {
   background: #2d2d44;
-  color: #42b983;
+  color: var(--accent, #42b983);
 }
 
 :global(.dark) .polaroid {

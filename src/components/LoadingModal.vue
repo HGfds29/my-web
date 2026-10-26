@@ -34,9 +34,14 @@
 </template>
 
 <script setup>
-import { computed } from 'vue'
+import { computed, watch } from 'vue'
 import { t } from '../utils/i18n'
+import { createLogger } from '../utils/logger'
 import AppIcon from './AppIcon.vue'
+
+const log = createLogger('LoadingModal')
+
+log.info('加载弹窗组件已初始化（转圈 / 百分比进度 / 可取消）')
 
 const props = defineProps({
   visible: { type: Boolean, default: false },
@@ -60,8 +65,20 @@ const resolvedTitle = computed(() => {
 const resolvedCancelText = computed(() => props.cancelText || t('modal.cancel'))
 
 const handleCancel = () => {
+  log.info('用户取消加载', { percent: props.percent })
   emit('cancel')
 }
+
+watch(
+  () => props.visible,
+  (val) => {
+    log.debug(val ? '加载弹窗显示' : '加载弹窗关闭', {
+      size: props.size,
+      percent: props.percent,
+      cancelable: props.cancelable
+    })
+  }
+)
 </script>
 
 <style scoped>
@@ -192,7 +209,7 @@ const handleCancel = () => {
 
 .loading-bar-inner {
   height: 100%;
-  background: linear-gradient(90deg, #42b983 0%, #42b983 100%);
+  background: linear-gradient(90deg, var(--accent, #42b983) 0%, var(--accent, #42b983) 100%);
   border-radius: 3px;
   transition: width 0.3s ease;
 }
