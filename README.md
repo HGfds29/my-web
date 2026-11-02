@@ -150,6 +150,7 @@
 - 🧭 导航栏「更多」下拉收起 功能演示 / 聊天室 / 讨论区；登录后右上角变成用户菜单（头像、用户名、管理员徽章、改密码、复制用户 ID、退出登录）
 - 🥚 右下角藏了个彩蛋：鼠标移到右下角会出现一面旗帜，点击进入英雄纪念页
 - 🛡️ 内置广告拦截（`MutationObserver` + 定时扫描），清理免费空间商注入的广告
+- 万圣节限定主题：10/30–10/31 自动切换南瓜橙强调色、飘浮装饰与顶部彩旗横幅，横幅可关闭且按年份记忆
 
 ### 页面与路由
 
@@ -595,6 +596,7 @@ MIT © 2026 [HGfds29](https://github.com/HGfds29)
 - 🧭 A "More" dropdown in the nav groups Playground / Chat / Discussions; once signed in the corner becomes a user menu (avatar, username, admin badge, change password, copy user ID, sign out)
 - 🥚 A hidden easter egg in the bottom-right corner: hover to reveal a flag, click to enter the memorial page
 - 🛡️ Built-in ad blocker (`MutationObserver` + periodic scanning) that removes ads injected by free hosting
+- Halloween limited theme: from Oct 30 to 31 the accent turns pumpkin orange with floating decorations and a bunting banner; the banner can be dismissed and remembers the year
 
 ### Pages and Routes
 

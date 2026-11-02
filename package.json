@@ -1,6 +1,6 @@
 {
   "name": "my-web",
-  "version": "2.2.7-beta",
+  "version": "4.0.9-beta",
   "type": "module",
   "scripts": {
     "dev": "vite",

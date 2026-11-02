@@ -29,12 +29,16 @@ export const DEFAULTS = {
   lightBg: '#fafafa',
   darkBg: '#0f0f1a',
   glass: false,
-  glassBlur: 5,
+  glassBlur: 0,
   glassThickness: 41,
   glassIor: 1.1,
   glassNormalStrength: 6.4,
+  glassTuning: 3,
   reduceMotion: false
 }
+
+// 按参考 demo 的滑杆默认值重置一次，旧配置里的雾面/弱折射参数不会自动生效
+const GLASS_TUNING_VERSION = DEFAULTS.glassTuning
 
 const HEX_RE = /^#([0-9a-f]{3}|[0-9a-f]{6})$/i
 
@@ -64,20 +68,19 @@ const sanitizeNumber = (value, fallback, min, max) => {
 const loadConfig = () => {
   try {
     const raw = JSON.parse(localStorage.getItem(STORAGE_KEY) || '{}')
+    const tuned = raw.glassTuning === GLASS_TUNING_VERSION
+    const glassNumber = (key, min, max) =>
+      tuned ? sanitizeNumber(raw[key], DEFAULTS[key], min, max) : DEFAULTS[key]
     return {
       accent: sanitizeColor(raw.accent, DEFAULTS.accent),
       lightBg: sanitizeColor(raw.lightBg, DEFAULTS.lightBg),
       darkBg: sanitizeColor(raw.darkBg, DEFAULTS.darkBg),
       glass: raw.glass === true,
-      glassBlur: sanitizeNumber(raw.glassBlur, DEFAULTS.glassBlur, 0, 5),
-      glassThickness: sanitizeNumber(raw.glassThickness, DEFAULTS.glassThickness, 0, 50),
-      glassIor: sanitizeNumber(raw.glassIor, DEFAULTS.glassIor, 0.8, 1.5),
-      glassNormalStrength: sanitizeNumber(
-        raw.glassNormalStrength,
-        DEFAULTS.glassNormalStrength,
-        0.1,
-        10
-      ),
+      glassBlur: glassNumber('glassBlur', 0, 5),
+      glassThickness: glassNumber('glassThickness', 0, 50),
+      glassIor: glassNumber('glassIor', 0.8, 1.5),
+      glassNormalStrength: glassNumber('glassNormalStrength', 0.1, 10),
+      glassTuning: GLASS_TUNING_VERSION,
       reduceMotion: raw.reduceMotion === true
     }
   } catch {
@@ -144,14 +147,54 @@ html.liquid-glass body :is(${CSS_GLASS_TARGETS.join(', ')}) {
   backdrop-filter: blur(var(--glass-blur)) saturate(180%);
 }
 
-/* 直接浮在壁纸上的面板：交给 WebGL 折射，CSS 只保留圆角和排版 */
-html.lg-glass body :is(${WEBGL_GLASS_TARGETS.join(', ')}) {
-  background-color: transparent !important;
+/* 直接浮在壁纸上的面板：交给 WebGL 折射，CSS 只保留圆角和排版。
+   深色主题原有的 html.dark .xxx .card { background: … !important } 优先级更高，
+   这里把 lg-webgl/lg-glass/dark 全叠上去，否则面板底色会盖住 canvas 上的玻璃。 */
+html.lg-webgl.lg-glass body :is(${WEBGL_GLASS_TARGETS.join(', ')}),
+html.lg-webgl.lg-glass.dark body :is(${WEBGL_GLASS_TARGETS.join(', ')}) {
+  background: transparent !important;
   background-image: none !important;
   border-color: transparent !important;
   box-shadow: none !important;
   -webkit-backdrop-filter: none !important;
   backdrop-filter: none !important;
+}
+
+/* 顶栏是 fixed，内容会从它下面滚过：WebGL 玻璃之外再补一层底衬和模糊，
+   否则滚到导航栏下面的文字会直接透上来 */
+html.lg-webgl.lg-glass body .navbar {
+  background: rgba(255, 255, 255, 0.55) !important;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.7) !important;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.85) !important;
+  -webkit-backdrop-filter: blur(12px) saturate(160%);
+  backdrop-filter: blur(12px) saturate(160%);
+}
+
+html.lg-webgl.lg-glass.dark body .navbar {
+  background: rgba(10, 12, 20, 0.58) !important;
+  border-bottom-color: rgba(255, 255, 255, 0.2) !important;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.26) !important;
+}
+
+/* 顶栏压在照片壁纸上，默认的灰字对比度不够，单独把字色提亮/压深 */
+html.lg-webgl.lg-glass body .navbar :is(.nav-logo, .lang-toggle, .theme-toggle, .settings-toggle, .more-btn, .user-btn) {
+  color: #1f2937 !important;
+  text-shadow: 0 1px 2px rgba(255, 255, 255, 0.7);
+}
+
+html.lg-webgl.lg-glass body .navbar .nav-link:not(.active) {
+  color: #374151 !important;
+  text-shadow: 0 1px 2px rgba(255, 255, 255, 0.7);
+}
+
+html.lg-webgl.lg-glass.dark body .navbar :is(.nav-logo, .lang-toggle, .theme-toggle, .settings-toggle, .more-btn, .user-btn) {
+  color: #f2f2f6 !important;
+  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.6);
+}
+
+html.lg-webgl.lg-glass.dark body .navbar .nav-link:not(.active) {
+  color: #e6e6ee !important;
+  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.6);
 }
 
 html.reduce-motion *,

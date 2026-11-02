@@ -1,5 +1,5 @@
 <template>
-  <nav class="navbar">
+  <nav class="navbar" v-bind="$attrs">
     <div class="nav-container">
       <router-link to="/home" class="nav-logo">{{ t('nav.title') }}</router-link>
       <div class="nav-right">
@@ -29,6 +29,26 @@
               </svg>
             </button>
             <div class="more-dropdown">
+              <router-link to="/home" class="more-item mobile-nav-item" active-class="active" @click="moreOpen = false">
+                <AppIcon name="全部_all-application" :size="16" />
+                <span>{{ t('nav.home') }}</span>
+              </router-link>
+              <router-link to="/blog" class="more-item mobile-nav-item" active-class="active" @click="moreOpen = false">
+                <AppIcon name="标签_tag" :size="16" />
+                <span>{{ t('nav.blog') }}</span>
+              </router-link>
+              <router-link to="/photos" class="more-item mobile-nav-item" active-class="active" @click="moreOpen = false">
+                <AppIcon name="预览-打开_preview-open" :size="16" />
+                <span>{{ t('nav.photos') }}</span>
+              </router-link>
+              <router-link to="/games" class="more-item mobile-nav-item" active-class="active" @click="moreOpen = false">
+                <AppIcon name="游戏手柄_game-handle" :size="16" />
+                <span>{{ t('nav.games') }}</span>
+              </router-link>
+              <router-link to="/about" class="more-item mobile-nav-item" active-class="active" @click="moreOpen = false">
+                <AppIcon name="更多2_more-two" :size="16" />
+                <span>{{ t('nav.about') }}</span>
+              </router-link>
               <router-link to="/demo" class="more-item" active-class="active" @click="moreOpen = false">
                 <AppIcon name="系统_system" :size="16" />
                 <span>{{ t('nav.menuDemo') }}</span>
@@ -305,6 +325,24 @@
               {{ t('nav.resetAppearance') }}
             </button>
           </div>
+
+          <div class="settings-divider"></div>
+          <div class="settings-section">
+            <p class="section-label">{{ t('nav.holidaySkin') }}</p>
+            <p class="settings-note">{{ t('nav.holidaySkinDesc') }}</p>
+            <div class="skin-list">
+              <button
+                v-for="option in skinOptions"
+                :key="option.value"
+                class="skin-chip"
+                :class="{ active: holidaySkin === option.value }"
+                :aria-pressed="holidaySkin === option.value"
+                @click="setHolidaySkin(option.value)"
+              >
+                {{ t(option.label) }}
+              </button>
+            </div>
+          </div>
         </div>
       </aside>
     </div>
@@ -321,9 +359,19 @@ import { supabase } from '../utils/supabase'
 import { showPrompt, showError, showSuccess } from '../utils/modal'
 import { isLogUploadEnabled, enableLogUpload, disableLogUpload } from '../utils/logUploader'
 import { appearance, updateAppearance, resetAppearance, ACCENT_PRESETS } from '../utils/appearance'
+import { holidaySkin, setHolidaySkin, HOLIDAY_SKINS } from '../utils/holiday'
 import { createLogger } from '../utils/logger'
 
+defineOptions({ inheritAttrs: false })
+
 const log = createLogger('NavBar')
+
+// 节日皮肤选项：自动跟随日期、各节日、关闭
+const skinOptions = [
+  { value: 'auto', label: 'nav.skinAuto' },
+  ...HOLIDAY_SKINS.map((skin) => ({ value: skin.id, label: skin.labelKey })),
+  { value: 'none', label: 'nav.skinNone' }
+]
 
 log.info('顶部导航栏已初始化（导航菜单 / 用户卡片 / 主题 / 语言）')
 
@@ -555,6 +603,7 @@ watch(isDark, (val) => {
   font-weight: bold;
   color: #2c3e50;
   text-decoration: none;
+  white-space: nowrap;
   transition: color 0.3s;
 }
 
@@ -583,6 +632,7 @@ watch(isDark, (val) => {
   border-radius: 20px;
   color: #666;
   font-size: 13px;
+  white-space: nowrap;
   transition: all 0.3s ease;
   overflow: hidden;
 }
@@ -717,6 +767,7 @@ watch(isDark, (val) => {
   color: #666;
   text-decoration: none;
   font-size: 14px;
+  white-space: nowrap;
   transition: color 0.3s;
 }
 
@@ -779,6 +830,7 @@ watch(isDark, (val) => {
   border-radius: 20px;
   color: #666;
   font-size: 13px;
+  white-space: nowrap;
   text-decoration: none;
   transition: all 0.3s ease;
 }
@@ -1010,6 +1062,7 @@ watch(isDark, (val) => {
   border-radius: 20px;
   color: #666;
   font-size: 13px;
+  white-space: nowrap;
   transition: all 0.3s ease;
 }
 
@@ -1109,6 +1162,11 @@ watch(isDark, (val) => {
   font-size: 13px;
   white-space: nowrap;
   transition: background 0.2s, color 0.2s;
+}
+
+/* 桌面端主链接直接显示，移动端收进「更多」 */
+.mobile-nav-item {
+  display: none;
 }
 
 .dark .more-item {
@@ -1357,6 +1415,55 @@ watch(isDark, (val) => {
   background: #fafafa;
 }
 
+/* 节日皮肤切换按钮组 */
+.skin-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 10px;
+}
+
+.skin-chip {
+  flex: 1 1 0;
+  min-width: 72px;
+  padding: 7px 10px;
+  border: 1px solid #e4e4e4;
+  border-radius: 10px;
+  background: #fafafa;
+  color: #666;
+  font-size: 12.5px;
+  cursor: pointer;
+  transition: border-color 0.2s ease, background 0.2s ease, color 0.2s ease;
+}
+
+.skin-chip:hover {
+  border-color: var(--accent, #42b983);
+  color: #333;
+}
+
+.skin-chip.active {
+  border-color: var(--accent, #42b983);
+  background: color-mix(in srgb, var(--accent, #42b983) 12%, transparent);
+  color: var(--accent, #42b983);
+  font-weight: 600;
+}
+
+.dark .skin-chip {
+  background: #1a1a2e;
+  border-color: #2a2a44;
+  color: #aaa;
+}
+
+.dark .skin-chip:hover {
+  color: #eee;
+  border-color: var(--accent, #42b983);
+}
+
+.dark .skin-chip.active {
+  background: color-mix(in srgb, var(--accent, #42b983) 22%, transparent);
+  color: #fff;
+}
+
 .dark .glass-params {
   background: #1a1a2e;
   border-color: #252540;
@@ -1590,14 +1697,75 @@ watch(isDark, (val) => {
   }
 }
 
-/* 窄屏隐藏导航图标，避免挤压换行 */
-@media (max-width: 680px) {
-  .nav-link .app-icon {
+/* 中等宽度：主链接收进「更多」，避免中文被挤成多行 */
+@media (max-width: 980px) {
+  .nav-links {
+    gap: 0;
+  }
+
+  .nav-links > .nav-link {
     display: none;
   }
 
-  .nav-links {
-    gap: 12px;
+  .mobile-nav-item {
+    display: flex;
+  }
+}
+
+@media (max-width: 680px) {
+  .nav-container {
+    padding: 0 16px;
+  }
+
+  .nav-right {
+    gap: 8px;
+  }
+}
+
+/* 窄屏只保留图标，避免顶栏溢出 */
+@media (max-width: 480px) {
+  .nav-container {
+    padding: 0 12px;
+  }
+
+  .nav-right {
+    gap: 6px;
+  }
+
+  .nav-logo {
+    font-size: 16px;
+  }
+
+  .lang-text,
+  .more-text,
+  .user-name,
+  .user-login > span:not(.app-icon) {
+    display: none;
+  }
+
+  .more-btn,
+  .lang-toggle,
+  .user-btn {
+    padding: 6px;
+  }
+
+  .more-btn .more-arrow,
+  .user-menu .more-arrow {
+    display: none;
+  }
+}
+
+@media (max-width: 360px) {
+  .nav-container {
+    padding: 0 10px;
+  }
+
+  .nav-right {
+    gap: 4px;
+  }
+
+  .nav-logo {
+    font-size: 15px;
   }
 }
 </style>

@@ -7,11 +7,14 @@ import { supabase } from './utils/supabase'
 import { createLogger, installGlobalLogging } from './utils/logger'
 import { installLogUploader } from './utils/logUploader'
 import { initAppearance } from './utils/appearance'
+import { initHoliday } from './utils/holiday'
 
 const log = createLogger('main')
 
 log.info('入口脚本开始执行', { mode: import.meta.env.MODE, hash: window.location.hash || '(空)' })
 
+// 节日皮肤先挂上类名，外观初始化时就能读到对应的强调色
+initHoliday()
 initAppearance()
 initAdBlocker()
 installLogUploader()

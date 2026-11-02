@@ -1,4 +1,10 @@
 <template>
+  <HolidayBanner
+    v-if="showHolidayBanner"
+    :skin="activeSkin"
+    :dismissed="holidayBannerClosed"
+    @close="onCloseHolidayBanner"
+  />
   <NavBar v-if="!hideNav" :class="{ 'nav-hidden': isLogin && navReady }" />
   <div class="page-wrapper" :class="{ 'no-nav': hideNav || isLogin }">
     <router-view />
@@ -60,12 +66,19 @@
 import { computed, onMounted, ref, watch } from 'vue'
 import { useRoute } from 'vue-router'
 import NavBar from './components/NavBar.vue'
+import HolidayBanner from './components/HolidayBanner.vue'
 import FlagEasterEgg from './components/FlagEasterEgg.vue'
 import ErrorModal from './components/ErrorModal.vue'
 import PromptModal from './components/PromptModal.vue'
 import LoadingModal from './components/LoadingModal.vue'
 import ToastContainer from './components/ToastContainer.vue'
 import { createLogger } from './utils/logger'
+import {
+  activeSkin,
+  dismissedBanners,
+  dismissHolidayBanner,
+  setHolidayRoute
+} from './utils/holiday'
 import {
   visible as modalVisible,
   config as modalConfig,
@@ -85,6 +98,16 @@ import {
 const route = useRoute()
 const hideNav = computed(() => !!route.meta.hideNav)
 const isLogin = computed(() => route.name === 'Login')
+// 节日横幅跟随当前皮肤，顶栏正常显示时出现（登录页不遮挡）；关闭后只留彩旗
+const holidayBannerClosed = computed(
+  () => !!activeSkin.value && dismissedBanners.value.has(activeSkin.value.id)
+)
+const showHolidayBanner = computed(
+  () => !!activeSkin.value && !hideNav.value && !isLogin.value
+)
+const onCloseHolidayBanner = () => {
+  if (activeSkin.value) dismissHolidayBanner(activeSkin.value.id)
+}
 const log = createLogger('App')
 
 // 首屏直接进入登录页时，让顶栏先完成一帧绘制再向上滑出，保证动画可见
@@ -95,6 +118,13 @@ onMounted(() => {
     requestAnimationFrame(() => { navReady.value = true })
   })
 })
+
+// 切换页面时更新装饰代码
+watch(
+  () => route.name,
+  (name) => setHolidayRoute(name),
+  { immediate: true }
+)
 
 // 路由 meta 变化导致顶栏显隐切换
 watch(hideNav, (val) => {

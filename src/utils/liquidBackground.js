@@ -23,9 +23,11 @@ const GLASS_CLASS = 'lg-glass'
 const MAX_DPR = 2
 const FRAME_MS = 1000 / 30
 const MAX_PANELS = 80
+const STYLE_SCAN_MS = 400
 
 /** 直接浮在壁纸上的面板：由 WebGL 折射渲染 */
 export const WEBGL_GLASS_TARGETS = [
+  '.navbar',
   '.card',
   '.post-item',
   '.game-item',
@@ -46,13 +48,14 @@ export const WEBGL_GLASS_TARGETS = [
   '.glass-surface'
 ]
 
+const PANEL_SELECTOR = WEBGL_GLASS_TARGETS.join(',')
+
 /**
  * 固定/浮层面板：继续用 CSS backdrop-filter
- * 导航栏是 fixed，滚动时卡片会从它下面穿过；只有浏览器自己的 backdrop-filter
+ * 这些面板会盖住滚到它下面的内容，只有浏览器自己的 backdrop-filter
  * 才能把下层内容真正遮住并虚化，WebGL 画在 canvas 上做不到这一点。
  */
 export const CSS_GLASS_TARGETS = [
-  '.navbar',
   '.settings-drawer',
   '.user-card',
   '.more-dropdown',
@@ -75,8 +78,8 @@ const GLASS_DEFAULTS = {
   displacementScale: 1.0,
   heightTransitionWidth: 8.0,
   sminSmoothing: 20.0,
-  // 参考默认 0（纯净折射）；这里默认取滑杆上限，保留磨砂，文字才压得住背景
-  blurRadius: 5.0,
+  // 与参考 demo 一致：0 表示纯净折射，不做磨砂
+  blurRadius: 0.0,
   highlightWidth: 3.5
 }
 
@@ -118,6 +121,9 @@ uniform vec3 u_accent;
 uniform vec3 u_accent2;
 uniform vec2 u_pointer;
 uniform float u_dark;
+uniform sampler2D u_photo;
+uniform float u_photoReady;
+uniform float u_photoAspect;
 
 float hash(vec2 p) {
   return fract(sin(dot(p, vec2(127.1, 311.7))) * 43758.5453);
@@ -163,6 +169,23 @@ void main() {
   col = mix(col, u_accent, b3 * 0.24);
 
   col += (1.0 - uv.y) * mix(0.025, 0.05, u_dark);
+
+  // 开启液态玻璃时叠一张照片壁纸，玻璃才有真实可折射的细节（和参考 demo 一致）
+  if (u_photoReady > 0.5) {
+    float viewAspect = u_res.x / u_res.y;
+    vec2 puv = uv;
+    if (viewAspect > u_photoAspect) {
+      puv.y = (uv.y - 0.5) * (u_photoAspect / viewAspect) + 0.5;
+    } else {
+      puv.x = (uv.x - 0.5) * (viewAspect / u_photoAspect) + 0.5;
+    }
+    vec3 photo = texture2D(u_photo, puv).rgb;
+    // 向主题底色压一档，保证页面文字可读
+    photo = mix(photo, u_base, u_dark > 0.5 ? 0.42 : 0.52);
+    float lum = dot(photo, vec3(0.299, 0.587, 0.114));
+    photo = mix(vec3(lum), photo, 1.12);
+    col = mix(col, photo, 0.9);
+  }
 
   float vig = smoothstep(1.3, 0.3, length(uv - 0.5));
   col *= mix(0.95, 1.0, vig);
@@ -374,6 +397,12 @@ let blitUniforms = {}
 let glassUniforms = {}
 let framebuffer = null
 let bgTexture = null
+let photoTexture = null
+let photoImage = null
+let photoLoading = false
+let photoAspect = 16 / 9
+let photoReady = false
+let dummyTexture = null
 let textureSize = { w: 0, h: 0 }
 let dpr = 1
 let rafId = 0
@@ -483,7 +512,10 @@ const setupPrograms = () => {
     'accent',
     'accent2',
     'pointer',
-    'dark'
+    'dark',
+    'photo',
+    'photoReady',
+    'photoAspect'
   ])
   const glass = createProgram(GLASS_VERT, GLASS_FRAG, [
     'resolution',
@@ -532,8 +564,159 @@ const setupPrograms = () => {
     gl.STATIC_DRAW
   )
 
+  // 照片未就绪时绑这张 1x1 占位图，避免采样到未初始化的纹理
+  dummyTexture = gl.createTexture()
+  gl.bindTexture(gl.TEXTURE_2D, dummyTexture)
+  gl.texImage2D(
+    gl.TEXTURE_2D,
+    0,
+    gl.RGBA,
+    1,
+    1,
+    0,
+    gl.RGBA,
+    gl.UNSIGNED_BYTE,
+    new Uint8Array([0, 0, 0, 255])
+  )
+  gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR)
+  gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR)
+  gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE)
+  gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE)
+
   applyPalette()
   return true
+}
+
+const PHOTO_TIMEOUT = 8000
+const PHOTO_RETRIES = 2
+
+const rgba = (color, alpha = 1) =>
+  `rgba(${Math.round(color[0] * 255)}, ${Math.round(color[1] * 255)}, ${Math.round(color[2] * 255)}, ${alpha})`
+
+/** 网络拿不到照片时，本地画一张有细节的抽象壁纸，玻璃照样有东西可折射 */
+const makeFallbackPhoto = () => {
+  const colors = palette || { base: [0.06, 0.06, 0.1], accent: [0.2, 0.5, 0.4], accent2: [0.2, 0.35, 0.6] }
+  const width = 1600
+  const height = 900
+  const sheet = document.createElement('canvas')
+  sheet.width = width
+  sheet.height = height
+  const ctx = sheet.getContext('2d')
+  if (!ctx) return null
+
+  const bg = ctx.createLinearGradient(0, 0, width, height)
+  bg.addColorStop(0, rgba(colors.base))
+  bg.addColorStop(1, rgba(colors.accent2))
+  ctx.fillStyle = bg
+  ctx.fillRect(0, 0, width, height)
+
+  const blobs = [
+    [0.22, 0.28, 0.5, colors.accent, 0.85],
+    [0.78, 0.22, 0.42, colors.accent2, 0.7],
+    [0.6, 0.82, 0.55, colors.accent, 0.55],
+    [0.1, 0.85, 0.4, colors.accent2, 0.5]
+  ]
+  blobs.forEach(([x, y, r, color, alpha]) => {
+    const glow = ctx.createRadialGradient(
+      x * width, y * height, 0,
+      x * width, y * height, r * width
+    )
+    glow.addColorStop(0, rgba(color, alpha))
+    glow.addColorStop(1, rgba(color, 0))
+    ctx.fillStyle = glow
+    ctx.fillRect(0, 0, width, height)
+  })
+
+  // 细噪点：给玻璃边缘的折射提供高频细节
+  for (let i = 0; i < 9000; i += 1) {
+    const alpha = 0.06 + Math.random() * 0.12
+    ctx.fillStyle = `rgba(255, 255, 255, ${alpha})`
+    ctx.fillRect(Math.random() * width, Math.random() * height, 1.5, 1.5)
+  }
+  return sheet
+}
+
+const uploadPhoto = (source) => {
+  try {
+    const texture = gl.createTexture()
+    gl.bindTexture(gl.TEXTURE_2D, texture)
+    // 和参考实现一致：翻转 Y，照片才不会上下颠倒
+    gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL, true)
+    gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, source)
+    gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL, false)
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR)
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR)
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE)
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE)
+    photoTexture = texture
+    photoImage = source
+    photoAspect = source.width / source.height || 16 / 9
+    photoReady = true
+    bgDirty = true
+    staticDrawn = false
+    return true
+  } catch (error) {
+    log.warn('照片上传纹理失败（可能被 CORS 拦截）', error)
+    return false
+  }
+}
+
+/** 加载一张随机照片当液态壁纸，只要玻璃开着就一直用它 */
+const loadPhoto = (attempt = 0) => {
+  if (!gl || photoTexture) return
+  photoLoading = true
+
+  const image = new Image()
+  image.crossOrigin = 'anonymous'
+  image.decoding = 'async'
+  let settled = false
+
+  const retryOrFallback = () => {
+    if (settled) return
+    settled = true
+    photoLoading = false
+    if (!gl) return
+    if (attempt < PHOTO_RETRIES) {
+      loadPhoto(attempt + 1)
+      return
+    }
+    const fallback = makeFallbackPhoto()
+    if (fallback && uploadPhoto(fallback)) {
+      log.warn('照片壁纸获取失败，已改用本地生成的壁纸')
+    }
+  }
+
+  const timer = setTimeout(() => {
+    image.src = ''
+    retryOrFallback()
+  }, PHOTO_TIMEOUT)
+
+  image.onload = () => {
+    clearTimeout(timer)
+    if (settled) return
+    settled = true
+    photoLoading = false
+    if (!gl) return
+    // 跨域图片上传会抛 SecurityError，这里兜住后继续重试
+    if (uploadPhoto(image)) {
+      log.info('液态壁纸照片已就绪')
+    } else if (attempt < PHOTO_RETRIES) {
+      loadPhoto(attempt + 1)
+    } else {
+      const fallback = makeFallbackPhoto()
+      if (fallback && uploadPhoto(fallback)) {
+        log.warn('照片壁纸不可用，已改用本地生成的壁纸')
+      }
+    }
+  }
+
+  image.onerror = () => {
+    clearTimeout(timer)
+    retryOrFallback()
+  }
+
+  const seed = Math.floor(Math.random() * 100)
+  image.src = `https://picsum.photos/1920/1080?random=${seed}&t=${Date.now()}`
 }
 
 const ensureFramebuffer = () => {
@@ -583,8 +766,7 @@ const resize = () => {
   bgDirty = true
 }
 
-const parseRadius = (rect, style) => {
-  const raw = style.borderTopLeftRadius || '0px'
+const parseRadius = (rect, raw = '0px') => {
   const value = parseFloat(raw) || 0
   const radius = raw.includes('%') ? (Math.min(rect.width, rect.height) * value) / 100 : value
   return Math.min(radius, Math.min(rect.width, rect.height) / 2)
@@ -608,26 +790,44 @@ const stackingScore = (el) => {
   return score
 }
 
-const collectPanels = () => {
-  const selector = WEBGL_GLASS_TARGETS.join(',')
+const panelStyleCache = new WeakMap()
+let panelNodesCache = null
+let lastStyleScan = -Infinity
+
+const collectPanels = (now) => {
+  // getComputedStyle、closest 和层叠权重都很贵，每帧对 80 个节点做会拖慢滚动。
+  // 这里按 400ms 重新扫一次，几何尺寸仍然每帧用 getBoundingClientRect 取。
+  const rescan = now - lastStyleScan > STYLE_SCAN_MS
+  if (rescan) {
+    lastStyleScan = now
+    panelNodesCache = Array.from(document.querySelectorAll(PANEL_SELECTOR))
+  }
+
   const list = []
-  const nodes = document.querySelectorAll(selector)
+  const nodes = panelNodesCache || []
   const viewportH = window.innerHeight
   const viewportW = window.innerWidth
 
   for (const el of nodes) {
     if (list.length >= MAX_PANELS) break
-    // 嵌套面板只画最外层，避免两层玻璃叠加
-    if (el.parentElement && el.parentElement.closest(selector)) continue
+
+    let info = panelStyleCache.get(el)
+    if (!info || rescan) {
+      const style = getComputedStyle(el)
+      info = {
+        // 嵌套面板只画最外层，避免两层玻璃叠加
+        nested: Boolean(el.parentElement && el.parentElement.closest(PANEL_SELECTOR)),
+        hidden: style.display === 'none' || style.visibility === 'hidden' || Number(style.opacity) === 0,
+        radius: style.borderTopLeftRadius || '0px',
+        z: stackingScore(el)
+      }
+      panelStyleCache.set(el, info)
+    }
+    if (info.nested || info.hidden) continue
 
     const rect = el.getBoundingClientRect()
     if (rect.width < 12 || rect.height < 12) continue
     if (rect.bottom < 0 || rect.top > viewportH || rect.right < 0 || rect.left > viewportW) continue
-
-    const style = getComputedStyle(el)
-    if (style.display === 'none' || style.visibility === 'hidden' || Number(style.opacity) === 0) {
-      continue
-    }
 
     // 着色器按 CSS 像素工作（和参考实现一致），center 是面板中心的屏幕坐标
     list.push({
@@ -635,8 +835,8 @@ const collectPanels = () => {
       cy: rect.top + rect.height / 2,
       w: rect.width,
       h: rect.height,
-      radius: parseRadius(rect, style),
-      z: stackingScore(el)
+      radius: parseRadius(rect, info.radius),
+      z: info.z
     })
   }
 
@@ -660,6 +860,14 @@ const renderBackground = (now) => {
   gl.uniform2f(bgUniforms.res, canvas.width, canvas.height)
   gl.uniform1f(bgUniforms.time, elapsed)
   gl.uniform2f(bgUniforms.pointer, pointer.x, pointer.y)
+
+  gl.activeTexture(gl.TEXTURE1)
+  gl.bindTexture(gl.TEXTURE_2D, photoTexture || dummyTexture)
+  gl.uniform1i(bgUniforms.photo, 1)
+  gl.uniform1f(bgUniforms.photoReady, photoReady ? 1 : 0)
+  gl.uniform1f(bgUniforms.photoAspect, photoAspect)
+  gl.activeTexture(gl.TEXTURE0)
+
   gl.drawArrays(gl.TRIANGLES, 0, 6)
 }
 
@@ -685,22 +893,25 @@ const drawGlass = () => {
   // 着色器全部用 CSS 像素，和参考实现一致
   gl.uniform2f(glassUniforms.resolution, window.innerWidth, window.innerHeight)
   gl.uniform1f(glassUniforms.ior, glassParams.ior)
-  gl.uniform1f(glassUniforms.glassThickness, glassParams.glassThickness)
-  gl.uniform1f(glassUniforms.normalStrength, glassParams.normalStrength)
   gl.uniform1f(glassUniforms.displacementScale, glassParams.displacementScale)
-  gl.uniform1f(glassUniforms.heightTransitionWidth, glassParams.heightTransitionWidth)
   gl.uniform1f(glassUniforms.sminSmoothing, glassParams.sminSmoothing)
   gl.uniform1f(glassUniforms.blurRadius, glassParams.blurRadius)
-  gl.uniform1f(glassUniforms.highlightWidth, glassParams.highlightWidth)
   gl.uniform4f(glassUniforms.overlayColor, 1.0, 1.0, 1.0, 1.0)
 
   gl.enable(gl.BLEND)
   gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA)
 
   panels.forEach((panel) => {
+    // 参考 demo 的玻璃片只有 150px 宽，41px 厚度才有明显的斜切边。
+    // 网站卡片普遍更大，按尺寸等比放大厚度/过渡带/高光，玻璃质感才不会被稀释。
+    const scale = clamp(Math.min(panel.w, panel.h) / 150, 1, 2.5)
     gl.uniform2f(glassUniforms.mousePos, panel.cx, panel.cy)
     gl.uniform2f(glassUniforms.glassSize, panel.w, panel.h)
     gl.uniform1f(glassUniforms.cornerRadius, panel.radius)
+    gl.uniform1f(glassUniforms.glassThickness, glassParams.glassThickness * scale)
+    gl.uniform1f(glassUniforms.normalStrength, glassParams.normalStrength * scale)
+    gl.uniform1f(glassUniforms.heightTransitionWidth, glassParams.heightTransitionWidth * scale)
+    gl.uniform1f(glassUniforms.highlightWidth, glassParams.highlightWidth * scale)
     gl.drawArrays(gl.TRIANGLES, 0, 6)
   })
 
@@ -722,7 +933,7 @@ const renderFrame = (now) => {
 
   resize()
   if (!ensureFramebuffer()) return
-  collectPanels()
+  collectPanels(now)
 
   if (bgDirty || now - lastBgDraw >= FRAME_MS) {
     renderBackground(now)
@@ -835,8 +1046,11 @@ const create = () => {
 
   startedAt = 0
   lastBgDraw = 0
+  lastStyleScan = -Infinity
+  panelNodesCache = null
   bgDirty = true
   staticDrawn = false
+  loadPhoto()
   rafId = requestAnimationFrame(loop)
   log.info('WebGL 液态背景与折射玻璃已启动')
   return true
@@ -858,6 +1072,8 @@ const destroy = (contextLost = false) => {
     if (quadBuffer) gl.deleteBuffer(quadBuffer)
     if (glassBuffer) gl.deleteBuffer(glassBuffer)
     if (bgTexture) gl.deleteTexture(bgTexture)
+    if (photoTexture) gl.deleteTexture(photoTexture)
+    if (dummyTexture) gl.deleteTexture(dummyTexture)
     if (framebuffer) gl.deleteFramebuffer(framebuffer)
     const lose = gl.getExtension('WEBGL_lose_context')
     lose?.loseContext()
@@ -875,12 +1091,20 @@ const destroy = (contextLost = false) => {
   blitAttr = -1
   glassAttr = -1
   bgTexture = null
+  photoTexture = null
+  photoImage = null
+  photoLoading = false
+  photoReady = false
+  photoAspect = 16 / 9
+  dummyTexture = null
   framebuffer = null
   textureSize = { w: 0, h: 0 }
   panels = []
   palette = null
   bgDirty = true
   staticDrawn = false
+  lastStyleScan = -Infinity
+  panelNodesCache = null
   uniformsReset()
   elapsed = 0
   startedAt = 0
