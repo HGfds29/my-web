@@ -1,5 +1,6 @@
 import { ref } from 'vue'
 import { createLogger } from './logger'
+import { setSkin } from './toast'
 import { syncLiquidBackground, WEBGL_GLASS_TARGETS, CSS_GLASS_TARGETS } from './liquidBackground'
 
 /**
@@ -34,8 +35,12 @@ export const DEFAULTS = {
   glassIor: 1.1,
   glassNormalStrength: 6.4,
   glassTuning: 3,
+  toastSkin: 'default',
   reduceMotion: false
 }
+
+// 与 toast.js 的 VALID_SKINS 保持一致
+const TOAST_SKINS = ['default', 'light', 'tarkov']
 
 // 按参考 demo 的滑杆默认值重置一次，旧配置里的雾面/弱折射参数不会自动生效
 const GLASS_TUNING_VERSION = DEFAULTS.glassTuning
@@ -81,6 +86,7 @@ const loadConfig = () => {
       glassIor: glassNumber('glassIor', 0.8, 1.5),
       glassNormalStrength: glassNumber('glassNormalStrength', 0.1, 10),
       glassTuning: GLASS_TUNING_VERSION,
+      toastSkin: TOAST_SKINS.includes(raw.toastSkin) ? raw.toastSkin : DEFAULTS.toastSkin,
       reduceMotion: raw.reduceMotion === true
     }
   } catch {
@@ -221,6 +227,9 @@ export const applyAppearance = () => {
   root.style.setProperty('--page-bg-dark', cfg.darkBg)
   root.classList.toggle('liquid-glass', cfg.glass)
   root.classList.toggle('reduce-motion', cfg.reduceMotion)
+
+  // Toast 皮肤是全局默认值，单条通知仍可用 skin 参数覆盖
+  setSkin(cfg.toastSkin)
 
   // 开启液态玻璃时挂载 WebGL 背景，关闭时释放显存；变量已写好，这里读到的都是最新配色
   syncLiquidBackground(cfg.glass, {

@@ -400,6 +400,7 @@ let bgTexture = null
 let photoTexture = null
 let photoImage = null
 let photoLoading = false
+let photoAbort = null
 let photoAspect = 16 / 9
 let photoReady = false
 let dummyTexture = null
@@ -637,8 +638,9 @@ const makeFallbackPhoto = () => {
 }
 
 const uploadPhoto = (source) => {
+  let texture = null
   try {
-    const texture = gl.createTexture()
+    texture = gl.createTexture()
     gl.bindTexture(gl.TEXTURE_2D, texture)
     // 和参考实现一致：翻转 Y，照片才不会上下颠倒
     gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL, true)
@@ -657,7 +659,16 @@ const uploadPhoto = (source) => {
     return true
   } catch (error) {
     log.warn('照片上传纹理失败（可能被 CORS 拦截）', error)
+    if (texture) gl.deleteTexture(texture)
     return false
+  }
+}
+
+const useFallbackPhoto = () => {
+  if (!gl) return
+  const fallback = makeFallbackPhoto()
+  if (fallback && uploadPhoto(fallback)) {
+    log.warn('照片壁纸获取失败，已改用本地生成的壁纸')
   }
 }
 
@@ -675,27 +686,39 @@ const loadPhoto = (attempt = 0) => {
     if (settled) return
     settled = true
     photoLoading = false
+    photoAbort = null
     if (!gl) return
     if (attempt < PHOTO_RETRIES) {
       loadPhoto(attempt + 1)
       return
     }
-    const fallback = makeFallbackPhoto()
-    if (fallback && uploadPhoto(fallback)) {
-      log.warn('照片壁纸获取失败，已改用本地生成的壁纸')
-    }
+    useFallbackPhoto()
   }
 
   const timer = setTimeout(() => {
+    image.onload = null
+    image.onerror = null
     image.src = ''
     retryOrFallback()
   }, PHOTO_TIMEOUT)
+
+  // 关闭玻璃时立刻停掉这次加载，避免销毁后回调还往新上下文里写纹理
+  photoAbort = () => {
+    clearTimeout(timer)
+    image.onload = null
+    image.onerror = null
+    image.src = ''
+    settled = true
+    photoLoading = false
+    photoAbort = null
+  }
 
   image.onload = () => {
     clearTimeout(timer)
     if (settled) return
     settled = true
     photoLoading = false
+    photoAbort = null
     if (!gl) return
     // 跨域图片上传会抛 SecurityError，这里兜住后继续重试
     if (uploadPhoto(image)) {
@@ -703,10 +726,7 @@ const loadPhoto = (attempt = 0) => {
     } else if (attempt < PHOTO_RETRIES) {
       loadPhoto(attempt + 1)
     } else {
-      const fallback = makeFallbackPhoto()
-      if (fallback && uploadPhoto(fallback)) {
-        log.warn('照片壁纸不可用，已改用本地生成的壁纸')
-      }
+      useFallbackPhoto()
     }
   }
 
@@ -1059,6 +1079,8 @@ const create = () => {
 const destroy = (contextLost = false) => {
   if (rafId) cancelAnimationFrame(rafId)
   rafId = 0
+  photoAbort?.()
+  photoAbort = null
   unbind()
   classObserver?.disconnect()
   classObserver = null

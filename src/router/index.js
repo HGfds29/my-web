@@ -13,6 +13,7 @@ import NotFound from '../views/NotFound.vue'
 import ModalDemo from '../views/ModalDemo.vue'
 import Chat from '../views/Chat.vue'
 import Discussion from '../views/Discussion.vue'
+import AiLab from '../views/AiLab.vue'
 import Login from '../views/Login.vue'
 import { loadSession, currentUser } from '../utils/auth'
 import { createLogger } from '../utils/logger'
@@ -125,6 +126,12 @@ const routes = [
     name: 'Discussion',
     component: Discussion,
     meta: { index: 13 }
+  },
+  {
+    path: '/ai',
+    name: 'AiLab',
+    component: AiLab,
+    meta: { index: 14 }
   },
   {
     path: '/:pathMatch(.*)*',

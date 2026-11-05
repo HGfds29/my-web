@@ -61,6 +61,10 @@
                 <AppIcon name="评论_comments" :size="16" />
                 <span>{{ t('nav.menuDiscussion') }}</span>
               </router-link>
+              <router-link to="/ai" class="more-item" active-class="active" @click="moreOpen = false">
+                <AppIcon name="工具_tool" :size="16" />
+                <span>{{ t('nav.menuAI') }}</span>
+              </router-link>
             </div>
           </div>
         </div>
@@ -327,6 +331,34 @@
           </div>
 
           <div class="settings-divider"></div>
+          <button class="skin-entry" @click="skinOpen = true">
+            <div class="setting-text">
+              <span class="setting-label">{{ t('nav.skinMenu') }}</span>
+              <span class="setting-desc">{{ skinSummary }}</span>
+            </div>
+            <svg class="skin-entry-arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+              <polyline points="9 6 15 12 9 18" />
+            </svg>
+          </button>
+        </div>
+      </aside>
+
+      <aside class="skin-drawer" :class="{ open: skinOpen }" :aria-hidden="!skinOpen" role="dialog" :aria-label="t('nav.skinMenu')">
+        <div class="settings-head">
+          <button class="skin-back" :aria-label="t('nav.back')" @click="skinOpen = false">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <polyline points="15 6 9 12 15 18" />
+            </svg>
+          </button>
+          <span class="settings-title">{{ t('nav.skinMenu') }}</span>
+          <button class="settings-close" :aria-label="t('nav.close')" @click="skinOpen = false">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+              <line x1="6" y1="6" x2="18" y2="18" />
+              <line x1="18" y1="6" x2="6" y2="18" />
+            </svg>
+          </button>
+        </div>
+        <div class="settings-body">
           <div class="settings-section">
             <p class="section-label">{{ t('nav.holidaySkin') }}</p>
             <p class="settings-note">{{ t('nav.holidaySkinDesc') }}</p>
@@ -338,6 +370,25 @@
                 :class="{ active: holidaySkin === option.value }"
                 :aria-pressed="holidaySkin === option.value"
                 @click="setHolidaySkin(option.value)"
+              >
+                {{ t(option.label) }}
+              </button>
+            </div>
+          </div>
+
+          <div class="settings-divider"></div>
+
+          <div class="settings-section">
+            <p class="section-label">{{ t('nav.toastSkin') }}</p>
+            <p class="settings-note">{{ t('nav.toastSkinDesc') }}</p>
+            <div class="skin-list">
+              <button
+                v-for="option in toastSkinOptions"
+                :key="option.value"
+                class="skin-chip"
+                :class="{ active: appearance.toastSkin === option.value }"
+                :aria-pressed="appearance.toastSkin === option.value"
+                @click="setToastSkin(option.value)"
               >
                 {{ t(option.label) }}
               </button>
@@ -360,6 +411,7 @@ import { showPrompt, showError, showSuccess } from '../utils/modal'
 import { isLogUploadEnabled, enableLogUpload, disableLogUpload } from '../utils/logUploader'
 import { appearance, updateAppearance, resetAppearance, ACCENT_PRESETS } from '../utils/appearance'
 import { holidaySkin, setHolidaySkin, HOLIDAY_SKINS } from '../utils/holiday'
+import { showToast } from '../utils/toast'
 import { createLogger } from '../utils/logger'
 
 defineOptions({ inheritAttrs: false })
@@ -372,6 +424,26 @@ const skinOptions = [
   ...HOLIDAY_SKINS.map((skin) => ({ value: skin.id, label: skin.labelKey })),
   { value: 'none', label: 'nav.skinNone' }
 ]
+
+// Toast 皮肤选项
+const toastSkinOptions = [
+  { value: 'default', label: 'nav.toastSkinDefault' },
+  { value: 'light', label: 'nav.toastSkinLight' },
+  { value: 'tarkov', label: 'nav.toastSkinTarkov' }
+]
+
+const setToastSkin = (value) => {
+  updateAppearance({ toastSkin: value })
+  // 用选中的皮肤立即弹一条，方便直接对比效果
+  showToast({ type: 'success', message: t('nav.toastSkinPreview'), skin: value, duration: 2000 })
+}
+
+// 设置主菜单上的皮肤摘要，避免要打开子菜单才知道当前用了什么
+const skinSummary = computed(() => {
+  const holidayLabel = skinOptions.find((option) => option.value === holidaySkin.value)?.label
+  const toastLabel = toastSkinOptions.find((option) => option.value === appearance.value.toastSkin)?.label
+  return [holidayLabel, toastLabel].filter(Boolean).map((key) => t(key)).join(' · ')
+})
 
 log.info('顶部导航栏已初始化（导航菜单 / 用户卡片 / 主题 / 语言）')
 
@@ -393,15 +465,23 @@ const closeUserMenu = (event) => {
 const onKeydown = (event) => {
   if (event.key !== 'Escape') return
   userOpen.value = false
+  // 先收子抽屉，再收设置抽屉
+  if (skinOpen.value) {
+    skinOpen.value = false
+    return
+  }
   closeSettings()
 }
 
 /* 设置抽屉：仅承载「提交日志到数据库」开关 */
 const settingsOpen = ref(false)
 const uploadEnabled = ref(false)
+// 皮肤子抽屉：从设置抽屉左侧滑出，不遮挡设置主菜单
+const skinOpen = ref(false)
 
 const openSettings = () => {
   settingsOpen.value = true
+  skinOpen.value = false
   uploadEnabled.value = isLogUploadEnabled()
   log.info('打开设置抽屉', { uploadEnabled: uploadEnabled.value })
 }
@@ -409,6 +489,7 @@ const openSettings = () => {
 const closeSettings = () => {
   if (!settingsOpen.value) return
   settingsOpen.value = false
+  skinOpen.value = false
   log.debug('关闭设置抽屉')
 }
 
@@ -1235,6 +1316,7 @@ watch(isDark, (val) => {
 
 /* 设置抽屉 */
 .settings-layer {
+  --settings-w: min(320px, 86vw);
   position: fixed;
   inset: 0;
   z-index: 1400;
@@ -1262,7 +1344,7 @@ watch(isDark, (val) => {
   top: 0;
   right: 0;
   bottom: 0;
-  width: 320px;
+  width: var(--settings-w);
   max-width: 86vw;
   display: flex;
   flex-direction: column;
@@ -1282,6 +1364,106 @@ watch(isDark, (val) => {
   background: #12121f;
   border-left-color: #252540;
   box-shadow: -12px 0 36px rgba(0, 0, 0, 0.55);
+}
+
+/* 皮肤入口：设置抽屉里的一行，点开后从左侧滑出子抽屉 */
+.skin-entry {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+  width: 100%;
+  padding: 14px;
+  background: #f7f9fa;
+  border: 1px solid #eee;
+  border-radius: 10px;
+  cursor: pointer;
+  text-align: left;
+  transition: background 0.2s, border-color 0.2s;
+}
+
+.skin-entry:hover {
+  background: #f0f5f3;
+  border-color: #d9e7e0;
+}
+
+.dark .skin-entry {
+  background: #1a1a2e;
+  border-color: #252540;
+}
+
+.dark .skin-entry:hover {
+  background: #20203a;
+  border-color: #33335a;
+}
+
+.skin-entry-arrow {
+  width: 16px;
+  height: 16px;
+  flex-shrink: 0;
+  color: #999;
+}
+
+/* 皮肤子抽屉：紧贴设置抽屉左侧，不覆盖主菜单 */
+.skin-drawer {
+  position: absolute;
+  top: 12px;
+  bottom: 12px;
+  right: calc(var(--settings-w) + 12px);
+  width: 300px;
+  max-width: calc(100vw - var(--settings-w) - 24px);
+  display: flex;
+  flex-direction: column;
+  background: #fff;
+  border: 1px solid #eee;
+  border-radius: 12px;
+  box-shadow: -8px 0 32px rgba(0, 0, 0, 0.12);
+  opacity: 0;
+  visibility: hidden;
+  transform: translateX(18px);
+  pointer-events: none;
+  transition: opacity 0.28s ease, transform 0.34s cubic-bezier(0.16, 1, 0.3, 1), visibility 0.28s;
+}
+
+.skin-drawer.open {
+  opacity: 1;
+  visibility: visible;
+  transform: translateX(0);
+  pointer-events: auto;
+}
+
+.dark .skin-drawer {
+  background: #12121f;
+  border-color: #252540;
+  box-shadow: -8px 0 32px rgba(0, 0, 0, 0.55);
+}
+
+.skin-back {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 5px;
+  border: none;
+  border-radius: 6px;
+  background: none;
+  color: #999;
+  cursor: pointer;
+  transition: background 0.2s, color 0.2s;
+}
+
+.skin-back svg {
+  width: 16px;
+  height: 16px;
+}
+
+.skin-back:hover {
+  background: #f0f0f0;
+  color: var(--accent, #42b983);
+}
+
+.dark .skin-back:hover {
+  background: #2d2d44;
+  color: var(--accent, #42b983);
 }
 
 .settings-head {
@@ -1691,9 +1873,32 @@ watch(isDark, (val) => {
 }
 
 @media (max-width: 480px) {
+  .settings-layer {
+    --settings-w: 100%;
+  }
+
   .settings-drawer {
     width: 100%;
     max-width: 100%;
+  }
+}
+
+/* 窄屏没有第二块面板的空间，皮肤子菜单改为整屏覆盖 */
+@media (max-width: 720px) {
+  .skin-drawer {
+    top: 0;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    width: auto;
+    max-width: none;
+    border: none;
+    border-radius: 0;
+    transform: translateY(14px);
+  }
+
+  .skin-drawer.open {
+    transform: translateY(0);
   }
 }
 
