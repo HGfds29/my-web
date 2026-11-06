@@ -97,7 +97,10 @@ const messages = {
     toastSkinTarkov: { zh: '塔科夫', en: 'Tarkov' },
     toastSkinPreview: { zh: '通知皮肤预览', en: 'Toast skin preview' },
     resetAppearance: { zh: '恢复默认外观', en: 'Reset appearance' },
-    appearanceReset: { zh: '外观已恢复默认', en: 'Appearance reset' }
+    appearanceReset: { zh: '外观已恢复默认', en: 'Appearance reset' },
+    statusPage: { zh: '状态页', en: 'Status' },
+    statusPageDesc: { zh: '查看网站实时运行状态', en: 'Check the live site status' },
+    openInNewTab: { zh: '在新标签页打开', en: 'Open in new tab' }
   },
   holiday: {
     halloween: { zh: '万圣节限定主题 · 10.30 – 10.31', en: 'Halloween limited theme · Oct 30 – 31' },

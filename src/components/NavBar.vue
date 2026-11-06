@@ -394,6 +394,26 @@
               </button>
             </div>
           </div>
+
+          <div class="settings-section">
+            <p class="section-label">{{ t('nav.statusPage') }}</p>
+            <a
+              class="status-link"
+              href="https://hgfds29.github.io/my-status/"
+              target="_blank"
+              rel="noopener noreferrer"
+              :title="t('nav.openInNewTab')"
+            >
+              <span class="status-text">
+                <span class="setting-label">{{ t('nav.statusPage') }}</span>
+                <span class="setting-desc">{{ t('nav.statusPageDesc') }}</span>
+              </span>
+              <svg class="status-arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M7 17 17 7" />
+                <path d="M7 7h10v10" />
+              </svg>
+            </a>
+          </div>
         </div>
       </aside>
     </div>
@@ -1870,6 +1890,57 @@ watch(isDark, (val) => {
   color: var(--accent, #42b983);
   border-color: var(--accent, #42b983);
   background: rgba(var(--accent-rgb, 66, 185, 131), 0.08);
+}
+
+/* 状态页外链入口 */
+.status-link {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  width: 100%;
+  padding: 14px;
+  border: 1px solid #eee;
+  border-radius: 12px;
+  background: #fafafa;
+  color: inherit;
+  text-decoration: none;
+  transition: border-color 0.2s ease, background 0.2s ease, transform 0.2s ease;
+}
+
+.status-link:hover {
+  border-color: var(--accent, #42b983);
+  background: rgba(var(--accent-rgb, 66, 185, 131), 0.06);
+  transform: translateY(-1px);
+}
+
+.dark .status-link {
+  background: #1a1a2e;
+  border-color: #252540;
+}
+
+.dark .status-link:hover {
+  background: rgba(var(--accent-rgb, 66, 185, 131), 0.12);
+}
+
+.status-text {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 0;
+}
+
+.status-arrow {
+  flex: 0 0 auto;
+  width: 18px;
+  height: 18px;
+  color: #bbb;
+  transition: color 0.2s ease, transform 0.2s ease;
+}
+
+.status-link:hover .status-arrow {
+  color: var(--accent, #42b983);
+  transform: translate(1px, -1px);
 }
 
 @media (max-width: 480px) {
