@@ -660,4 +660,59 @@ const goBack = () => {
 :global(.dark) .empty {
   color: #888;
 }
+
+/* 手机端适配：工具栏横置吸底，照片区降为竖屏高度 */
+@media (max-width: 720px) {
+  .photos-page {
+    padding: 12px;
+  }
+
+  .page-header {
+    padding: 12px 0 12px;
+  }
+
+  .page-header h1 {
+    font-size: 26px;
+  }
+
+  .subtitle {
+    font-size: 14px;
+  }
+
+  .main-content {
+    flex-direction: column;
+    gap: 12px;
+  }
+
+  .toolbar {
+    width: 100%;
+    flex-direction: row;
+    justify-content: center;
+    gap: 8px;
+    padding: 8px;
+    position: sticky;
+    bottom: 8px;
+    z-index: 50;
+  }
+
+  .tool {
+    padding: 8px 6px;
+  }
+
+  .photo-area {
+    height: min(72vh, 520px);
+  }
+
+  .pin-hint {
+    bottom: 76px;
+    max-width: calc(100vw - 32px);
+    text-align: center;
+  }
+}
+
+@media (max-width: 420px) {
+  .photo-area {
+    height: min(64vh, 460px);
+  }
+}
 </style>

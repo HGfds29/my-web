@@ -65,6 +65,10 @@
                 <AppIcon name="工具_tool" :size="16" />
                 <span>{{ t('nav.menuAI') }}</span>
               </router-link>
+              <button class="more-item" @click="openChangelog">
+                <AppIcon name="日志_log" :size="16" />
+                <span>{{ t('nav.changelog') }}</span>
+              </button>
             </div>
           </div>
         </div>
@@ -331,7 +335,7 @@
           </div>
 
           <div class="settings-divider"></div>
-          <button class="skin-entry" @click="skinOpen = true">
+          <button class="skin-entry" @click="openSkin">
             <div class="setting-text">
               <span class="setting-label">{{ t('nav.skinMenu') }}</span>
               <span class="setting-desc">{{ skinSummary }}</span>
@@ -340,6 +344,26 @@
               <polyline points="9 6 15 12 9 18" />
             </svg>
           </button>
+
+          <div class="settings-divider"></div>
+          <div class="settings-section">
+            <a
+              class="status-link"
+              href="https://hgfds29.github.io/my-status/"
+              target="_blank"
+              rel="noopener noreferrer"
+              :title="t('nav.openInNewTab')"
+            >
+              <span class="status-text">
+                <span class="setting-label">{{ t('nav.statusPage') }}</span>
+                <span class="setting-desc">{{ t('nav.statusPageDesc') }}</span>
+              </span>
+              <svg class="status-arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M7 17 17 7" />
+                <path d="M7 7h10v10" />
+              </svg>
+            </a>
+          </div>
         </div>
       </aside>
 
@@ -394,26 +418,108 @@
               </button>
             </div>
           </div>
+        </div>
+      </aside>
+    </div>
 
-          <div class="settings-section">
-            <p class="section-label">{{ t('nav.statusPage') }}</p>
-            <a
-              class="status-link"
-              href="https://hgfds29.github.io/my-status/"
-              target="_blank"
-              rel="noopener noreferrer"
-              :title="t('nav.openInNewTab')"
-            >
-              <span class="status-text">
-                <span class="setting-label">{{ t('nav.statusPage') }}</span>
-                <span class="setting-desc">{{ t('nav.statusPageDesc') }}</span>
-              </span>
-              <svg class="status-arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                <path d="M7 17 17 7" />
-                <path d="M7 7h10v10" />
-              </svg>
-            </a>
+    <div class="log-layer" :class="{ open: changelogOpen }" :aria-hidden="!changelogOpen">
+      <div class="log-overlay" @click="changelogOpen = false"></div>
+      <aside class="changelog-drawer" :class="{ open: changelogOpen, wide: maximizedLogKey }" role="dialog" aria-modal="true" :aria-label="t('nav.changelog')">
+        <div class="settings-head">
+          <button v-if="maximizedLogKey" class="skin-back" :aria-label="t('nav.back')" @click="backToLogList">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <polyline points="15 6 9 12 15 18" />
+            </svg>
+          </button>
+          <span class="settings-title">{{ t('nav.changelog') }}</span>
+          <button class="settings-close" :aria-label="t('nav.close')" @click="changelogOpen = false">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+              <line x1="6" y1="6" x2="18" y2="18" />
+              <line x1="18" y1="6" x2="6" y2="18" />
+            </svg>
+          </button>
+        </div>
+        <div class="settings-body">
+          <div v-if="maximizedEntry" class="log-full" :style="logStyle(maximizedEntry)">
+            <div class="log-full-head">
+              <span class="log-version">{{ maximizedEntry.version }}</span>
+              <span
+                v-for="(type, index) in logTypesOf(maximizedEntry)"
+                :key="type + index"
+                class="log-badge"
+                :style="{ '--log-color': logTypeColor(type) }"
+              >{{ t(changelogTypes[type]) }}</span>
+            </div>
+            <span class="log-time">{{ maximizedEntry.time }}</span>
+            <div v-if="maximizedEntry.image" class="log-full-shot">
+              <img :src="maximizedEntry.image" :alt="maximizedEntry.imageAlt || maximizedEntry.version" loading="lazy" />
+            </div>
+            <ul v-if="maximizedEntry.items && maximizedEntry.items.length" class="log-full-items">
+              <li v-for="(line, index) in typedLines" :key="index">{{ line }}<span v-if="index === typedLines.length - 1 && !typingDone" class="log-cursor"></span></li>
+            </ul>
           </div>
+
+          <template v-else>
+            <article
+              v-for="entry in changelogEntries"
+              :key="entry.version + entry.time"
+              class="log-card"
+              :class="{ expanded: isLogExpanded(entry) }"
+              :style="logStyle(entry)"
+            >
+              <button
+                class="log-head"
+                :class="{ 'has-shot': entry.image }"
+                :aria-expanded="isLogExpanded(entry)"
+                @click="toggleLogEntry(entry)"
+              >
+                <div class="log-head-main">
+                  <h3 class="log-head-title">
+                    <span class="log-version">{{ entry.version }}</span>
+                    <span class="log-sep">—</span>
+                    <span class="log-summary">{{ entry.title || (entry.items && entry.items[0]) || '' }}</span>
+                  </h3>
+                  <div class="log-head-meta">
+                    <span class="log-time">{{ entry.time }}</span>
+                    <div class="log-badge-row">
+                      <span
+                        v-for="(type, index) in logTypesOf(entry)"
+                        :key="type + index"
+                        class="log-badge"
+                        :style="{ '--log-color': logTypeColor(type) }"
+                      >{{ t(changelogTypes[type]) }}</span>
+                    </div>
+                  </div>
+                </div>
+                <img
+                  v-if="entry.image"
+                  class="log-head-shot"
+                  :src="entry.image"
+                  :alt="entry.imageAlt || entry.version"
+                  loading="lazy"
+                />
+                <svg class="log-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <polyline points="6 15 12 9 18 15" />
+                </svg>
+              </button>
+              <div class="log-detail">
+                <div class="log-detail-inner">
+                  <ul v-if="isTypingTarget(entry)" class="log-items">
+                    <li v-for="(line, index) in typedLines" :key="index">{{ line }}<span v-if="index === typedLines.length - 1 && !typingDone" class="log-cursor"></span></li>
+                  </ul>
+                  <ul v-else-if="entry.items && entry.items.length" class="log-items">
+                    <li v-for="(line, index) in entry.items" :key="index">{{ line }}</li>
+                  </ul>
+                  <button class="log-more" @click.stop="openLogDetail(entry)">
+                    {{ t('nav.viewFullDetail') }}
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                      <polyline points="9 6 15 12 9 18" />
+                    </svg>
+                  </button>
+                </div>
+              </div>
+            </article>
+          </template>
         </div>
       </aside>
     </div>
@@ -432,6 +538,7 @@ import { isLogUploadEnabled, enableLogUpload, disableLogUpload } from '../utils/
 import { appearance, updateAppearance, resetAppearance, ACCENT_PRESETS } from '../utils/appearance'
 import { holidaySkin, setHolidaySkin, HOLIDAY_SKINS } from '../utils/holiday'
 import { showToast } from '../utils/toast'
+import { changelogEntries, changelogTypes, changelogTypeColors } from '../data/changelog'
 import { createLogger } from '../utils/logger'
 
 defineOptions({ inheritAttrs: false })
@@ -486,6 +593,10 @@ const onKeydown = (event) => {
   if (event.key !== 'Escape') return
   userOpen.value = false
   // 先收子抽屉，再收设置抽屉
+  if (changelogOpen.value) {
+    changelogOpen.value = false
+    return
+  }
   if (skinOpen.value) {
     skinOpen.value = false
     return
@@ -498,10 +609,125 @@ const settingsOpen = ref(false)
 const uploadEnabled = ref(false)
 // 皮肤子抽屉：从设置抽屉左侧滑出，不遮挡设置主菜单
 const skinOpen = ref(false)
+// 更新日志抽屉：独立图层
+const changelogOpen = ref(false)
+// 内联展开的日志条目（同一时间只展开一条）
+const expandedLogKey = ref('')
+// 完整详情状态：抽屉拉宽，只展示该条
+const maximizedLogKey = ref('')
+
+const logKeyOf = (entry) => entry.version + entry.time
+// type 可以是字符串或数组；数组时色条做成渐变拼色
+const logTypesOf = (entry) => (Array.isArray(entry.type) ? entry.type : [entry.type])
+const logTypeColor = (type) => changelogTypeColors[type] || '#9aa4b2'
+const logStyle = (entry) => {
+  const types = logTypesOf(entry)
+  const colors = types.map(logTypeColor)
+  return {
+    '--log-color': colors[0],
+    '--log-gradient': `linear-gradient(90deg, ${colors.join(', ')})`
+  }
+}
+const isLogExpanded = (entry) => expandedLogKey.value === logKeyOf(entry)
+const maximizedEntry = computed(
+  () => changelogEntries.find((entry) => logKeyOf(entry) === maximizedLogKey.value) || null
+)
+
+// 点卡片：内联展开 / 收起
+const toggleLogEntry = (entry) => {
+  const key = logKeyOf(entry)
+  expandedLogKey.value = expandedLogKey.value === key ? '' : key
+}
+
+// 展开后点「查看完整详情」：抽屉拉宽
+const openLogDetail = (entry) => {
+  maximizedLogKey.value = logKeyOf(entry)
+}
+
+// 返回列表，保留该条的展开状态
+const backToLogList = () => {
+  maximizedLogKey.value = ''
+}
+
+// 当前正在展示详情的条目：完整详情优先，其次是内联展开的那条
+const activeLogEntry = computed(() => {
+  if (maximizedEntry.value) return maximizedEntry.value
+  return changelogEntries.find((entry) => logKeyOf(entry) === expandedLogKey.value) || null
+})
+const isTypingTarget = (entry) => !!activeLogEntry.value && logKeyOf(entry) === logKeyOf(activeLogEntry.value)
+
+// 打字机效果：逐字显示当前条目的更新点
+const typedCount = ref(0)
+const typingDone = ref(true)
+let typingTimer = null
+
+const activeLogText = computed(() => (activeLogEntry.value?.items || []).join('\n'))
+const typedLines = computed(() => activeLogText.value.slice(0, typedCount.value).split('\n'))
+
+const stopTyping = () => {
+  if (typingTimer) {
+    clearInterval(typingTimer)
+    typingTimer = null
+  }
+}
+
+const startTyping = () => {
+  stopTyping()
+  const total = activeLogText.value.length
+  typedCount.value = 0
+  typingDone.value = false
+  if (!total) {
+    typingDone.value = true
+    return
+  }
+  // 尊重系统的「减少动态效果」设置，直接显示全文
+  if (window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+    typedCount.value = total
+    typingDone.value = true
+    return
+  }
+  typingTimer = setInterval(() => {
+    typedCount.value = Math.min(total, typedCount.value + 2)
+    if (typedCount.value >= total) {
+      typingDone.value = true
+      stopTyping()
+    }
+  }, 24)
+}
+
+// 同一条目在「内联展开」与「完整详情」之间切换时不重新打字
+let lastTypedKey = null
+watch([expandedLogKey, maximizedLogKey], () => {
+  const key = activeLogEntry.value ? logKeyOf(activeLogEntry.value) : null
+  if (!key) {
+    lastTypedKey = null
+    stopTyping()
+    return
+  }
+  if (key === lastTypedKey) return
+  lastTypedKey = key
+  startTyping()
+})
+
+const openChangelog = () => {
+  skinOpen.value = false
+  settingsOpen.value = false
+  moreOpen.value = false
+  expandedLogKey.value = ''
+  maximizedLogKey.value = ''
+  changelogOpen.value = true
+  log.info('打开更新日志抽屉', { entries: changelogEntries.length })
+}
+
+const openSkin = () => {
+  changelogOpen.value = false
+  skinOpen.value = true
+}
 
 const openSettings = () => {
   settingsOpen.value = true
   skinOpen.value = false
+  changelogOpen.value = false
   uploadEnabled.value = isLogUploadEnabled()
   log.info('打开设置抽屉', { uploadEnabled: uploadEnabled.value })
 }
@@ -510,6 +736,7 @@ const closeSettings = () => {
   if (!settingsOpen.value) return
   settingsOpen.value = false
   skinOpen.value = false
+  changelogOpen.value = false
   log.debug('关闭设置抽屉')
 }
 
@@ -634,8 +861,8 @@ watch(userOpen, (val) => {
 })
 
 /* 抽屉打开时锁定页面滚动 */
-watch(settingsOpen, (val) => {
-  document.body.style.overflow = val ? 'hidden' : ''
+watch([settingsOpen, changelogOpen], ([settings, changelog]) => {
+  document.body.style.overflow = settings || changelog ? 'hidden' : ''
 })
 
 onMounted(() => {
@@ -1256,12 +1483,19 @@ watch(isDark, (val) => {
   display: flex;
   align-items: center;
   gap: 8px;
+  width: 100%;
   padding: 8px 12px;
+  border: none;
   border-radius: 8px;
+  background: none;
   color: #555;
+  font-family: inherit;
   text-decoration: none;
+  text-align: left;
   font-size: 13px;
+  line-height: 1.4;
   white-space: nowrap;
+  cursor: pointer;
   transition: background 0.2s, color 0.2s;
 }
 
@@ -1458,6 +1692,62 @@ watch(isDark, (val) => {
   box-shadow: -8px 0 32px rgba(0, 0, 0, 0.55);
 }
 
+/* 更新日志：独立图层，从右侧滑入的抽屉 */
+.log-layer {
+  position: fixed;
+  inset: 0;
+  z-index: 1500;
+  pointer-events: none;
+}
+
+.log-layer.open {
+  pointer-events: auto;
+}
+
+.log-overlay {
+  position: absolute;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.38);
+  opacity: 0;
+  transition: opacity 0.3s ease;
+}
+
+.log-layer.open .log-overlay {
+  opacity: 1;
+}
+
+.changelog-drawer {
+  position: absolute;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  width: 340px;
+  max-width: 92vw;
+  display: flex;
+  flex-direction: column;
+  background: #fff;
+  border-left: 1px solid #eee;
+  box-shadow: -12px 0 40px rgba(0, 0, 0, 0.14);
+  transform: translateX(100%);
+  transition: transform 0.4s cubic-bezier(0.16, 1, 0.3, 1), width 0.42s cubic-bezier(0.16, 1, 0.3, 1),
+    background 0.3s ease;
+}
+
+.changelog-drawer.open {
+  transform: translateX(0);
+}
+
+/* 二次点击日志后，整个侧边栏拉宽展示完整详情 */
+.changelog-drawer.wide {
+  width: min(720px, 100vw);
+}
+
+.dark .changelog-drawer {
+  background: #12121f;
+  border-left-color: #252540;
+  box-shadow: -12px 0 40px rgba(0, 0, 0, 0.55);
+}
+
 .skin-back {
   display: flex;
   align-items: center;
@@ -1541,6 +1831,13 @@ watch(isDark, (val) => {
   flex: 1;
   overflow-y: auto;
   padding: 18px;
+  /* 隐藏滚动条但保留滚动能力 */
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+
+.settings-body::-webkit-scrollbar {
+  display: none;
 }
 
 .setting-item {
@@ -1943,6 +2240,347 @@ watch(isDark, (val) => {
   transform: translate(1px, -1px);
 }
 
+/* 带截图的条目：右侧缩略图，左侧渐隐融入卡片 */
+.log-head.has-shot .log-head-main {
+  max-width: 52%;
+}
+
+.log-head-shot {
+  position: absolute;
+  top: 4px;
+  right: 4px;
+  bottom: 4px;
+  width: 50%;
+  border-radius: 9px;
+  object-fit: cover;
+  object-position: 50% 30%;
+  -webkit-mask-image: linear-gradient(90deg, transparent 0, #000 26%);
+  mask-image: linear-gradient(90deg, transparent 0, #000 26%);
+}
+
+/* 更新条目：紧凑卡片，点击展开详情，抽屉保持打开 */
+.log-head {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  padding: 12px 34px 12px 12px;
+  border: none;
+  background: none;
+  color: inherit;
+  font-family: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+.log-head-main {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  gap: 5px;
+  min-width: 0;
+}
+
+.log-head-title {
+  display: flex;
+  align-items: baseline;
+  gap: 6px;
+  min-width: 0;
+  margin: 0;
+}
+
+.log-sep {
+  flex-shrink: 0;
+  color: #c4c4c8;
+}
+
+.log-summary {
+  overflow: hidden;
+  font-size: 12.5px;
+  font-weight: 600;
+  color: #2c3e50;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.log-head-meta {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.log-badge-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 5px;
+}
+
+/* 完整详情里的功能截图，同样带轻微倾斜 */
+.log-full-shot {
+  margin: 14px 0 4px;
+}
+
+.log-full-shot img {
+  display: block;
+  width: 100%;
+  border-radius: 12px;
+  transform: rotateX(4deg) rotateY(-6deg) rotateZ(-1deg);
+  box-shadow: 0 24px 44px -22px rgba(0, 0, 0, 0.85);
+}
+
+/* 更新日志卡片：横幅式，顶部色条区分类型；点击展开详情，抽屉保持打开 */
+.log-card {
+  position: relative;
+  overflow: hidden;
+  border: 1px solid #ececec;
+  border-radius: 12px;
+  background: #fff;
+  transition: background 0.2s ease, border-color 0.2s ease;
+}
+
+/* 顶部色条：单类型为纯色，多类型为渐变拼色 */
+.log-card::before,
+.log-full::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 4px;
+  background: var(--log-gradient, var(--log-color, #9aa4b2));
+}
+
+.log-card + .log-card {
+  margin-top: 12px;
+}
+
+.log-card:hover {
+  background: #f7f8f9;
+}
+
+.log-version {
+  font-size: 14px;
+  font-weight: 600;
+  letter-spacing: 0.2px;
+  color: #2c3e50;
+}
+
+.log-badge {
+  flex-shrink: 0;
+  padding: 3px 7px;
+  border: 1px solid color-mix(in srgb, var(--log-color, #9aa4b2) 52%, transparent);
+  border-radius: 4px;
+  background: color-mix(in srgb, var(--log-color, #9aa4b2) 12%, transparent);
+  color: var(--log-color, #9aa4b2);
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.log-time {
+  display: block;
+  font-size: 10.5px;
+  color: #999;
+  font-variant-numeric: tabular-nums;
+}
+
+.log-chevron {
+  position: absolute;
+  top: 11px;
+  right: 11px;
+  z-index: 3;
+  width: 18px;
+  height: 18px;
+  padding: 3px;
+  border-radius: 50%;
+  background: rgba(10, 10, 16, 0.5);
+  color: #d8d8de;
+  transition: background 0.2s ease, transform 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.log-card:hover .log-chevron {
+  background: rgba(10, 10, 16, 0.75);
+}
+
+.log-card.expanded .log-chevron {
+  transform: rotate(180deg);
+}
+
+/* 展开区域用 grid 行高过渡，顺滑拉长且不重开抽屉 */
+.log-detail {
+  display: grid;
+  grid-template-rows: 0fr;
+  transition: grid-template-rows 0.32s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.log-card.expanded .log-detail {
+  grid-template-rows: 1fr;
+}
+
+.log-detail-inner {
+  overflow: hidden;
+}
+
+.log-items {
+  margin: 0;
+  padding: 0 14px 0 30px;
+  font-size: 12.5px;
+  line-height: 1.7;
+  color: #666;
+}
+
+.log-items li::marker {
+  color: var(--log-color, #9aa4b2);
+}
+
+/* 打字机光标 */
+.log-cursor {
+  display: inline-block;
+  width: 2px;
+  height: 1em;
+  margin-left: 1px;
+  vertical-align: -0.1em;
+  background: var(--log-color, #9aa4b2);
+  animation: logCursorBlink 0.9s steps(1) infinite;
+}
+
+@keyframes logCursorBlink {
+  0%,
+  50% {
+    opacity: 1;
+  }
+  50.01%,
+  100% {
+    opacity: 0;
+  }
+}
+
+/* 展开后可见的「查看完整详情」入口，避免隐藏的二次点击规则 */
+.log-more {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  margin: 10px 0 13px 30px;
+  padding: 5px 10px;
+  border: 1px solid #e5e5e5;
+  border-radius: 7px;
+  background: #fff;
+  color: #666;
+  font-family: inherit;
+  font-size: 11.5px;
+  cursor: pointer;
+  transition: border-color 0.2s ease, color 0.2s ease, background 0.2s ease;
+}
+
+.log-more svg {
+  width: 12px;
+  height: 12px;
+  transition: transform 0.2s ease;
+}
+
+.log-more:hover {
+  border-color: var(--log-color, #9aa4b2);
+  color: var(--log-color, #9aa4b2);
+  background: color-mix(in srgb, var(--log-color, #9aa4b2) 8%, #fff);
+}
+
+.log-more:hover svg {
+  transform: translateX(2px);
+}
+
+.dark .log-items {
+  color: #aaa;
+}
+
+.dark .log-more {
+  border-color: #2c2c44;
+  background: #15152a;
+  color: #aaa;
+}
+
+.dark .log-more:hover {
+  color: var(--log-color, #9aa4b2);
+  border-color: var(--log-color, #9aa4b2);
+  background: #1c1c34;
+}
+
+/* 完整详情视图：抽屉拉宽后单条展示 */
+.log-full {
+  position: relative;
+  overflow: hidden;
+  padding: 18px 0 0;
+}
+
+.log-full-head {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.log-full-head .log-version {
+  font-size: 17px;
+}
+
+.log-full-items {
+  margin: 16px 0 0;
+  padding-left: 20px;
+  font-size: 13.5px;
+  line-height: 1.9;
+  color: #555;
+}
+
+.log-full-items li::marker {
+  color: var(--log-color, #9aa4b2);
+}
+
+.dark .log-full-items {
+  color: #bbb;
+}
+
+/* 类型颜色由 changelogTypeColors 通过内联 CSS 变量提供，见 logStyle() */
+
+.dark .log-card {
+  background: #14141f;
+  border-color: #23233a;
+}
+
+.dark .log-card:hover {
+  background: #191927;
+}
+
+.dark .log-summary {
+  color: #ececf0;
+}
+
+.dark .log-sep {
+  color: #5a5a70;
+}
+
+.dark .log-chevron {
+  color: #d0d0da;
+  background: rgba(10, 10, 16, 0.55);
+}
+
+.dark .log-card:hover .log-chevron {
+  background: rgba(10, 10, 16, 0.8);
+}
+
+.dark .log-version {
+  color: #e8e8e8;
+}
+
+.dark .log-time {
+  color: #777;
+}
+
+.dark .log-items {
+  color: #aaa;
+}
+
 @media (max-width: 480px) {
   .settings-layer {
     --settings-w: 100%;
@@ -1952,9 +2590,18 @@ watch(isDark, (val) => {
     width: 100%;
     max-width: 100%;
   }
+
+  /* 窄屏收窄缩略图，给文字留空间 */
+  .log-head.has-shot .log-head-main {
+    max-width: 58%;
+  }
+
+  .log-head-shot {
+    width: 44%;
+  }
 }
 
-/* 窄屏没有第二块面板的空间，皮肤子菜单改为整屏覆盖 */
+/* 窄屏没有第二块面板的空间，子菜单改为整屏覆盖 */
 @media (max-width: 720px) {
   .skin-drawer {
     top: 0;
@@ -1970,6 +2617,11 @@ watch(isDark, (val) => {
 
   .skin-drawer.open {
     transform: translateY(0);
+  }
+
+  .changelog-drawer {
+    width: 100%;
+    max-width: none;
   }
 }
 

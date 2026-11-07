@@ -100,7 +100,19 @@ const messages = {
     appearanceReset: { zh: '外观已恢复默认', en: 'Appearance reset' },
     statusPage: { zh: '状态页', en: 'Status' },
     statusPageDesc: { zh: '查看网站实时运行状态', en: 'Check the live site status' },
-    openInNewTab: { zh: '在新标签页打开', en: 'Open in new tab' }
+    openInNewTab: { zh: '在新标签页打开', en: 'Open in new tab' },
+    changelog: { zh: '更新日志', en: 'Changelog' },
+    viewFullDetail: { zh: '查看完整详情', en: 'View full details' },
+    logTypeFeature: { zh: '新增', en: 'Feature' },
+    logTypeFix: { zh: '修复', en: 'Fix' },
+    logTypeBeta: { zh: '实验性更新', en: 'Experimental' },
+    logTypeUrgent: { zh: '紧急', en: 'Hotfix' },
+    logTypeStyle: { zh: '样式', en: 'Style' },
+    logTypePerf: { zh: '优化', en: 'Perf' },
+    logTypeDocs: { zh: '文档', en: 'Docs' },
+    logTypeRefactor: { zh: '重构', en: 'Refactor' },
+    logTypeSecurity: { zh: '安全', en: 'Security' },
+    logTypeTest: { zh: '测试', en: 'Test' }
   },
   holiday: {
     halloween: { zh: '万圣节限定主题 · 10.30 – 10.31', en: 'Halloween limited theme · Oct 30 – 31' },

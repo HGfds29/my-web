@@ -717,3 +717,33 @@ html.dark .discussion-page .trash-wrap.open .trash-btn {
   background: rgba(255, 107, 107, 0.12);
 }
 
+/* ===== 手机端全局兜底 ===== */
+/* 媒体元素不撑破容器 */
+img,
+video,
+canvas {
+  max-width: 100%;
+}
+
+/* 页面不出现横向滚动条（个别组件 absolute 超宽时兜底） */
+html,
+body {
+  overflow-x: hidden;
+}
+
+/* 窄屏通用：长链接/长代码换行，避免撑破布局 */
+@media (max-width: 480px) {
+  a,
+  p,
+  li,
+  td {
+    overflow-wrap: break-word;
+  }
+
+  pre,
+  code {
+    white-space: pre-wrap;
+    word-break: break-word;
+  }
+}
+

@@ -160,4 +160,15 @@ h1 {
 .contact {
   color: #666;
 }
+
+/* 手机端适配：标题与内边距收紧 */
+@media (max-width: 480px) {
+  .about-page {
+    padding: 12px;
+  }
+
+  h1 {
+    font-size: 25px;
+  }
+}
 </style>

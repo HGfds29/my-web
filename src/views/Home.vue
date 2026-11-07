@@ -290,4 +290,23 @@ onMounted(() => {
   color: #999;
   font-size: 13px;
 }
+
+/* 手机端适配：收紧首屏留白与标题 */
+@media (max-width: 480px) {
+  .home-page {
+    padding: 12px;
+  }
+
+  .hero {
+    padding: 36px 0 24px;
+  }
+
+  .hero h1 {
+    font-size: 25px;
+  }
+
+  .nav-links {
+    flex-wrap: wrap;
+  }
+}
 </style>
