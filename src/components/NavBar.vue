@@ -335,6 +335,29 @@
           </div>
 
           <div class="settings-divider"></div>
+          <div class="setting-item">
+            <div class="setting-text">
+              <span class="setting-label">{{ t('nav.easterEgg') }}</span>
+              <span class="setting-desc">{{ t('nav.easterEggDesc') }}</span>
+            </div>
+            <div class="setting-actions">
+              <button v-if="eggEnabled" class="setting-try" @click="tryEgg">
+                {{ t('nav.easterEggTry') }}
+              </button>
+              <button
+                class="setting-switch"
+                :class="{ on: eggEnabled }"
+                role="switch"
+                :aria-checked="eggEnabled"
+                :aria-label="t('nav.easterEgg')"
+                @click="toggleEgg"
+              >
+                <span class="switch-knob"></span>
+              </button>
+            </div>
+          </div>
+
+          <div class="settings-divider"></div>
           <button class="skin-entry" @click="openSkin">
             <div class="setting-text">
               <span class="setting-label">{{ t('nav.skinMenu') }}</span>
@@ -536,6 +559,7 @@ import { supabase } from '../utils/supabase'
 import { showPrompt, showError, showSuccess } from '../utils/modal'
 import { isLogUploadEnabled, enableLogUpload, disableLogUpload } from '../utils/logUploader'
 import { appearance, updateAppearance, resetAppearance, ACCENT_PRESETS } from '../utils/appearance'
+import { easterEggEnabled, setEasterEggEnabled, triggerEasterEgg } from '../utils/easterEgg'
 import { holidaySkin, setHolidaySkin, HOLIDAY_SKINS } from '../utils/holiday'
 import { showToast } from '../utils/toast'
 import { changelogEntries, changelogTypes, changelogTypeColors } from '../data/changelog'
@@ -765,6 +789,18 @@ const onLightBgInput = (event) => updateAppearance({ lightBg: event.target.value
 const onDarkBgInput = (event) => updateAppearance({ darkBg: event.target.value })
 const toggleGlass = () => updateAppearance({ glass: !appearance.value.glass })
 const toggleMotion = () => updateAppearance({ reduceMotion: !appearance.value.reduceMotion })
+
+// 彩蛋：默认关闭，开启后由 EggOverlay 负责随机事件与数字键触发
+const eggEnabled = computed(() => easterEggEnabled.value)
+
+const toggleEgg = () => {
+  setEasterEggEnabled(!easterEggEnabled.value)
+  // 开启时立刻来一个，不用等随机间隔
+  if (easterEggEnabled.value) triggerEasterEgg()
+  showSuccess(t(easterEggEnabled.value ? 'nav.easterEggOn' : 'nav.easterEggOff'))
+}
+
+const tryEgg = () => triggerEasterEgg()
 
 const onGlassParam = (key, event) => {
   updateAppearance({ [key]: Number(event.target.value) })
@@ -1881,6 +1917,37 @@ watch(isDark, (val) => {
 
 .dark .setting-desc {
   color: #888;
+}
+
+/* 彩蛋：右侧「立即体验」+ 开关 */
+.setting-actions {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-shrink: 0;
+}
+
+.setting-try {
+  padding: 5px 10px;
+  border: 1px solid #eee;
+  border-radius: 8px;
+  background: transparent;
+  color: #777;
+  font-size: 11.5px;
+  white-space: nowrap;
+  cursor: pointer;
+  transition: color 0.25s, border-color 0.25s, background 0.25s;
+}
+
+.dark .setting-try {
+  border-color: #252540;
+  color: #999;
+}
+
+.setting-try:hover {
+  color: var(--accent, #42b983);
+  border-color: var(--accent, #42b983);
+  background: rgba(var(--accent-rgb, 66, 185, 131), 0.08);
 }
 
 .setting-switch {

@@ -10,6 +10,7 @@
     <router-view />
   </div>
   <FlagEasterEgg />
+  <EggOverlay />
   <ErrorModal
     v-model:visible="modalVisible"
     :type="modalConfig.type"
@@ -68,6 +69,7 @@ import { useRoute } from 'vue-router'
 import NavBar from './components/NavBar.vue'
 import HolidayBanner from './components/HolidayBanner.vue'
 import FlagEasterEgg from './components/FlagEasterEgg.vue'
+import EggOverlay from './components/EggOverlay.vue'
 import ErrorModal from './components/ErrorModal.vue'
 import PromptModal from './components/PromptModal.vue'
 import LoadingModal from './components/LoadingModal.vue'
